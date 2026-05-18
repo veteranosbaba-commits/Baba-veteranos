@@ -21,7 +21,7 @@
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
 
-    <!-- TOPBAR COMPACTA (Sempre visível para consistência) -->
+    <!-- TOPBAR COMPACTA -->
     <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
@@ -30,7 +30,7 @@
                 <span id="topbar-temporada" class="text-[9px] text-gray-400 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
             <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded font-black tracking-wider flex items-center gap-1 border border-amber-300 shadow">
-                <i class="fa-solid fa-user-gear"></i> ADMIN <button onclick="logoutAdmin()" class="underline font-bold text-stone-900 ml-1">SAIR</button>
+                <i class="fa-solid fa-user-gear"></i> ADMIN <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1">SAIR</button>
             </div>
         </div>
     </nav>
@@ -60,7 +60,7 @@
                 </div>
             </div>
             
-            <!-- EXIBIÇÃO DA PARTIDA EM TEMPO REAL -->
+            <!-- EXIBIÇÃO DA PARTIDA -->
             <div class="bg-black/95 rounded-3xl border-2 border-emerald-500 p-6 shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-500 text-black font-black text-[10px] px-4 py-1 rounded-b-xl uppercase tracking-widest flex flex-col items-center">
                     <span>Última Partida</span>
@@ -96,7 +96,7 @@
                 </div>
             </div>
 
-            <!-- HISTÓRICO DE PLACARES DA LIGA -->
+            <!-- HISTÓRICO DE PLACARES -->
             <div class="bg-stone-900/95 p-4 rounded-2xl border border-stone-700 shadow-xl">
                 <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-3 flex items-center gap-2 border-b border-stone-800 pb-2">
                     <i class="fa-solid fa-clock-rotate-left text-teal-400"></i> Histórico de Resultados das Rodadas
@@ -114,7 +114,7 @@
                     <h4 class="font-black text-gray-200 uppercase tracking-wider text-sm flex items-center gap-2">
                         <i class="fa-solid fa-fire text-amber-500 animate-bounce"></i> Artilharia da Liga
                     </h4>
-                    <select id="artilharia-filtro" onchange="renderizerTudo()" class="text-xs bg-stone-800 border border-stone-700 p-1.5 rounded-lg text-emerald-400 font-bold focus:outline-none">
+                    <select id="artilharia-filtro" onchange="window.renderizerTudo()" class="text-xs bg-stone-800 border border-stone-700 p-1.5 rounded-lg text-emerald-400 font-bold focus:outline-none">
                         <option value="geral">Geral (Todos)</option>
                         <option value="FLUMINENSE">Fluminense FC</option>
                         <option value="BOTAFOGO">Botafogo FR</option>
@@ -127,8 +127,8 @@
         <!-- ABA 2: ELENCOS -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
             <div class="flex space-x-3 mb-1">
-                <button onclick="filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
-                <button onclick="filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
+                <button onclick="window.filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
+                <button onclick="window.filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
@@ -237,7 +237,7 @@
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
                 <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card-clip mr-1"></i> Central de Monitoramento de Atleta</p>
                 <div class="relative">
-                    <input type="text" id="search-input" oninput="searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="search-input" oninput="window.searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <i class="fa-solid fa-search text-stone-500 absolute right-3 top-3.5"></i>
                 </div>
                 <div id="search-result" class="hidden mt-4 space-y-2"></div>
@@ -250,7 +250,7 @@
                 <div>
                     <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Técnico Administrativo</h3>
                 </div>
-                <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-black rounded-lg uppercase transition">Fechar</button>
+                <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-black rounded-lg uppercase transition">Fechar</button>
             </div>
 
             <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-hidden">
@@ -264,7 +264,7 @@
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
                 <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-t-0 border-stone-700 shadow-xl">
                     <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Inscrever Novo Jogador</h4>
-                    <form id="form-cadastro-atleta" onsubmit="cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <form id="form-cadastro-atleta" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input type="text" id="cad-nome" placeholder="Nome do Jogador" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <input type="number" id="cad-camisa" placeholder="Nº Camisa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
@@ -309,11 +309,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
                         <h4 class="font-bold text-teal-400 text-xs uppercase mb-3"><i class="fa-solid fa-plus mr-1"></i> Contribuição de Sócio</h4>
-                        <form id="form-socio" onsubmit="cadastrarSocio(event)" class="space-y-3">
+                        <form id="form-socio" class="space-y-3">
                             <input type="text" id="socio-nome" placeholder="Nome Completo do Sócio" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
-                                    <!-- Gerado dinamicamente via JS -->
                                 </select>
                                 <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
@@ -323,7 +322,7 @@
 
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
                         <h4 class="font-bold text-amber-400 text-xs uppercase mb-3"><i class="fa-solid fa-handshake-angle mr-1"></i> Entrada de Patrocínio / Doação</h4>
-                        <form id="form-patrocinio" onsubmit="cadastrarPatrocinio(event)" class="space-y-3">
+                        <form id="form-patrocinio" class="space-y-3">
                             <input type="text" id="pat-nome" placeholder="Empresa / Doador" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="text" id="pat-destino" placeholder="Ex: Uniforme, Arena..." required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
@@ -358,7 +357,7 @@
                         </div>
                     </div>
                     <div class="text-center pt-2">
-                        <button onclick="atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
+                        <button onclick="window.atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar do Jogo
                         </button>
                     </div>
@@ -367,7 +366,7 @@
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
                     <div class="flex justify-between items-center border-b border-stone-800 pb-2">
                         <h4 class="font-bold text-amber-500 text-xs uppercase"><i class="fa-solid fa-eraser mr-1"></i> Moderação de Rodadas Gravadas</h4>
-                        <button onclick="resetTotalRodadas()" class="bg-red-600 hover:bg-red-700 text-white font-black text-[10px] px-3 py-1.5 rounded uppercase tracking-wider transition flex items-center gap-1 shadow">
+                        <button onclick="window.resetTotalRodadas()" class="bg-red-600 hover:bg-red-700 text-white font-black text-[10px] px-3 py-1.5 rounded uppercase tracking-wider transition flex items-center gap-1 shadow">
                             <i class="fa-solid fa-triangle-exclamation"></i> Resetar Tudo
                         </button>
                     </div>
@@ -387,7 +386,7 @@
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-red-400 text-xs uppercase mb-3"><i class="fa-solid fa-minus mr-1"></i> Lançar Despesa / Gasto do Baba</h4>
-                    <form id="form-gasto" onsubmit="processarGasto(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <form id="form-gasto" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input type="text" id="gasto-descricao" placeholder="Descrição da Despesa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none md:col-span-2">
                         <input type="number" step="0.01" id="gasto-valor" placeholder="Valor Pago (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar Gasto</button>
@@ -405,8 +404,7 @@
                 <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
                     <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2">
                         <h4 class="font-bold text-emerald-400 text-xs uppercase tracking-tight">Boleto de Mensalidades (Atletas)</h4>
-                        <select id="adm-mes-filtro" onchange="loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
-                            <!-- Injetado dinamicamente para os 12 meses -->
+                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -427,9 +425,8 @@
         </div>
     </div>
 
-    <!-- RECIPIENTE FIXO NO RODAPÉ -->
+    <!-- RODAPÉ FIXO -->
     <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
-        
         <!-- ANÚNCIO MINIMALISTA -->
         <div class="bg-stone-950 border-b border-stone-800 px-4 py-2 flex items-center justify-between gap-3 text-xs">
             <div class="flex items-center gap-2 truncate">
@@ -441,7 +438,7 @@
             </a>
         </div>
 
-        <!-- RECONTAGEM REGRESSIVA DINÂMICA (Baseada no próximo domingo) -->
+        <!-- RECONTAGEM REGRESSIVA -->
         <div class="bg-emerald-950/90 border-b border-emerald-900/60 px-4 py-1.5 text-center text-xs">
             <div class="flex justify-center items-center gap-2 text-[11px]">
                 <span class="text-emerald-400 font-bold uppercase tracking-wider"><i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:</span>
@@ -450,7 +447,7 @@
             </div>
         </div>
 
-        <!-- MENU DE NAVEGAÇÃO COMPACTADO -->
+        <!-- MENU DE NAVEGAÇÃO -->
         <div class="container mx-auto flex justify-around items-center py-2 max-w-xl text-center text-[10px] font-black uppercase tracking-wider text-stone-500">
             <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-14 text-emerald-400 transition"><i class="fa-solid fa-chart-line text-lg mb-0.5"></i>Painel</button>
             <button onclick="switchTab('jogadores')" id="nav-jogadores" class="flex flex-col items-center justify-center w-14 hover:text-stone-200 transition"><i class="fa-solid fa-shirt text-lg mb-0.5"></i>Times</button>
@@ -469,7 +466,7 @@
                 <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider"><i class="fa-solid fa-lock text-amber-500 mr-1"></i> Acesso à Súmula</h3>
                 <button onclick="closeAdminModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form onsubmit="autenticarAdmin(event)" class="space-y-4">
+            <form id="form-autenticar-admin" class="space-y-4">
                 <div>
                     <input type="text" id="login-user" placeholder="Comandante" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
                 </div>
@@ -482,11 +479,10 @@
         </div>
     </div>
 
-    <!-- SCRIPT: MOTOR DO FIREBASE -->
+    <!-- SCRIPT: MOTOR DO FIREBASE CORRIGIDO -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        // AJUSTE: Adicionado onValue para escuta em tempo real
-        import { getDatabase, ref, set, onValue, child, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
@@ -509,7 +505,7 @@
 
         window.timeFiltroAtual = 'FLUMINENSE';
         window.isAdminLogado = false;
-        let tokenAdmin = null; // Assinatura enviada ao Firebase
+        let tokenAdmin = null; 
         let toastTimeout = null;
 
         const mesesNomes = { 
@@ -523,7 +519,6 @@
         }
 
         window.salvarNoStorage = function() {
-            // Injeta temporariamente a credencial de gravação validada pelas regras de segurança
             if(window.isAdminLogado && tokenAdmin) {
                 set(ref(db, 'baba/auth_token'), tokenAdmin);
             }
@@ -534,10 +529,8 @@
             set(ref(db, 'baba/patrocinios'), window.patrociniosCache);
             set(ref(db, 'baba/partidaEstatisticas'), window.partidaEstatisticas);
             set(ref(db, 'baba/historicoPlacares'), window.historicoPlacares);
-            // Removido o renderizarTudo daqui de dentro, pois o gatilho onValue cuidará disso automaticamente ao detectar a gravação.
         };
 
-        // AJUSTE CRÍTICO: Modificado de get() para onValue() para sincronização multi-dispositivo instantânea
         async function carregarDadosIniciais() {
             buildDynamicSelectors();
             const babaRef = ref(db, 'baba');
@@ -552,10 +545,9 @@
                     window.historicoPlacares = data.historicoPlacares || [];
                     window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
                     
-                    // Renderiza automaticamente na tela de qualquer aparelho conectado sempre que houver alteração
-                    window.renderizarTudo();
+                    window.renderizerTudo();
                 } else {
-                    window.renderizarTudo();
+                    window.renderizerTudo();
                 }
             }, (error) => {
                 console.error("Erro na escuta em tempo real do Firebase:", error);
@@ -589,7 +581,7 @@
             toastTimeout = setTimeout(() => { toast.classList.add('translate-x-96'); }, 2500);
         };
 
-        window.renderizarTudo = function() {
+        window.renderizerTudo = function() {
             recalcularClassificacaoGeral();
             loadDashboard();
             renderListaJogadoresPublica();
@@ -602,7 +594,7 @@
                 renderAdminSocios();
                 renderAdminGastosTabela();
                 renderAdminHistoricoExclusao();
-                loadAdmFinancas();
+                window.loadAdmFinancas();
             }
         };
 
@@ -629,7 +621,6 @@
                 document.getElementById('dash-data-ultima-partida').innerText = "(--/--)";
             }
 
-            // AJUSTE: Permite atualizar inputs do painel admin sem prender digitação se outro aparelho salvar
             const inputFlu = document.getElementById('adm-placar-flu');
             const inputBota = document.getElementById('adm-placar-bota');
             if(inputFlu && document.activeElement !== inputFlu) {
@@ -767,7 +758,7 @@
                         <td class="p-2 text-stone-400 font-mono">${item.data}</td>
                         <td class="p-2 font-mono text-stone-200">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
                         <td class="p-2">
-                            <button onclick="excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded border border-stone-700 transition">
+                            <button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded border border-stone-700 transition">
                                 <i class="fa-solid fa-trash-can"></i> Excluir
                             </button>
                         </td>
@@ -903,7 +894,8 @@
             document.getElementById('financeiro-gastos-lista').innerHTML = feedGastosHtml || '<li class="py-2 text-stone-500 italic">Nenhuma despesa.</li>';
         }
 
-        window.cadastrarPatrocinio = function(e) {
+        // --- SUBMISSÃO DE FORMULÁRIOS CORRIGIDA (Gatilhos escopo Module) ---
+        document.getElementById('form-patrocinio').addEventListener('submit', function(e) {
             e.preventDefault();
             window.patrociniosCache.push({
                 id: 'pat_' + Date.now(),
@@ -914,18 +906,9 @@
             document.getElementById('form-patrocinio').reset();
             window.mostrarToast("Patrocínio adicionado!");
             window.salvarNoStorage();
-        };
+        });
 
-        window.excluirReceitaExterna = function(id, tipo) {
-            if(confirm("Deseja remover essa receita?")) {
-                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
-                if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
-                window.salvarNoStorage();
-                window.mostrarToast("Receita excluída!");
-            }
-        };
-
-        window.cadastrarSocio = function(e) {
+        document.getElementById('form-socio').addEventListener('submit', function(e) {
             e.preventDefault();
             window.sociosCache.push({
                 id: 'socio_' + Date.now(),
@@ -936,6 +919,60 @@
             document.getElementById('form-socio').reset();
             window.mostrarToast("Sócio lançado!");
             window.salvarNoStorage();
+        });
+
+        document.getElementById('form-gasto').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const hj = new Date();
+            window.gastosCache.push({ 
+                id:'gasto_'+Date.now(), 
+                descricao: document.getElementById('gasto-descricao').value.trim(), 
+                valor: parseFloat(document.getElementById('gasto-valor').value), 
+                dataStr: `${hj.getDate()}/${hj.getMonth()+1}` 
+            });
+            document.getElementById('form-gasto').reset(); 
+            window.mostrarToast("Despesa computada!");
+            window.salvarNoStorage();
+        });
+
+        document.getElementById('form-cadastro-atleta').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            window.atletasCache.push({ 
+                id:'atleta_'+Date.now(), 
+                nome:document.getElementById('cad-nome').value.trim(), 
+                camisa:parseInt(document.getElementById('cad-camisa').value), 
+                time:document.getElementById('cad-time').value, 
+                gols:0, amarelos:0, vermelho:0, pagamentos:{} 
+            }); 
+            document.getElementById('form-cadastro-atleta').reset(); 
+            window.mostrarToast("Jogador inscrito!"); 
+            window.salvarNoStorage();
+        });
+
+        document.getElementById('form-autenticar-admin').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const userIn = document.getElementById('login-user').value;
+            const passIn = document.getElementById('login-pass').value;
+            if(userIn === 'veteranos07' && passIn === 'veteranos07'){ 
+                window.isAdminLogado = true; 
+                tokenAdmin = passIn; 
+                document.getElementById('login-modal').classList.add('hidden'); 
+                document.getElementById('admin-badge').classList.remove('hidden'); 
+                switchTab('admin-panel'); 
+                window.renderizerTudo(); 
+            }else{ 
+                document.getElementById('login-erro').classList.remove('hidden'); 
+            }
+        });
+
+        // --- SISTEMA DE GESTÃO DO COMANDANTE ---
+        window.excluirReceitaExterna = function(id, tipo) {
+            if(confirm("Deseja remover essa receita?")) {
+                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
+                if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
+                window.salvarNoStorage();
+                window.mostrarToast("Receita excluída!");
+            }
         };
 
         window.salvarHistoricoCartao = function(id) {
@@ -994,101 +1031,27 @@
             window.salvarNoStorage();
         };
 
-        function renderAdminScouts() {
-            let html = '';
-            window.atletasCache.forEach(a => {
-                let multasListHtml = '';
-                if(a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(m => {
-                        if(a.pagamentos[m].multas) {
-                            a.pagamentos[m].multas.forEach((multa, idx) => {
-                                multasListHtml += `
-                                    <div class="bg-black/40 p-1 rounded my-1 border border-stone-800 flex justify-between items-center text-[10px] gap-1">
-                                        <span class="${multa.paga?'line-through text-emerald-400':'text-red-300'}">${multa.motivo} (${mesesNomes[m] || m}): R$ ${multa.valor}</span>
-                                        <div class="flex items-center gap-1">
-                                            <input type="checkbox" ${multa.paga?'checked':''} onchange="toggleStatusMulta('${a.id}', '${m}', ${idx}, this.checked)" class="accent-emerald-500 cursor-pointer">
-                                            <button onclick="cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'} ml-1">
-                                                <i class="fa-solid fa-box-archive text-[10px]"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        }
-                    });
-                }
-
-                html += `
-                    <tr class="border-b border-stone-800 text-center text-xs">
-                        <td class="p-2 font-bold text-left">${a.nome}</td>
-                        <td class="p-2 font-mono">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.gols||0}</span>
-                                <button onclick="alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2 font-mono text-amber-500">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.amarelos||0}</span>
-                                <button onclick="alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2 font-mono text-red-500">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.vermelho||0}</span>
-                                <button onclick="alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2">
-                            <button onclick="salvarHistoricoCartao('${a.id}')" class="bg-blue-600 text-white font-bold p-1 rounded text-[10px] uppercase">Arquivar</button>
-                        </td>
-                        <td class="p-2">
-                            <div class="flex gap-1 justify-center">
-                                <input type="text" id="motivo-${a.id}" placeholder="Motivo" class="bg-stone-800 p-1 rounded text-[10px] w-20 text-white border border-stone-700 outline-none">
-                                <input type="number" id="vmulta-${a.id}" placeholder="R$" class="bg-stone-800 p-1 rounded text-[10px] w-10 text-white border border-stone-700 outline-none">
-                                <button onclick="aplicarMultaAtleta('${a.id}')" class="bg-red-600 px-1 rounded text-white font-bold text-[10px]">OK</button>
-                            </div>
-                        </td>
-                        <td class="p-2 text-left">${multasListHtml || '<span class="text-stone-600 italic text-[10px]">Sem multas</span>'}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('adm-scouts-tabela').innerHTML = html;
-        }
-
-        function renderAdminSocios() {
-            let html = '';
-            window.sociosCache.forEach(s => {
-                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
-            });
-            window.patrociniosCache.forEach(p => {
-                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
-            });
-            document.getElementById('adm-receitas-tabela').innerHTML = html;
-        }
-
-        window.processarGasto = function(e){
-            e.preventDefault(); const hj = new Date();
-            window.gastosCache.push({ id:'gasto_'+Date.now(), descricao: document.getElementById('gasto-descricao').value.trim(), valor: parseFloat(document.getElementById('gasto-valor').value), dataStr: `${hj.getDate()}/${hj.getMonth()+1}` });
-            document.getElementById('form-gasto').reset(); 
-            window.mostrarToast("Despesa computada!");
-            window.salvarNoStorage();
+        window.excluirGasto = function(id){ 
+            if(confirm("Excluir despesa?")){ 
+                window.gastosCache=window.gastosCache.filter(g=>g.id!==id); 
+                window.mostrarToast("Gasto removido!"); 
+                window.salvarNoStorage(); 
+            }
         };
-        window.excluirGasto = function(id){ if(confirm("Excluir despesa?")){ window.gastosCache=window.gastosCache.filter(g=>g.id!==id); window.mostrarToast("Gasto removido!"); window.salvarNoStorage(); }};
-        function renderAdminGastosTabela(){
-            let h=''; window.gastosCache.forEach(g=>{ h+=`<tr class="border-b border-stone-800"><td class="p-2 font-mono text-stone-500">${g.dataStr}</td><td class="p-2 font-bold uppercase text-xs">${g.descricao}</td><td class="p-2 text-right font-mono text-red-400 text-xs">R$ ${g.valor.toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirGasto('${g.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; });
-            document.getElementById('adm-gastos-tabela').innerHTML=h;
-        }
+
+        window.excluirAtleta = function(id){ 
+            if(confirm("Remover atleta?")){ 
+                window.atletasCache=window.atletasCache.filter(a=>a.id!==id); 
+                window.mostrarToast("Atleta removido!"); 
+                window.salvarNoStorage(); 
+            }
+        };
 
         window.loadAdmFinancas = function() {
             const mes = document.getElementById('adm-mes-filtro').value; let html = '';
             window.atletasCache.forEach(a => {
                 const d = (a.pagamentos && a.pagamentos[mes]) ? a.pagamentos[mes] : { pago: false, extra: 0 };
                 
-                // AJUSTE: Identifica se o campo de input extra já está focado para evitar reescrever o valor enquanto o usuário digita
                 const inputExtraId = `extra-${a.id}`;
                 const inputExtraElement = document.getElementById(inputExtraId);
                 const valorExtra = (inputExtraElement && document.activeElement === inputExtraElement) ? inputExtraElement.value : (d.extra || 0);
@@ -1097,13 +1060,13 @@
                     <tr class="border-b border-stone-800/40 text-center hover:bg-stone-800/10 text-xs">
                         <td class="p-1.5 font-bold text-left text-stone-300">${a.nome}</td>
                         <td class="p-1.5">
-                            <input type="checkbox" onchange="toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
+                            <input type="checkbox" onchange="window.toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
                         </td>
                         <td class="p-1.5">
                             <input type="number" id="${inputExtraId}" value="${valorExtra}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
                         </td>
                         <td class="p-1.5">
-                            <button onclick="salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
+                            <button onclick="window.salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
                                 <i class="fa-solid fa-floppy-disk"></i>
                             </button>
                         </td>
@@ -1113,32 +1076,28 @@
             document.getElementById('adm-mensalidades-tabela').innerHTML = html;
         };
         
-        window.toggleMensalidade = function(id, mes, isChecked) { const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].pago = isChecked; window.mostrarToast("Mensalidade salva!"); window.salvarNoStorage(); };
-        window.salvarAporteLinha = function(id, mes) { const val = document.getElementById(`extra-${id}`).value; const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].extra = parseFloat(val || 0); window.mostrarToast("Aporte salvo!"); window.salvarNoStorage(); };
-        window.cadastrarAtleta = function(e){ e.preventDefault(); window.atletasCache.push({ id:'atleta_'+Date.now(), nome:document.getElementById('cad-nome').value.trim(), camisa:parseInt(document.getElementById('cad-camisa').value), time:document.getElementById('cad-time').value, gols:0, amarelos:0, vermelho:0, pagamentos:{} }); document.getElementById('form-cadastro-atleta').reset(); window.mostrarToast("Jogador inscrito!"); window.salvarNoStorage(); };
-        window.excluirAtleta = function(id){ if(confirm("Remover atleta?")){ window.atletasCache=window.atletasCache.filter(a=>a.id!==id); window.mostrarToast("Atleta removido!"); window.salvarNoStorage(); }};
-        function renderAdminAtletas(){ let h=''; window.atletasCache.forEach(a=>{ h+=`<tr class="border-b border-stone-800 text-xs"><td class="p-2.5 font-bold">${a.nome} (${a.time})</td><td class="p-2.5 text-center font-mono">#${a.camisa}</td><td class="p-2.5 text-center"><button onclick="excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.getElementById('adm-atletas-tabela').innerHTML=h; }
-        
-        window.autenticarAdmin = function(e){ 
-            e.preventDefault(); 
-            const userIn = document.getElementById('login-user').value;
-            const passIn = document.getElementById('login-pass').value;
-            if(userIn === 'veteranos07' && passIn === 'veteranos07'){ 
-                window.isAdminLogado = true; 
-                tokenAdmin = passIn; // Captura a chave para assinar as rotas de gravação
-                document.getElementById('login-modal').classList.add('hidden'); 
-                document.getElementById('admin-badge').classList.remove('hidden'); 
-                switchTab('admin-panel'); 
-                window.renderizarTudo(); 
-            }else{ 
-                document.getElementById('login-erro').classList.remove('hidden'); 
-            }
+        window.toggleMensalidade = function(id, mes, isChecked) { 
+            const a = window.atletasCache.find(j => j.id === id); 
+            if(!a.pagamentos) a.pagamentos = {}; 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
+            a.pagamentos[mes].pago = isChecked; 
+            window.mostrarToast("Mensalidade salva!"); 
+            window.salvarNoStorage(); 
         };
-        
+
+        window.salvarAporteLinha = function(id, mes) { 
+            const val = document.getElementById(`extra-${id}`).value; 
+            const a = window.atletasCache.find(j => j.id === id); 
+            if(!a.pagamentos) a.pagamentos = {}; 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
+            a.pagamentos[mes].extra = parseFloat(val || 0); 
+            window.mostrarToast("Aporte salvo!"); 
+            window.salvarNoStorage(); 
+        };
+
         window.logoutAdmin = function(){ 
             window.isAdminLogado = false; 
-            tokenAdmin = null; // Destrói o token local
-            remove(ref(db, 'baba/auth_token')); // Limpa o token ativo no servidor
+            tokenAdmin = null; 
             document.getElementById('admin-panel').classList.add('hidden'); 
             document.getElementById('admin-badge').classList.add('hidden'); 
             switchTab('dashboard'); 
@@ -1172,7 +1131,7 @@
         iniciarContagemRegressiva();
     </script>
 
-    <!-- NAVEGAÇÃO DE TELAS CORRIGIDA -->
+    <!-- NAVEGAÇÃO DE TELAS -->
     <script>
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
