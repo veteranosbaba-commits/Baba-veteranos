@@ -485,7 +485,8 @@
     <!-- SCRIPT: MOTOR DO FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+        // AJUSTE: Adicionado onValue para escuta em tempo real
+        import { getDatabase, ref, set, onValue, child, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
@@ -533,13 +534,15 @@
             set(ref(db, 'baba/patrocinios'), window.patrociniosCache);
             set(ref(db, 'baba/partidaEstatisticas'), window.partidaEstatisticas);
             set(ref(db, 'baba/historicoPlacares'), window.historicoPlacares);
-            window.renderizarTudo();
+            // Removido o renderizarTudo daqui de dentro, pois o gatilho onValue cuidará disso automaticamente ao detectar a gravação.
         };
 
+        // AJUSTE CRÍTICO: Modificado de get() para onValue() para sincronização multi-dispositivo instantânea
         async function carregarDadosIniciais() {
-            const dbRef = ref(db);
-            try {
-                const snapshot = await get(child(dbRef, 'baba'));
+            buildDynamicSelectors();
+            const babaRef = ref(db, 'baba');
+            
+            onValue(babaRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     window.atletasCache = data.atletas || [];
@@ -548,12 +551,15 @@
                     window.patrociniosCache = data.patrocinios || [];
                     window.historicoPlacares = data.historicoPlacares || [];
                     window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
+                    
+                    // Renderiza automaticamente na tela de qualquer aparelho conectado sempre que houver alteração
+                    window.renderizarTudo();
+                } else {
+                    window.renderizarTudo();
                 }
-            } catch (error) {
-                console.error("Erro ao ler Firebase:", error);
-            }
-            buildDynamicSelectors();
-            window.renderizarTudo();
+            }, (error) => {
+                console.error("Erro na escuta em tempo real do Firebase:", error);
+            });
         }
 
         function buildDynamicSelectors() {
@@ -623,10 +629,14 @@
                 document.getElementById('dash-data-ultima-partida').innerText = "(--/--)";
             }
 
-            if(document.getElementById('adm-placar-flu') && !document.getElementById('adm-placar-flu').dataset.loaded) {
-                document.getElementById('adm-placar-flu').value = window.partidaEstatisticas.placarFlu ?? 0;
-                document.getElementById('adm-placar-bota').value = window.partidaEstatisticas.placarBota ?? 0;
-                document.getElementById('adm-placar-flu').dataset.loaded = "true";
+            // AJUSTE: Permite atualizar inputs do painel admin sem prender digitação se outro aparelho salvar
+            const inputFlu = document.getElementById('adm-placar-flu');
+            const inputBota = document.getElementById('adm-placar-bota');
+            if(inputFlu && document.activeElement !== inputFlu) {
+                inputFlu.value = window.partidaEstatisticas.placarFlu ?? 0;
+            }
+            if(inputBota && document.activeElement !== inputBota) {
+                inputBota.value = window.partidaEstatisticas.placarBota ?? 0;
             }
 
             let totalArrecadado = 0;
@@ -1077,6 +1087,12 @@
             const mes = document.getElementById('adm-mes-filtro').value; let html = '';
             window.atletasCache.forEach(a => {
                 const d = (a.pagamentos && a.pagamentos[mes]) ? a.pagamentos[mes] : { pago: false, extra: 0 };
+                
+                // AJUSTE: Identifica se o campo de input extra já está focado para evitar reescrever o valor enquanto o usuário digita
+                const inputExtraId = `extra-${a.id}`;
+                const inputExtraElement = document.getElementById(inputExtraId);
+                const valorExtra = (inputExtraElement && document.activeElement === inputExtraElement) ? inputExtraElement.value : (d.extra || 0);
+
                 html += `
                     <tr class="border-b border-stone-800/40 text-center hover:bg-stone-800/10 text-xs">
                         <td class="p-1.5 font-bold text-left text-stone-300">${a.nome}</td>
@@ -1084,7 +1100,7 @@
                             <input type="checkbox" onchange="toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
                         </td>
                         <td class="p-1.5">
-                            <input type="number" id="extra-${a.id}" value="${d.extra||0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
+                            <input type="number" id="${inputExtraId}" value="${valorExtra}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
                         </td>
                         <td class="p-1.5">
                             <button onclick="salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
@@ -1146,9 +1162,9 @@
 
                 const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
                 const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
+                const minutes = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
 
-                document.getElementById("cronometro-jogo").innerText = `${dias}d ${horas}h ${minutos}m`;
+                document.getElementById("cronometro-jogo").innerText = `${dias}d ${horas}h ${minutes}m`;
             }, 1000);
         }
 
