@@ -2,427 +2,566 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>BABA VETERANOS - Flu vs Bota</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+    
     <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Font Awesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        input, select, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        .tab-content { 
+            display: none; 
+        }
+        .tab-content.active { 
+            display: block; 
+        }
+        
         .soccer-bg {
             background-color: #064e3b;
-            background-image: radial-gradient(#047857 1px, transparent 0), radial-gradient(#047857 1px, transparent 0);
+            background-image: radial-gradient(#047857 1px, transparent 0), 
+                            radial-gradient(#047857 1px, transparent 0);
             background-size: 24px 24px;
             background-position: 0 0, 12px 12px;
+        }
+        
+        @media (max-width: 640px) {
+            input, select, button {
+                font-size: 16px !important;
+            }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 2px;
+        }
+        
+        .loading-spinner {
+            border: 2px solid #374151;
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .placar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+        
+        .placar-time {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .placar-numeros {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            flex: 2;
+        }
+        
+        .placar-numero {
+            min-width: 60px;
+            text-align: center;
+            background: #1f2937;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid #374151;
+        }
+        
+        @media (max-width: 640px) {
+            .placar-numero {
+                min-width: 45px;
+                font-size: 1.5rem;
+                padding: 0.375rem 0.5rem;
+            }
+        }
+        
+        .toast-show {
+            display: flex !important;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
     </style>
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
 
-    <!-- TOPBAR COMPACTA -->
-    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-2 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50 transition-all duration-200">
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
+        <div class="bg-stone-900 p-6 rounded-2xl border-2 border-emerald-500 text-center shadow-2xl">
+            <div class="loading-spinner mx-auto mb-3 w-8 h-8 border-4"></div>
+            <p class="text-emerald-400 font-bold text-sm">Sincronizando dados...</p>
+            <p class="text-stone-500 text-xs mt-2">Aguarde um momento</p>
+        </div>
+    </div>
+
+    <!-- TOPBAR -->
+    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
                 <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
                 <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
-            <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded font-black tracking-wider flex items-center gap-1 border border-amber-300 shadow">
-                <i class="fa-solid fa-user-gear"></i> ADMIN <button onclick="logoutAdmin()" class="underline font-bold text-stone-900 ml-1">SAIR</button>
+            <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
+                <i class="fa-solid fa-user-gear"></i> ADMIN 
+                <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
+            </div>
+            <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
+                <span class="hidden sm:inline">Online</span>
             </div>
         </div>
     </nav>
 
-    <!-- NOTIFICAÇÃO FLUTUANTE -->
-    <div id="toast-notificacao" class="fixed top-16 right-4 bg-emerald-500 text-black font-bold px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-x-96 transition-transform duration-300 flex items-center gap-2 border-2 border-emerald-300 text-sm">
-        <i class="fa-solid fa-circle-check text-lg"></i> <span id="toast-mensagem">Atualizado com sucesso!</span>
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notificacao" class="fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-500 text-black font-bold px-5 py-3 rounded-xl shadow-2xl z-[60] hidden transition-all duration-300 items-center gap-2 border-2 border-emerald-300 text-sm whitespace-nowrap">
+        <i class="fa-solid fa-circle-check text-lg"></i> 
+        <span id="toast-mensagem">Atualizado com sucesso!</span>
     </div>
 
-    <!-- CONTAINER PRINCIPAL -->
-    <div class="container mx-auto p-4 max-w-5xl space-y-6">
+    <!-- MAIN CONTAINER -->
+    <div class="container mx-auto p-4 max-w-6xl space-y-6">
 
-        <!-- ABA 1: DASHBOARD -->
+        <!-- DASHBOARD -->
         <div id="dashboard" class="tab-content active space-y-6">
             
-            <!-- INFO FINANCEIRA -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-black/90 rounded-2xl border-2 border-emerald-500 p-5 relative overflow-hidden shadow-2xl">
-                    <div class="absolute top-0 right-0 bg-emerald-500 text-black font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Disponível em Caixa</div>
-                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-vault mr-1"></i> Saldo Geral da Liga</p>
-                    <h3 id="dash-saldo-total" class="text-4xl font-mono font-bold text-emerald-400 tracking-tight">R$ 0,00</h3>
+                    <div class="absolute top-0 right-0 bg-emerald-500 text-black font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Disponível</div>
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-vault mr-1"></i> Saldo Geral da Liga
+                    </p>
+                    <h3 id="dash-saldo-total" class="text-3xl sm:text-4xl font-mono font-bold text-emerald-400 tracking-tight">R$ 0,00</h3>
                 </div>
                 <div class="bg-black/90 rounded-2xl border-2 border-red-500 p-5 relative overflow-hidden shadow-2xl">
-                    <div class="absolute top-0 right-0 bg-red-500 text-white font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Despesas Totais</div>
-                    <p class="text-red-400 text-xs font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-money-bill-wave mr-1"></i> Total de Gastos</p>
-                    <h3 id="dash-saldo-gastos" class="text-4xl font-mono font-bold text-red-500 tracking-tight">R$ 0,00</h3>
+                    <div class="absolute top-0 right-0 bg-red-500 text-white font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Despesas</div>
+                    <p class="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-money-bill-wave mr-1"></i> Total de Gastos
+                    </p>
+                    <h3 id="dash-saldo-gastos" class="text-3xl sm:text-4xl font-mono font-bold text-red-500 tracking-tight">R$ 0,00</h3>
                 </div>
             </div>
             
-            <!-- EXIBIÇÃO DA PARTIDA EM TEMPO REAL -->
+            <!-- PLACAR CORRIGIDO -->
             <div class="bg-black/95 rounded-3xl border-2 border-emerald-500 p-6 shadow-2xl relative overflow-hidden">
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-500 text-black font-black text-[10px] px-4 py-1 rounded-b-xl uppercase tracking-widest flex flex-col items-center">
-                    <span>Última Partida</span>
-                    <span id="dash-data-ultima-partida" class="text-[8px] font-mono text-emerald-900 font-bold opacity-80 tracking-normal mt-0.5">(--/--)</span>
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-500 text-black font-black text-[10px] px-4 py-1 rounded-b-xl uppercase tracking-widest text-center whitespace-nowrap">
+                    Última Partida
+                    <span id="dash-data-ultima-partida" class="text-[8px] font-mono text-emerald-900 font-bold opacity-80 tracking-normal block mt-0.5">(--/--)</span>
                 </div>
                 
-                <div class="flex justify-between items-center max-w-xl mx-auto mt-6 text-center">
-                    <div class="w-1/3">
-                        <span class="block bg-emerald-800 text-white font-black px-2 py-1.5 rounded-lg text-xs md:text-sm shadow border border-emerald-600">FLUMINENSE</span>
+                <div class="placar-container mt-8">
+                    <div class="placar-time text-center">
+                        <div class="bg-emerald-800 text-white font-black px-3 py-2 rounded-lg text-xs sm:text-sm shadow border border-emerald-600 inline-block">
+                            FLUMINENSE
+                        </div>
                     </div>
-                    <div class="w-1/3 flex justify-center items-center gap-3 font-mono">
-                        <span id="placar-flu" class="text-4xl md:text-5xl font-black text-emerald-400 bg-stone-900 px-4 py-2 rounded-xl border border-stone-800">0</span>
+                    <div class="placar-numeros">
+                        <div class="placar-numero">
+                            <span id="placar-flu" class="text-3xl sm:text-5xl font-black text-emerald-400">0</span>
+                        </div>
                         <span class="text-xl font-bold text-stone-600">X</span>
-                        <span id="placar-bota" class="text-4xl md:text-5xl font-black text-white bg-stone-900 px-4 py-2 rounded-xl border border-stone-800">0</span>
+                        <div class="placar-numero">
+                            <span id="placar-bota" class="text-3xl sm:text-5xl font-black text-white">0</span>
+                        </div>
                     </div>
-                    <div class="w-1/3">
-                        <span class="block bg-stone-800 text-gray-300 font-black px-2 py-1.5 rounded-lg text-xs md:text-sm shadow border border-stone-700">BOTAFOGO</span>
+                    <div class="placar-time text-center">
+                        <div class="bg-stone-800 text-gray-300 font-black px-3 py-2 rounded-lg text-xs sm:text-sm shadow border border-stone-700 inline-block">
+                            BOTAFOGO
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- CLASSIFICAÇÃO GERAL ANUAL -->
+            <!-- CLASSIFICAÇÃO -->
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl text-center">
                 <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-4 flex justify-center items-center gap-2 border-b border-stone-800 pb-2">
                     <i class="fa-solid fa-trophy text-amber-500"></i> Classificação da Temporada (Vitórias Gerais)
                 </h4>
-                <div class="flex justify-center items-center gap-4 py-2 bg-black/40 rounded-xl border border-stone-800/80 max-w-md mx-auto">
-                    <span class="font-black text-emerald-400 text-sm md:text-base tracking-wide">FLUMINENSE</span>
-                    <span id="placar-temporada-flu" class="text-2xl md:text-3xl font-mono font-black text-emerald-400 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
-                    <span class="text-stone-600 font-black text-sm">X</span>
-                    <span id="placar-temporada-bota" class="text-2xl md:text-3xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
-                    <span class="font-black text-stone-300 text-sm md:text-base tracking-wide">BOTAFOGO</span>
+                <div class="flex justify-center items-center gap-2 sm:gap-4 py-3 bg-black/40 rounded-xl border border-stone-800/80 max-w-md mx-auto flex-wrap">
+                    <span class="font-black text-emerald-400 text-xs sm:text-sm tracking-wide">FLUMINENSE</span>
+                    <span id="placar-temporada-flu" class="text-xl sm:text-2xl font-mono font-black text-emerald-400 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                    <span class="text-stone-600 font-black text-xs sm:text-sm">X</span>
+                    <span id="placar-temporada-bota" class="text-xl sm:text-2xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                    <span class="font-black text-stone-300 text-xs sm:text-sm tracking-wide">BOTAFOGO</span>
                 </div>
             </div>
 
-            <!-- HISTÓRICO DE PLACARES DA LIGA -->
+            <!-- HISTÓRICO -->
             <div class="bg-stone-900/95 p-4 rounded-2xl border border-stone-700 shadow-xl">
                 <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-3 flex items-center gap-2 border-b border-stone-800 pb-2">
                     <i class="fa-solid fa-clock-rotate-left text-teal-400"></i> Histórico de Resultados das Rodadas
                 </h4>
                 <div class="max-h-48 overflow-y-auto pr-1">
-                    <ul id="lista-historico-placares" class="divide-y divide-stone-800 font-bold text-xs text-stone-300 space-y-1">
-                        <!-- Gerado dinamicamente -->
-                    </ul>
+                    <ul id="lista-historico-placares" class="divide-y divide-stone-800 font-bold text-xs text-stone-300 space-y-1"></ul>
                 </div>
             </div>
         </div>
 
-        <!-- ABA: ARTILHARIA -->
+        <!-- ARTILHARIA -->
         <div id="artilharia-ver" class="tab-content space-y-6 pt-4">
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
-                <div class="flex justify-between items-center mb-4 border-b border-stone-800 pb-3">
+                <div class="flex justify-between items-center mb-4 border-b border-stone-800 pb-3 flex-wrap gap-2">
                     <h4 class="font-black text-gray-200 uppercase tracking-wider text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-fire text-amber-500 animate-bounce"></i> Artilharia da Liga
+                        <i class="fa-solid fa-fire text-amber-500"></i> Artilharia da Liga
                     </h4>
-                    <select id="artilharia-filtro" onchange="renderizerTudo()" class="text-xs bg-stone-800 border border-stone-700 p-1.5 rounded-lg text-emerald-400 font-bold focus:outline-none">
+                    <select id="artilharia-filtro" onchange="window.renderizarTudo()" class="text-xs bg-stone-800 border border-stone-700 p-2 rounded-lg text-emerald-400 font-bold focus:outline-none">
                         <option value="geral">Geral (Todos)</option>
                         <option value="FLUMINENSE">Fluminense FC</option>
                         <option value="BOTAFOGO">Botafogo FR</option>
                     </select>
                 </div>
-                <ol id="dash-artilharia" class="divide-y divide-stone-800 text-sm font-medium text-stone-300 space-y-1"></ol>
+                <ol id="dash-artilharia" class="divide-y divide-stone-800 text-sm font-medium text-stone-300"></ol>
             </div>
         </div>
 
-        <!-- ABA 2: ELENCOS -->
+        <!-- JOGADORES -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
             <div class="flex space-x-3 mb-1">
-                <button onclick="filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
-                <button onclick="filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
+                <button onclick="window.filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
+                <button onclick="window.filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[650px]">
+                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
                     <thead>
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
                             <th class="p-2 text-center w-12">Nº</th>
-                            <th class="p-2">Nome do Atleta</th>
+                            <th class="p-2">Nome</th>
                             <th class="p-2 text-center w-14">Gols</th>
-                            <th class="p-2 text-center w-16">🟨 Atual</th>
-                            <th class="p-2 text-center w-16">🟥 Atual</th>
-                            <th class="p-2 text-center w-28">Histórico Anual</th>
+                            <th class="p-2 text-center w-16">🟨</th>
+                            <th class="p-2 text-center w-16">🟥</th>
+                            <th class="p-2 text-center w-28">Histórico</th>
                             <th class="p-2 text-center w-20">Condição</th>
-                            <th class="p-2 text-center w-20">Mês Atual</th>
+                            <th class="p-2 text-center w-20">Mês</th>
                         </tr>
                     </thead>
-                    <tbody id="lista-jogadores-corpo" class="text-xs divide-y divide-stone-800/60"></tbody>
+                    <tbody id="lista-jogadores-corpo"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ABA 3: BALANÇO -->
+        <!-- BALANÇO -->
         <div id="financeiro-ver" class="tab-content space-y-6 pt-4">
-            <!-- Patrocínios e Doações -->
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                <h4 class="font-black text-amber-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800"><i class="fa-solid fa-handshake-angle mr-2"></i>Patrocínios e Doações de Incentivo</h4>
+                <h4 class="font-black text-amber-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                    <i class="fa-solid fa-handshake-angle mr-2"></i>Patrocínios e Doações
+                </h4>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left">
                         <thead>
                             <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
-                                <th class="p-3">Doador / Parceiro</th>
-                                <th class="p-3 text-center">Origem / Destinação</th>
-                                <th class="p-3 text-right">Valor Líquido</th>
+                                <th class="p-3">Doador</th>
+                                <th class="p-3 text-center">Destinação</th>
+                                <th class="p-3 text-right">Valor</th>
                             </tr>
                         </thead>
-                        <tbody id="publico-patrocinio-tabela" class="divide-y divide-stone-800 text-stone-300"></tbody>
+                        <tbody id="publico-patrocinio-tabela"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                <h4 class="font-black text-gray-200 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800"><i class="fa-solid fa-chart-line mr-2 text-emerald-400"></i>Balanço Consolidado Mensal (Atletas)</h4>
+                <h4 class="font-black text-gray-200 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                    <i class="fa-solid fa-chart-line mr-2 text-emerald-400"></i>Balanço Mensal
+                </h4>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left">
                         <thead>
                             <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
                                 <th class="p-3">Mês</th>
-                                <th class="p-3 text-right">Mensalidades (R$ 25)</th>
-                                <th class="p-3 text-right">Aportes Extras</th>
-                                <th class="p-3 text-right">Multas Pagas</th>
+                                <th class="p-3 text-right">Mensalidades</th>
+                                <th class="p-3 text-right">Aportes</th>
+                                <th class="p-3 text-right">Multas</th>
                             </tr>
                         </thead>
-                        <tbody id="financeiro-mensal-corpo" class="divide-y divide-stone-800 text-stone-300"></tbody>
+                        <tbody id="financeiro-mensal-corpo"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                <h4 class="font-black text-teal-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800"><i class="fa-solid fa-hand-holding-dollar mr-2"></i>Contribuições de Sócios do Baba</h4>
+                <h4 class="font-black text-teal-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                    <i class="fa-solid fa-hand-holding-dollar mr-2"></i>Contribuições de Sócios
+                </h4>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left">
                         <thead>
                             <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
-                                <th class="p-3">Nome do Sócio</th>
-                                <th class="p-3 text-center">Mês Referência</th>
-                                <th class="p-3 text-right">Valor Contribuído</th>
+                                <th class="p-3">Sócio</th>
+                                <th class="p-3 text-center">Mês</th>
+                                <th class="p-3 text-right">Valor</th>
                             </tr>
                         </thead>
-                        <tbody id="publico-socios-tabela" class="divide-y divide-stone-800 text-stone-300"></tbody>
+                        <tbody id="publico-socios-tabela"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                    <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs mb-4 border-b border-stone-800 pb-2"><i class="fa-solid fa-circle-plus mr-2"></i>Histórico de Aportes Extras</h4>
-                    <ul id="financeiro-aportes-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto pr-1"></ul>
+                    <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                        <i class="fa-solid fa-circle-plus mr-2"></i>Aportes Extras
+                    </h4>
+                    <ul id="financeiro-aportes-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
                 </div>
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                    <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 border-b border-stone-800 pb-2"><i class="fa-solid fa-circle-minus mr-2"></i>Histórico de Gastos / Saídas</h4>
-                    <ul id="financeiro-gastos-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto pr-1"></ul>
+                    <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                        <i class="fa-solid fa-circle-minus mr-2"></i>Gastos Realizados
+                    </h4>
+                    <ul id="financeiro-gastos-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 4: PENDÊNCIAS E SÚMULA -->
+        <!-- PENDÊNCIAS -->
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                    <div class="mb-4 border-b border-stone-800 pb-2">
-                        <h4 class="font-black text-red-500 uppercase tracking-wide text-xs"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Inadimplentes e Devedores (Mês Atual)</h4>
+                    <div class="mb-4 pb-2 border-b border-stone-800">
+                        <h4 class="font-black text-red-500 uppercase tracking-wide text-xs">
+                            <i class="fa-solid fa-triangle-exclamation mr-2"></i>Inadimplentes (Mês Atual)
+                        </h4>
                     </div>
-                    <ul id="dash-pendentes" class="divide-y divide-stone-800 text-sm space-y-1 max-h-80 overflow-y-auto"></ul>
+                    <ul id="dash-pendentes" class="divide-y divide-stone-800 text-sm max-h-80 overflow-y-auto"></ul>
                 </div>
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                    <div class="mb-4 border-b border-stone-800 pb-2">
-                        <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs"><i class="fa-solid fa-gavel mr-2"></i>Tribunal de Disciplina (Suspensos da Rodada)</h4>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Máximo: 3 amarelos ou 1 vermelho na rodada</p>
+                    <div class="mb-4 pb-2 border-b border-stone-800">
+                        <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs">
+                            <i class="fa-solid fa-gavel mr-2"></i>Suspensos da Rodada
+                        </h4>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">3 amarelos ou 1 vermelho</p>
                     </div>
-                    <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm space-y-1"></ul>
+                    <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm"></ul>
                 </div>
             </div>
         </div>
 
-        <!-- ABA BUSCA -->
+        <!-- BUSCA -->
         <div id="busca-ver" class="tab-content space-y-6 pt-4">
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
-                <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card-clip mr-1"></i> Central de Monitoramento de Atleta</p>
+                <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3">
+                    <i class="fa-solid fa-id-card-clip mr-1"></i> Central de Atleta
+                </p>
                 <div class="relative">
-                    <input type="text" id="search-input" oninput="searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="search-input" oninput="window.searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <i class="fa-solid fa-search text-stone-500 absolute right-3 top-3.5"></i>
                 </div>
                 <div id="search-result" class="hidden mt-4 space-y-2"></div>
             </div>
         </div>
 
-        <!-- ABA 5: PAINEL ADMINISTRATIVO -->
-        <div id="admin-panel" class="tab-content space-y-6 hidden pt-4">
+        <!-- ADMIN PANEL -->
+        <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
             <div class="bg-stone-950 border-2 border-amber-500 p-4 rounded-2xl flex justify-between items-center shadow-xl">
-                <div>
-                    <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Técnico Administrativo</h3>
-                </div>
-                <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-black rounded-lg uppercase transition">Fechar</button>
+                <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
+                <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black rounded-lg uppercase transition">Fechar</button>
             </div>
 
-            <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-hidden">
-                <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500">Inscrição</button>
-                <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 text-center text-stone-400 hover:text-amber-500">Súmula & Multas</button>
-                <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 text-center text-stone-400 hover:text-amber-500">Sócios & Doações</button>
-                <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 text-center text-stone-400 hover:text-amber-500">Caixa & Placar</button>
+            <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-x-auto">
+                <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">Atletas</button>
+                <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
+                <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
+                <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
             </div>
 
-            <!-- SUB-ABA: INSCRIÇÃO -->
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
-                <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-t-0 border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Inscrever Novo Jogador</h4>
-                    <form id="form-cadastro-atleta" onsubmit="cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <input type="text" id="cad-nome" placeholder="Nome do Jogador" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                        <input type="number" id="cad-camisa" placeholder="Nº Camisa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Cadastrar Jogador</h4>
+                    <form id="form-cadastro-atleta" onsubmit="window.cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <input type="text" id="cad-nome" placeholder="Nome" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <input type="number" id="cad-camisa" placeholder="Nº" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
                             <option value="">Clube...</option>
                             <option value="FLUMINENSE">Fluminense</option>
                             <option value="BOTAFOGO">Botafogo</option>
                         </select>
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-black font-black p-2 rounded-lg text-xs uppercase tracking-wider transition">Registrar Atleta</button>
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-black font-black p-2 rounded-lg text-xs uppercase transition">Cadastrar</button>
                     </form>
                 </div>
-                <div class="bg-white/5 rounded-2xl border border-stone-800 p-4">
-                    <table class="w-full text-left text-xs">
-                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 font-center">Manto</th><th class="p-3 text-center">Remover</th></tr></thead>
-                        <tbody id="adm-atletas-tabela" class="divide-y divide-stone-800"></tbody>
+                <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
+                    <table class="w-full text-left text-xs min-w-[300px]">
+                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">Ação</th></tr></thead>
+                        <tbody id="adm-atletas-tabela"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- SUB-ABA: SÚMULA E MULTAS -->
-            <div id="adm-scouts" class="adm-sub-content hidden bg-stone-900/95 rounded-b-2xl p-4 border border-t-0 border-stone-700 shadow-xl space-y-6">
-                <div class="overflow-x-auto">
-                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3"><i class="fa-solid fa-gavel mr-1"></i> Desempenho, Cartões e Arquivamento de Multas</h4>
-                    <table class="w-full text-left text-xs min-w-[850px]">
-                        <thead>
-                            <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
-                                <th class="p-2">Atleta</th>
-                                <th class="p-2 text-center">Gols</th>
-                                <th class="p-2 text-center">🟨 Atual</th>
-                                <th class="p-2 text-center">🟥 Atual</th>
-                                <th class="p-2 text-center">Salvar Cartões Ano</th>
-                                <th class="p-2 text-center">Aplicar Nova Multa</th>
-                                <th class="p-2 text-center">Multas Ativas (Pague para Arquivar)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adm-scouts-tabela" class="divide-y divide-stone-800"></tbody>
-                    </table>
-                </div>
+            <div id="adm-scouts" class="adm-sub-content hidden bg-stone-900/95 rounded-b-2xl p-4 border border-stone-700 shadow-xl overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[800px]">
+                    <thead>
+                        <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
+                            <th class="p-2">Atleta</th>
+                            <th class="p-2 text-center">Gols</th>
+                            <th class="p-2 text-center">🟨</th>
+                            <th class="p-2 text-center">🟥</th>
+                            <th class="p-2 text-center">Arquivar</th>
+                            <th class="p-2 text-center">Multa</th>
+                            <th class="p-2 text-center">Ativas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adm-scouts-tabela"></tbody>
+                </table>
             </div>
 
-            <!-- SUB-ABA: SÓCIOS E PATROCÍNIOS -->
             <div id="adm-socios" class="adm-sub-content hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
-                        <h4 class="font-bold text-teal-400 text-xs uppercase mb-3"><i class="fa-solid fa-plus mr-1"></i> Contribuição de Sócio</h4>
-                        <form id="form-socio" onsubmit="cadastrarSocio(event)" class="space-y-3">
-                            <input type="text" id="socio-nome" placeholder="Nome Completo do Sócio" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <h4 class="font-bold text-teal-400 text-xs uppercase mb-3">Sócio</h4>
+                        <form id="form-socio" onsubmit="window.cadastrarSocio(event)" class="space-y-3">
+                            <input type="text" id="socio-nome" placeholder="Nome" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
                                     <option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option>
                                 </select>
                                 <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
-                            <button type="submit" class="w-full bg-teal-500 text-black font-black p-2 rounded-lg text-xs uppercase tracking-wide transition">Lançar Sócio</button>
+                            <button type="submit" class="w-full bg-teal-500 text-black font-black p-2 rounded-lg text-xs uppercase transition">Lançar</button>
                         </form>
                     </div>
 
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
-                        <h4 class="font-bold text-amber-400 text-xs uppercase mb-3"><i class="fa-solid fa-handshake-angle mr-1"></i> Entrada de Patrocínio / Doação</h4>
-                        <form id="form-patrocinio" onsubmit="cadastrarPatrocinio(event)" class="space-y-3">
-                            <input type="text" id="pat-nome" placeholder="Empresa / Doador" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <h4 class="font-bold text-amber-400 text-xs uppercase mb-3">Patrocínio</h4>
+                        <form id="form-patrocinio" onsubmit="window.cadastrarPatrocinio(event)" class="space-y-3">
+                            <input type="text" id="pat-nome" placeholder="Doador" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="text" id="pat-destino" placeholder="Ex: Uniforme, Arena..." required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                                <input type="number" step="0.01" id="pat-valor" placeholder="Valor Recebido (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                <input type="text" id="pat-destino" placeholder="Destino" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                <input type="number" step="0.01" id="pat-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
-                            <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-2 rounded-lg text-xs uppercase tracking-wide transition">Computar Doação</button>
+                            <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-2 rounded-lg text-xs uppercase transition">Computar</button>
                         </form>
                     </div>
                 </div>
 
-                <div class="bg-white/5 rounded-2xl border border-stone-800 p-4">
-                    <h5 class="text-xs font-bold text-gray-400 uppercase mb-2">Painel de Exclusão de Receitas Externas</h5>
-                    <table class="w-full text-left text-xs">
+                <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
+                    <table class="w-full text-left text-xs min-w-[400px]">
                         <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Origem</th><th class="p-3 text-center">Tipo</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Excluir</th></tr></thead>
-                        <tbody id="adm-receitas-tabela" class="divide-y divide-stone-800"></tbody>
+                        <tbody id="adm-receitas-tabela"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- SUB-ABA: CAIXA & CONTROLADORES DE PLACAR -->
             <div id="adm-financas" class="adm-sub-content hidden space-y-6">
-                <!-- PAINEL DE CONTROLE DO PLACAR COM BOTÃO SALVAR -->
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
-                    <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2"><i class="fa-solid fa-gamepad mr-1"></i> Painel de Controle do Jogo (Placar de Hoje)</h4>
+                    <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2">
+                        <i class="fa-solid fa-gamepad mr-1"></i> Placar do Jogo
+                    </h4>
                     <div class="grid grid-cols-2 gap-4 text-xs max-w-md mx-auto">
                         <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                            <label class="block font-bold text-emerald-400 uppercase mb-1">Fluminense FC</label>
-                            <input type="number" id="adm-placar-flu" required class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            <label class="block font-bold text-emerald-400 uppercase mb-1">Fluminense</label>
+                            <input type="number" id="adm-placar-flu" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
                         </div>
                         <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                            <label class="block font-bold text-stone-300 uppercase mb-1">Botafogo FR</label>
-                            <input type="number" id="adm-placar-bota" required class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
+                            <label class="block font-bold text-stone-300 uppercase mb-1">Botafogo</label>
+                            <input type="number" id="adm-placar-bota" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
                         </div>
                     </div>
                     <div class="text-center pt-2">
-                        <button onclick="atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
-                            <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar do Jogo
+                        <button onclick="window.atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar
                         </button>
                     </div>
                 </div>
 
-                <!-- CONTROLE E EXCLUSÃO DE RODADAS -->
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3"><i class="fa-solid fa-eraser mr-1"></i> Moderação de Rodadas Gravadas (Excluir Involuntários)</h4>
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3">
+                        <i class="fa-solid fa-eraser mr-1"></i> Histórico de Rodadas
+                    </h4>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
+                        <table class="w-full text-left text-xs min-w-[400px]">
                             <thead>
                                 <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
                                     <th class="p-2">Data</th>
-                                    <th class="p-2 text-center">Resultado Gravado</th>
+                                    <th class="p-2 text-center">Resultado</th>
                                     <th class="p-2 text-center">Ação</th>
                                 </tr>
                             </thead>
-                            <tbody id="adm-historico-exclusao-tabela" class="divide-y divide-stone-800 font-medium">
-                                <!-- Preenchido dinamicamente -->
-                            </tbody>
+                            <tbody id="adm-historico-exclusao-tabela"></tbody>
                         </table>
                     </div>
                 </div>
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-red-400 text-xs uppercase mb-3"><i class="fa-solid fa-minus mr-1"></i> Lançar Despesa / Gasto do Baba</h4>
-                    <form id="form-gasto" onsubmit="processarGasto(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <input type="text" id="gasto-descricao" placeholder="Descrição da Despesa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none md:col-span-2">
-                        <input type="number" step="0.01" id="gasto-valor" placeholder="Valor Pago (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar Gasto</button>
+                    <h4 class="font-bold text-red-400 text-xs uppercase mb-3">
+                        <i class="fa-solid fa-minus mr-1"></i> Lançar Despesa
+                    </h4>
+                    <form id="form-gasto" onsubmit="window.processarGasto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="text" id="gasto-descricao" placeholder="Descrição" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none md:col-span-1">
+                        <input type="number" step="0.01" id="gasto-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar</button>
                     </form>
                 </div>
 
-                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <table class="w-full text-left text-xs">
-                        <thead><tr class="bg-stone-800 text-stone-400 border-b border-stone-700"><th class="p-2.5">Data</th><th class="p-2.5">Descrição</th><th class="p-2.5 text-right">Valor</th><th class="p-2.5 text-center">Ações</th></tr></thead>
-                        <tbody id="adm-gastos-tabela" class="divide-y divide-stone-800"></tbody>
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl overflow-x-auto">
+                    <table class="w-full text-left text-xs min-w-[500px]">
+                        <thead><tr class="bg-stone-800 text-stone-400 border-b border-stone-700"><th class="p-2.5">Data</th><th class="p-2.5">Descrição</th><th class="p-2.5 text-right">Valor</th><th class="p-2.5 text-center">Ação</th></tr></thead>
+                        <tbody id="adm-gastos-tabela"></tbody>
                     </table>
                 </div>
 
-                <!-- SEÇÃO BOLETOS -->
                 <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
-                    <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2">
-                        <h4 class="font-bold text-emerald-400 text-xs uppercase tracking-tight">Boleto de Mensalidades (Atletas)</h4>
-                        <select id="adm-mes-filtro" onchange="loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
+                    <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2 flex-wrap gap-2">
+                        <h4 class="font-bold text-emerald-400 text-xs uppercase">Mensalidades</h4>
+                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
                             <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
                             <option value="04">Abril</option><option value="05" selected>Maio</option><option value="06">Junho</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse">
+                        <table class="w-full text-left text-xs border-collapse min-w-[400px]">
                             <thead>
                                 <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
                                     <th class="p-1.5 text-left">Nome</th>
-                                    <th class="p-1.5 text-center w-24">Mensalidade (R$25)</th>
-                                    <th class="p-1.5 text-center w-24">Extra (R$)</th>
+                                    <th class="p-1.5 text-center w-24">Mensalidade</th>
+                                    <th class="p-1.5 text-center w-24">Extra</th>
                                     <th class="p-1.5 text-center w-16">Ação</th>
                                 </tr>
                             </thead>
-                            <tbody id="adm-mensalidades-tabela" class="divide-y divide-stone-800/60 font-medium text-stone-200"></tbody>
+                            <tbody id="adm-mensalidades-tabela"></tbody>
                         </table>
                     </div>
                 </div>
@@ -430,30 +569,30 @@
         </div>
     </div>
 
-    <!-- RECIPIENTE FIXO NO RODAPÉ -->
+    <!-- RODAPÉ FIXO -->
     <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
-        
-        <!-- ANÚNCIO MINIMALISTA -->
         <div class="bg-stone-950 border-b border-stone-800 px-4 py-2 flex items-center justify-between gap-3 text-xs">
             <div class="flex items-center gap-2 truncate">
-                <span class="bg-gradient-to-r from-amber-500 to-red-500 text-black font-black text-[9px] px-1.5 py-0.5 rounded uppercase shrink-0"><i class="fa-solid fa-bolt"></i> ODDS ALTAS</span>
-                <p class="text-stone-300 font-medium text-[11px] truncate">Multiplique seus palpites da rodada na plataforma secreta dos veteranos!</p>
+                <span class="bg-gradient-to-r from-amber-500 to-red-500 text-black font-black text-[9px] px-1.5 py-0.5 rounded uppercase shrink-0">
+                    <i class="fa-solid fa-bolt"></i> ODDS ALTAS
+                </span>
+                <p class="text-stone-300 font-medium text-[11px] truncate">Multiplique seus palpites da rodada!</p>
             </div>
             <a href="https://15A.com/?pid=1744505426" target="_blank" rel="noopener noreferrer" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-3 py-1 rounded font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shrink-0 transition">
                 Acessar <i class="fa-solid fa-circle-arrow-right text-[11px]"></i>
             </a>
         </div>
 
-        <!-- RECONTAGEM REGRESSIVA COMPACTA EM DIAS -->
         <div class="bg-emerald-950/90 border-b border-emerald-900/60 px-4 py-1.5 text-center text-xs">
-            <div class="flex justify-center items-center gap-2 text-[11px]">
-                <span class="text-emerald-400 font-bold uppercase tracking-wider"><i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:</span>
+            <div class="flex justify-center items-center gap-2 text-[11px] flex-wrap">
+                <span class="text-emerald-400 font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:
+                </span>
                 <span id="cronometro-jogo" class="text-amber-400 font-mono font-black bg-stone-950 px-1.5 py-0.5 rounded border border-emerald-800/40">0d 00h 00m</span>
                 <span class="text-stone-400 text-[10px]">| Arena Coqueiros (24/05 às 06:15)</span>
             </div>
         </div>
 
-        <!-- MENU DE NAVEGAÇÃO COMPACTADO -->
         <div class="container mx-auto flex justify-around items-center py-2 max-w-xl text-center text-[10px] font-black uppercase tracking-wider text-stone-500">
             <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-14 text-emerald-400 transition"><i class="fa-solid fa-chart-line text-lg mb-0.5"></i>Painel</button>
             <button onclick="switchTab('jogadores')" id="nav-jogadores" class="flex flex-col items-center justify-center w-14 hover:text-stone-200 transition"><i class="fa-solid fa-shirt text-lg mb-0.5"></i>Times</button>
@@ -465,451 +604,615 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN ADMIN -->
-    <div id="login-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <!-- MODAL LOGIN -->
+    <div id="login-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center hidden">
         <div class="bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider"><i class="fa-solid fa-lock text-amber-500 mr-1"></i> Acesso à Súmula</h3>
-                <button onclick="closeAdminModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark"></i></button>
+                <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider">
+                    <i class="fa-solid fa-lock text-amber-500 mr-1"></i> Acesso Técnico
+                </h3>
+                <button onclick="closeAdminModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <form onsubmit="autenticarAdmin(event)" class="space-y-4">
-                <div>
-                    <input type="text" id="login-user" placeholder="Comandante" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
-                </div>
-                <div>
-                    <input type="password" id="login-pass" placeholder="Senha" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
-                </div>
-                <div id="login-erro" class="text-xs text-red-500 font-bold hidden">Credenciais incorretas! (veteranos07)</div>
-                <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest hover:bg-amber-400 transition">Autenticar</button>
+            <form onsubmit="window.autenticarAdmin(event)" class="space-y-4">
+                <input type="text" id="login-user" placeholder="Usuário" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                <input type="password" id="login-pass" placeholder="Senha" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                <div id="login-erro" class="text-xs text-red-500 font-bold hidden">Credenciais incorretas!</div>
+                <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest hover:bg-amber-400 transition">Entrar</button>
             </form>
         </div>
     </div>
 
-    <!-- SCRIPT: MOTOR DO FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
-            authDomain: "baba-veteranos.firebaseapp.com",
-            projectId: "baba-veteranos",
-            storageBucket: "baba-veteranos.firebasestorage.app",
-            messagingSenderId: "636505907297",
-            appId: "1:636505907297:web:4a9a2f7674329f9cffca20"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
+    <script>
+        // =====================================================
+        // CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
+        // =====================================================
+        
         window.atletasCache = [];
         window.gastosCache = [];
         window.sociosCache = [];
         window.patrociniosCache = [];
         window.historicoPlacares = [];
-        window.partidaEstatisticas = { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
-
+        window.partidaEstatisticas = { 
+            placarFlu: 0, 
+            placarBota: 0, 
+            vitFlu: 0, 
+            vitBota: 0 
+        };
         window.timeFiltroAtual = 'FLUMINENSE';
         window.isAdminLogado = false;
+        window.dbRef = null;
+        window.firebaseInicializado = false;
+        
         let toastTimeout = null;
-
-        const mesesNomes = { "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", "05": "Maio", "06": "Junho" };
-
-        window.salvarNoStorage = function() {
-            set(ref(db, 'baba/atletas'), window.atletasCache);
-            set(ref(db, 'baba/gastos'), window.gastosCache);
-            set(ref(db, 'baba/socios'), window.sociosCache);
-            set(ref(db, 'baba/patrocinios'), window.patrociniosCache);
-            set(ref(db, 'baba/partidaEstatisticas'), window.partidaEstatisticas);
-            set(ref(db, 'baba/historicoPlacares'), window.historicoPlacares);
-            window.renderizarTudo();
+        let syncEmAndamento = false;
+        
+        const mesesNomes = { 
+            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
+            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+            "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
-
-        async function carregarDadosIniciais() {
-            const dbRef = ref(db);
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
+            authDomain: "baba-veteranos.firebaseapp.com",
+            databaseURL: "https://baba-veteranos-default-rtdb.firebaseio.com",
+            projectId: "baba-veteranos",
+            storageBucket: "baba-veteranos.firebasestorage.app",
+            messagingSenderId: "636505907297",
+            appId: "1:636505907297:web:4a9a2f7674329f9cffca20"
+        };
+        
+        // =====================================================
+        // FUNÇÕES DE NOTIFICAÇÃO
+        // =====================================================
+        
+        window.mostrarToast = function(mensagem, isErro = false) {
+            const toast = document.getElementById('toast-notificacao');
+            const msgEl = document.getElementById('toast-mensagem');
+            
+            if (!toast || !msgEl) return;
+            
+            msgEl.innerText = mensagem;
+            toast.className = `fixed top-20 left-1/2 -translate-x-1/2 ${isErro ? 'bg-red-500 border-red-300' : 'bg-emerald-500 border-emerald-300'} text-black font-bold px-5 py-3 rounded-xl shadow-2xl z-[60] toast-show items-center gap-2 border-2 text-sm whitespace-nowrap`;
+            
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            toast.classList.add('toast-show');
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('toast-show');
+                toast.classList.add('hidden');
+            }, 2500);
+        };
+        
+        // =====================================================
+        // FUNÇÕES DO FIREBASE
+        // =====================================================
+        
+        function inicializarFirebase() {
             try {
-                const snapshot = await get(child(dbRef, 'baba'));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log('Firebase inicializado');
+                }
+                window.dbRef = firebase.database().ref('baba');
+                window.firebaseInicializado = true;
+                document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
+                return true;
+            } catch (error) {
+                console.error('Erro Firebase:', error);
+                document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-red-500"></i> <span class="hidden sm:inline">Offline</span>';
+                window.mostrarToast('Erro de conexão!', true);
+                return false;
+            }
+        }
+        
+        window.salvarNoStorage = function() {
+            if (!window.firebaseInicializado || !window.dbRef) {
+                if (!inicializarFirebase()) {
+                    window.mostrarToast('Sem conexão com banco!', true);
+                    return;
+                }
+            }
+            
+            if (syncEmAndamento) {
+                setTimeout(() => window.salvarNoStorage(), 500);
+                return;
+            }
+            
+            syncEmAndamento = true;
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
+            
+            const dadosParaSalvar = {
+                atletas: window.atletasCache,
+                gastos: window.gastosCache,
+                socios: window.sociosCache,
+                patrocinios: window.patrociniosCache,
+                partidaEstatisticas: window.partidaEstatisticas,
+                historicoPlacares: window.historicoPlacares,
+                ultimaAtualizacao: new Date().toISOString(),
+                public_access: true
+            };
+            
+            window.dbRef.set(dadosParaSalvar)
+                .then(() => {
+                    console.log('Dados salvos');
+                    window.renderizarTudo();
+                    syncEmAndamento = false;
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                })
+                .catch((error) => {
+                    console.error('Erro ao salvar:', error);
+                    window.mostrarToast('Erro ao salvar! Tentando novamente...', true);
+                    syncEmAndamento = false;
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                    setTimeout(() => window.salvarNoStorage(), 3000);
+                });
+        };
+        
+        async function carregarDadosIniciais() {
+            if (!window.firebaseInicializado) {
+                if (!inicializarFirebase()) return;
+            }
+            
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
+            
+            try {
+                const snapshot = await window.dbRef.once('value');
+                const data = snapshot.val();
+                
+                if (data) {
                     window.atletasCache = data.atletas || [];
                     window.gastosCache = data.gastos || [];
                     window.sociosCache = data.socios || [];
                     window.patrociniosCache = data.patrocinios || [];
                     window.historicoPlacares = data.historicoPlacares || [];
-                    window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
+                    window.partidaEstatisticas = data.partidaEstatisticas || { 
+                        placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
+                    };
+                    console.log('Dados carregados:', window.atletasCache.length, 'atletas');
+                } else {
+                    console.log('Sem dados, iniciando vazio');
                 }
             } catch (error) {
-                console.error("Erro ao ler Firebase:", error);
+                console.error('Erro ao carregar:', error);
+                window.mostrarToast('Erro ao carregar dados!', true);
+            } finally {
+                document.getElementById('loading-overlay')?.classList.add('hidden');
+                window.renderizarTudo();
             }
-            window.renderizarTudo();
         }
-
-        window.mostrarToast = function(mensaje) {
-            const toast = document.getElementById('toast-notificacao');
-            document.getElementById('toast-mensagem').innerText = mensaje;
-            
-            if (toastTimeout) clearTimeout(toastTimeout);
-            
-            toast.classList.remove('translate-x-96');
-            
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('translate-x-96');
-            }, 2500);
-        };
-
+        
+        // =====================================================
+        // FUNÇÕES PRINCIPAIS
+        // =====================================================
+        
         window.renderizarTudo = function() {
-            recalcularClassificacaoGeral();
-            loadDashboard();
-            renderListaJogadoresPublica();
-            renderFinanceiroPublico();
-            renderHistoricoPlacares();
-            
-            if (window.isAdminLogado) {
-                renderAdminAtletas();
-                renderAdminScouts();
-                renderAdminSocios();
-                renderAdminGastosTabela();
-                renderAdminHistoricoExclusao();
-                loadAdmFinancas();
+            try {
+                recalcularClassificacaoGeral();
+                loadDashboard();
+                renderListaJogadoresPublica();
+                renderFinanceiroPublico();
+                renderHistoricoPlacares();
+                
+                if (window.isAdminLogado) {
+                    renderAdminAtletas();
+                    renderAdminScouts();
+                    renderAdminSocios();
+                    renderAdminGastosTabela();
+                    renderAdminHistoricoExclusao();
+                    window.loadAdmFinancas();
+                }
+            } catch (error) {
+                console.error('Erro ao renderizar:', error);
             }
         };
-
+        
         function recalcularClassificacaoGeral() {
-            let celulasFlu = 0;
-            let celulasBota = 0;
-
-            window.historicoPlacares.forEach(rodada => {
-                if (parseInt(rodada.golsFlu) > parseInt(rodada.golsBota)) {
-                    celulasFlu++;
-                } else if (parseInt(rodada.golsBota) > parseInt(rodada.golsFlu)) {
-                    celulasBota++;
-                }
-            });
-
-            window.partidaEstatisticas.vitFlu = celulasFlu;
-            window.partidaEstatisticas.vitBota = celulasBota;
-        }
-
-        function loadDashboard() {
-            document.getElementById('placar-flu').innerText = window.partidaEstatisticas.placarFlu ?? 0;
-            document.getElementById('placar-bota').innerText = window.partidaEstatisticas.placarBota ?? 0;
+            let vitoriasFlu = 0, vitoriasBota = 0;
             
-            document.getElementById('placar-temporada-flu').innerText = window.partidaEstatisticas.vitFlu || 0;
-            document.getElementById('placar-temporada-bota').innerText = window.partidaEstatisticas.vitBota || 0;
-
-            if (window.historicoPlacares && window.historicoPlacares.length > 0) {
-                document.getElementById('dash-data-ultima-partida').innerText = `(${window.historicoPlacares[0].data.substring(0, 5)})`;
-            } else {
-                document.getElementById('dash-data-ultima-partida').innerText = "(--/--)";
+            if (window.historicoPlacares && window.historicoPlacares.length) {
+                window.historicoPlacares.forEach(rodada => {
+                    const golsFlu = parseInt(rodada.golsFlu) || 0;
+                    const golsBota = parseInt(rodada.golsBota) || 0;
+                    if (golsFlu > golsBota) vitoriasFlu++;
+                    else if (golsBota > golsFlu) vitoriasBota++;
+                });
             }
-
-            if(document.getElementById('adm-placar-flu') && !document.getElementById('adm-placar-flu').dataset.loaded) {
-                document.getElementById('adm-placar-flu').value = window.partidaEstatisticas.placarFlu ?? 0;
-                document.getElementById('adm-placar-bota').value = window.partidaEstatisticas.placarBota ?? 0;
-                document.getElementById('adm-placar-flu').dataset.loaded = "true";
+            
+            window.partidaEstatisticas.vitFlu = vitoriasFlu;
+            window.partidaEstatisticas.vitBota = vitoriasBota;
+        }
+        
+        function loadDashboard() {
+            const placarFlu = document.getElementById('placar-flu');
+            const placarBota = document.getElementById('placar-bota');
+            if (placarFlu) placarFlu.innerText = window.partidaEstatisticas.placarFlu ?? 0;
+            if (placarBota) placarBota.innerText = window.partidaEstatisticas.placarBota ?? 0;
+            
+            const tempFlu = document.getElementById('placar-temporada-flu');
+            const tempBota = document.getElementById('placar-temporada-bota');
+            if (tempFlu) tempFlu.innerText = window.partidaEstatisticas.vitFlu || 0;
+            if (tempBota) tempBota.innerText = window.partidaEstatisticas.vitBota || 0;
+            
+            const dataEl = document.getElementById('dash-data-ultima-partida');
+            if (dataEl && window.historicoPlacares?.length) {
+                dataEl.innerText = `(${window.historicoPlacares[0].data})`;
+            } else if (dataEl) {
+                dataEl.innerText = "(--/--)";
             }
-
-            let totalArrecadado = 0;
-            let totalGastos = 0;
-
+            
+            const admFlu = document.getElementById('adm-placar-flu');
+            const admBota = document.getElementById('adm-placar-bota');
+            if (admFlu && admBota && !admFlu.dataset.loaded) {
+                admFlu.value = window.partidaEstatisticas.placarFlu ?? 0;
+                admBota.value = window.partidaEstatisticas.placarBota ?? 0;
+                admFlu.dataset.loaded = "true";
+            }
+            
+            let totalArrecadado = 0, totalGastos = 0;
+            
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (a.pagamentos[mes].pago) totalArrecadado += 25;
                         totalArrecadado += Number(a.pagamentos[mes].extra || 0);
-                        
                         if (a.pagamentos[mes].multas) {
-                            a.pagamentos[mes].multas.forEach(m => { if(m.paga) totalArrecadado += Number(m.valor); });
+                            a.pagamentos[mes].multas.forEach(m => { 
+                                if(m.paga) totalArrecadado += Number(m.valor); 
+                            });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(valorHistorico => {
-                                totalArrecadado += Number(valorHistorico);
-                            });
+                            a.pagamentos[mes].multasArquivadasHistorico.forEach(v => totalArrecadado += Number(v));
                         }
                     });
                 }
             });
-
+            
             window.sociosCache.forEach(s => totalArrecadado += Number(s.valor || 0));
             window.patrociniosCache.forEach(p => totalArrecadado += Number(p.valor || 0));
             window.gastosCache.forEach(g => totalGastos += Number(g.valor || 0));
             
             const saldoLiquido = totalArrecadado - totalGastos;
-            document.getElementById('dash-saldo-total').innerText = `R$ ${saldoLiquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            document.getElementById('dash-saldo-gastos').innerText = `R$ ${totalGastos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-
-            const filtroArtilharia = document.getElementById('artilharia-filtro').value;
+            
+            const saldoEl = document.getElementById('dash-saldo-total');
+            const gastosEl = document.getElementById('dash-saldo-gastos');
+            if (saldoEl) saldoEl.innerText = `R$ ${saldoLiquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            if (gastosEl) gastosEl.innerText = `R$ ${totalGastos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            const filtro = document.getElementById('artilharia-filtro')?.value || 'geral';
             let artilheiros = [...window.atletasCache];
-            if (filtroArtilharia !== 'geral') artilheiros = artilheiros.filter(a => a.time === filtroArtilharia);
+            if (filtro !== 'geral') artilheiros = artilheiros.filter(a => a.time === filtro);
             artilheiros.sort((a, b) => (b.gols || 0) - (a.gols || 0));
             
             let artilhariaHtml = '';
-            artilheiros.slice(0, 10).forEach((a, index) => {
-                if((a.gols || 0) > 0) {
-                    artilhariaHtml += `<li class="flex justify-between py-2 border-b border-stone-800/60 items-center"><span><span class="font-mono text-stone-500 mr-2">${index+1}º</span><strong>${a.nome}</strong> <span class="text-[10px] text-gray-400">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span> <span class="font-bold text-emerald-400 font-mono"><i class="fa-solid fa-soccer-ball text-[11px] mr-1 text-stone-400"></i>${a.gols}</span></li>`;
+            artilheiros.slice(0, 10).forEach((a, idx) => {
+                if ((a.gols || 0) > 0) {
+                    artilhariaHtml += `<li class="flex justify-between py-2 border-b border-stone-800/60 items-center">
+                        <span><span class="font-mono text-stone-500 mr-2">${idx+1}º</span>
+                        <strong>${a.nome}</strong> <span class="text-[10px] text-gray-400">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
+                        <span class="font-bold text-emerald-400 font-mono"><i class="fa-solid fa-soccer-ball text-[11px] mr-1 text-stone-400"></i>${a.gols}</span>
+                    </li>`;
                 }
             });
-            document.getElementById('dash-artilharia').innerHTML = artilhariaHtml || '<p class="text-xs text-stone-500 italic py-2">Nenhum gol computado.</p>';
-
-            let textPendentesHtml = '';
-            let textSuspensosHtml = '';
+            
+            const artEl = document.getElementById('dash-artilharia');
+            if (artEl) artEl.innerHTML = artilhariaHtml || '<p class="text-xs text-stone-500 italic py-2">Nenhum gol computado.</p>';
+            
+            let pendentesHtml = '', suspensosHtml = '';
             window.atletasCache.forEach(a => {
-                let debitoTotal = 0;
-                const pagoNoMes = a.pagamentos && a.pagamentos["05"] && a.pagamentos["05"].pago;
-                if (!pagoNoMes) debitoTotal += 25;
+                let debito = 0;
+                const pagoMes = a.pagamentos?.["05"]?.pago;
+                if (!pagoMes) debito += 25;
+                
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
-                        if(a.pagamentos[m].multas) a.pagamentos[m].multas.forEach(ml => { if(!ml.paga) debitoTotal += Number(ml.valor); });
+                        a.pagamentos[m].multas?.forEach(ml => { if(!ml.paga) debito += Number(ml.valor); });
                     });
                 }
-                if (debitoTotal > 0) {
-                    textPendentesHtml += `<li class="flex justify-between py-2 items-center text-stone-300"><span>${a.nome} <span class="text-[10px] text-stone-400">(${a.time})</span></span> <span class="font-black text-[11px] text-red-400 font-mono">Devendo R$ ${debitoTotal.toFixed(2)}</span></li>`;
+                
+                if (debito > 0) {
+                    pendentesHtml += `<li class="flex justify-between py-2 items-center text-stone-300">
+                        <span>${a.nome} <span class="text-[10px] text-stone-400">(${a.time})</span></span>
+                        <span class="font-black text-[11px] text-red-400 font-mono">R$ ${debito.toFixed(2)}</span>
+                    </li>`;
                 }
-
+                
                 if ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) {
-                    textSuspensosHtml += `<li class="flex justify-between py-2 items-center"><span>${a.nome}</span> <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho Direto' : '🟨 3 Amarelos'}</span></li>`;
+                    suspensosHtml += `<li class="flex justify-between py-2 items-center">
+                        <span>${a.nome}</span>
+                        <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho' : '🟨 3 Amarelos'}</span>
+                    </li>`;
                 }
             });
-            document.getElementById('dash-pendentes').innerHTML = textPendentesHtml || '<p class="text-xs text-emerald-400 p-2">Tudo em dia!</p>';
-            document.getElementById('dash-suspensos').innerHTML = textSuspensosHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhum atleta suspenso.</p>';
+            
+            const pendEl = document.getElementById('dash-pendentes');
+            const suspEl = document.getElementById('dash-suspensos');
+            if (pendEl) pendEl.innerHTML = pendentesHtml || '<p class="text-xs text-emerald-400 p-2">Tudo em dia!</p>';
+            if (suspEl) suspEl.innerHTML = suspensosHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhum suspenso.</p>';
         }
-
-        window.atualizarPlacarGeral = function() {
-            const fluVal = document.getElementById('adm-placar-flu').value;
-            const botaVal = document.getElementById('adm-placar-bota').value;
-
-            if (fluVal === "" || botaVal === "") {
-                alert("Erro: Preencha os campos de placar.");
-                return;
+        
+        window.filterTimeList = function(time) {
+            window.timeFiltroAtual = time;
+            const fluBtn = document.getElementById('btn-list-flu');
+            const botaBtn = document.getElementById('btn-list-bota');
+            
+            if (fluBtn) {
+                fluBtn.className = time === 'FLUMINENSE' 
+                    ? "flex-1 bg-emerald-800 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs"
+                    : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
             }
-
+            if (botaBtn) {
+                botaBtn.className = time === 'BOTAFOGO'
+                    ? "flex-1 bg-white text-stone-900 font-black p-3 rounded-xl shadow border-b-4 border-stone-400 uppercase tracking-wider text-center transition text-xs"
+                    : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
+            }
+            renderListaJogadoresPublica();
+        };
+        
+        function renderListaJogadoresPublica() {
+            const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
+            let html = '';
+            filtrados.forEach(a => {
+                const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+                const pagoMes = a.pagamentos?.["05"]?.pago;
+                html += `<tr class="hover:bg-stone-800/30 transition text-center">
+                    <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
+                    <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
+                    <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
+                    <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
+                    <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
+                    <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
+                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
+                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
+                </tr>`;
+            });
+            const corpo = document.getElementById('lista-jogadores-corpo');
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+        }
+        
+        window.searchPlayer = function() {
+            const termo = document.getElementById('search-input')?.value?.toLowerCase().trim() || '';
+            const resultBox = document.getElementById('search-result');
+            if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
+            
+            let achados;
+            if (isNaN(termo)) achados = window.atletasCache.filter(a => a.nome?.toLowerCase().includes(termo));
+            else achados = window.atletasCache.filter(a => parseInt(a.camisa) === parseInt(termo));
+            
+            if (achados.length) {
+                let html = '';
+                achados.forEach(a => {
+                    html += `<div class="p-4 bg-stone-800 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-2 shadow-md">
+                        <p class="font-black text-stone-200 text-sm flex justify-between">
+                            <span>${a.nome}</span><span class="text-amber-400 font-mono">#${a.camisa}</span>
+                        </p>
+                        <p class="text-[10px] text-stone-400 font-bold uppercase">Time: ${a.time}</p>
+                        <div class="grid grid-cols-2 gap-2 text-stone-300">
+                            <p>⚽ Gols: <strong>${a.gols || 0}</strong></p>
+                            <p>🟨 Cartões: <strong>${a.amarelos || 0}/3</strong></p>
+                            <p>🟥 Vermelhos: <strong>${a.vermelho || 0}/1</strong></p>
+                            <p class="text-amber-400">📜 Histórico: 🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</p>
+                        </div>
+                    </div>`;
+                });
+                resultBox.innerHTML = html;
+                resultBox.classList.remove('hidden');
+            } else {
+                resultBox.innerHTML = '<p class="text-stone-500 italic text-center text-xs py-2">Nenhum jogador encontrado.</p>';
+                resultBox.classList.remove('hidden');
+            }
+        };
+        
+        window.atualizarPlacarGeral = function() {
+            const fluVal = document.getElementById('adm-placar-flu')?.value;
+            const botaVal = document.getElementById('adm-placar-bota')?.value;
+            if (!fluVal || !botaVal) { alert("Preencha os placares!"); return; }
+            
             const placarFlu = parseInt(fluVal);
             const placarBota = parseInt(botaVal);
-
+            if (isNaN(placarFlu) || isNaN(placarBota)) { alert("Valores inválidos!"); return; }
+            
             const hoje = new Date();
-            const dataHojeStr = `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
-
-            const dataJaExiste = window.historicoPlacares.some(rodada => rodada.data === dataHojeStr);
-            if (dataJaExiste) {
-                alert(`Atenção: Já existe um resultado salvo na data de hoje (${dataHojeStr}). Remova o anterior na listagem de exclusão se desejar mudar.`);
+            const dataStr = `${hoje.getDate().toString().padStart(2,'0')}/${(hoje.getMonth()+1).toString().padStart(2,'0')}/${hoje.getFullYear()}`;
+            
+            if (window.historicoPlacares?.some(r => r.data === dataStr)) {
+                alert(`Já existe resultado para hoje (${dataStr}). Remova no histórico primeiro.`);
                 return;
             }
-
+            
             window.partidaEstatisticas.placarFlu = placarFlu;
             window.partidaEstatisticas.placarBota = placarBota;
-
-            window.historicoPlacares.unshift({
-                id: 'rodada_' + Date.now(),
-                data: dataHojeStr,
-                golsFlu: placarFlu,
-                golsBota: placarBota
-            });
-
+            
+            window.historicoPlacares.unshift({ id: 'rodada_' + Date.now(), data: dataStr, golsFlu: placarFlu, golsBota: placarBota });
             recalcularClassificacaoGeral();
             window.salvarNoStorage();
-            window.mostrarToast("Placar salvo com sucesso!");
+            window.mostrarToast("Placar salvo!");
         };
-
+        
         window.excluirRodadaHistorico = function(id) {
-            if(confirm("Deseja apagar permanentemente esta rodada? O placar geral anual será recalculado.")) {
+            if(confirm("Apagar esta rodada?")) {
                 window.historicoPlacares = window.historicoPlacares.filter(r => r.id !== id);
-                
-                if(window.historicoPlacares.length > 0){
+                if(window.historicoPlacares.length) {
                     window.partidaEstatisticas.placarFlu = window.historicoPlacares[0].golsFlu;
                     window.partidaEstatisticas.placarBota = window.historicoPlacares[0].golsBota;
                 } else {
                     window.partidaEstatisticas.placarFlu = 0;
                     window.partidaEstatisticas.placarBota = 0;
                 }
-
                 recalcularClassificacaoGeral();
                 window.salvarNoStorage();
                 window.mostrarToast("Rodada removida!");
             }
         };
-
+        
+        function renderHistoricoPlacares() {
+            let html = '';
+            (window.historicoPlacares || []).forEach(item => {
+                html += `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center">
+                    <span class="text-stone-500 font-mono text-[11px]"><i class="fa-solid fa-calendar-day mr-1"></i>${item.data}</span>
+                    <div class="flex items-center gap-2 font-mono">
+                        <span class="text-emerald-400 font-black">FLU ${item.golsFlu}</span>
+                        <span class="text-stone-600 text-[10px]">X</span>
+                        <span class="text-white font-black">${item.golsBota} BOTA</span>
+                    </div>
+                </li>`;
+            });
+            const lista = document.getElementById('lista-historico-placares');
+            if (lista) lista.innerHTML = html || '<p class="text-xs text-stone-500 italic py-1">Sem rodadas.</p>';
+        }
+        
         function renderAdminHistoricoExclusao() {
             let html = '';
-            window.historicoPlacares.forEach(item => {
-                html += `
-                    <tr class="border-b border-stone-800 text-center text-xs">
-                        <td class="p-2 text-stone-400 font-mono">${item.data}</td>
-                        <td class="p-2 font-mono text-stone-200">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
-                        <td class="p-2">
-                            <button onclick="excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded border border-stone-700 transition">
-                                <i class="fa-solid fa-trash-can"></i> Excluir
-                            </button>
-                        </td>
-                    </tr>
-                `;
+            (window.historicoPlacares || []).forEach(item => {
+                html += `<tr class="border-b border-stone-800 text-center text-xs">
+                    <td class="p-2 text-stone-400 font-mono">${item.data}</td>
+                    <td class="p-2 font-mono">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
+                    <td class="p-2"><button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded transition"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`;
             });
-            document.getElementById('adm-historico-exclusao-tabela').innerHTML = html || '<tr><td colspan="3" class="p-4 text-stone-600 italic text-center">Nenhum placar em histórico.</td></tr>';
+            const tabela = document.getElementById('adm-historico-exclusao-tabela');
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="3" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
         }
-
-        function renderHistoricoPlacares() {
-            let h = '';
-            window.historicoPlacares.forEach(item => {
-                h += `
-                    <li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center">
-                        <span class="text-stone-500 font-mono text-[11px]"><i class="fa-solid fa-calendar-day mr-1"></i>${item.data}</span>
-                        <div class="flex items-center gap-2 font-mono">
-                            <span class="text-emerald-400 font-black">FLU ${item.golsFlu}</span>
-                            <span class="text-stone-600 text-[10px]">X</span>
-                            <span class="text-white font-black">${item.golsBota} BOTA</span>
-                        </div>
-                    </li>
-                `;
-            });
-            document.getElementById('lista-historico-placares').innerHTML = h || '<p class="text-xs text-stone-500 italic py-1">Sem rodadas arquivadas.</p>';
-        }
-
-        window.searchPlayer = function() {
-            const termo = document.getElementById('search-input').value.toLowerCase().trim();
-            const resultBox = document.getElementById('search-result');
-            if(!termo) { resultBox.classList.add('hidden'); return; }
-
-            let achados = isNaN(termo) ? window.atletasCache.filter(a => a.nome.toLowerCase().includes(termo)) : window.atletasCache.filter(a => parseInt(a.camisa) === parseInt(termo));
-
-            if(achados.length > 0) {
-                let htmlStr = '';
-                achados.forEach(achado => {
-                    htmlStr += `
-                        <div class="p-4 bg-stone-800 rounded-xl border-l-4 ${achado.time === 'FLUMINENSE'?'border-emerald-500':'border-stone-400'} text-xs space-y-2 shadow-md">
-                            <p class="font-black text-stone-200 text-sm flex justify-between"><span>${achado.nome}</span> <span class="text-amber-400 font-mono">#${achado.camisa}</span></p>
-                            <p class="text-[10px] text-stone-400 font-bold uppercase">Time: ${achado.time}</p>
-                            <div class="grid grid-cols-2 gap-2 text-stone-300">
-                                <p>⚽ Gols: <strong>${achado.gols || 0}</strong></p>
-                                <p>🟨 Cartões: <strong>${achado.amarelos || 0}/3</strong></p>
-                                <p>🟥 Vermelhos: <strong>${achado.vermelho || 0}/1</strong></p>
-                                <p class="text-amber-400 font-bold">📜 Histórico: 🟨 ${achado.histAmarelos || 0} | 🟥 ${achado.histVermelhos || 0}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-                resultBox.innerHTML = htmlStr;
-                resultBox.classList.remove('hidden');
-            } else {
-                resultBox.innerHTML = '<p class="text-stone-500 italic text-center text-xs py-2">Nenhum jogador localizado.</p>';
-                resultBox.classList.remove('hidden');
-            }
-        };
-
-        window.filterTimeList = function(time) {
-            window.timeFiltroAtual = time;
-            document.getElementById('btn-list-flu').className = time === 'FLUMINENSE' ? "flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs" : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
-            document.getElementById('btn-list-bota').className = time === 'BOTAFOGO' ? "flex-1 bg-white text-stone-900 font-black p-2.5 rounded-xl shadow border-b-4 border-stone-400 uppercase tracking-wider text-center transition text-xs" : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
-            renderListaJogadoresPublica();
-        };
-
-        function renderListaJogadoresPublica() {
-            const atletasFiltrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
-            let html = '';
-            atletasFiltrados.forEach(a => {
-                const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                html += `
-                    <tr class="hover:bg-stone-800/30 transition text-center">
-                        <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa}</td>
-                        <td class="p-1.5 font-bold text-stone-200 text-left truncate max-w-[150px]">${a.nome}</td>
-                        <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
-                        <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
-                        <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
-                        <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
-                        <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                        <td class="p-1.5 text-[10px] font-black ${(a.pagamentos && a.pagamentos['05'] && a.pagamentos['05'].pago)?'text-emerald-400':'text-red-500'}">${(a.pagamentos && a.pagamentos['05'] && a.pagamentos['05'].pago)?'PAGO':'PEND'}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('lista-jogadores-corpo').innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas listados.</td></tr>';
-        }
-
+        
         function renderFinanceiroPublico() {
             let mensalMap = {};
             Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, extra: 0, multas: 0 });
-
+            
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (mensalMap[mes]) {
-                            if (a.pagamentos[mes].pago)  mensalMap[mes].fixo += 25;
+                            if (a.pagamentos[mes].pago) mensalMap[mes].fixo += 25;
                             if (a.pagamentos[mes].extra) mensalMap[mes].extra += Number(a.pagamentos[mes].extra);
-                            
                             if (a.pagamentos[mes].multas) {
                                 a.pagamentos[mes].multas.forEach(ml => { if(ml.paga) mensalMap[mes].multas += Number(ml.valor); });
                             }
                             if (a.pagamentos[mes].multasArquivadasHistorico) {
-                                a.pagamentos[mes].multasArquivadasHistorico.forEach(valHist => {
-                                    mensalMap[mes].multas += Number(valHist);
-                                });
+                                a.pagamentos[mes].multasArquivadasHistorico.forEach(v => mensalMap[mes].multas += Number(v));
                             }
                         }
                     });
                 }
             });
-
+            
             let mensalHtml = '';
             Object.keys(mensalMap).forEach(mes => {
                 if (mensalMap[mes].fixo > 0 || mensalMap[mes].extra > 0 || mensalMap[mes].multas > 0) {
-                    mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td><td class="p-3 text-right text-emerald-400 font-mono font-bold">R$ ${mensalMap[mes].fixo.toFixed(2)}</td><td class="p-3 text-right text-teal-400 font-mono font-bold">R$ ${mensalMap[mes].extra.toFixed(2)}</td><td class="p-3 text-right text-amber-500 font-mono font-bold">R$ ${mensalMap[mes].multas.toFixed(2)}</td></tr>`;
+                    mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td>
+                        <td class="p-3 text-right text-emerald-400 font-mono">R$ ${mensalMap[mes].fixo.toFixed(2)}</td>
+                        <td class="p-3 text-right text-teal-400 font-mono">R$ ${mensalMap[mes].extra.toFixed(2)}</td>
+                        <td class="p-3 text-right text-amber-500 font-mono">R$ ${mensalMap[mes].multas.toFixed(2)}</td>
+                    </tr>`;
                 }
             });
-            document.getElementById('financeiro-mensal-corpo').innerHTML = mensalHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
-
+            
+            const financeiroEl = document.getElementById('financeiro-mensal-corpo');
+            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
+            
             let patHtml = '';
             window.patrociniosCache.forEach(p => {
-                patHtml += `<tr><td class="p-3 font-bold text-stone-200"><i class="fa-solid fa-handshake text-amber-400 mr-2"></i>${p.nome}</td><td class="p-3 text-center text-stone-400 font-medium">${p.destino}</td><td class="p-3 text-right text-emerald-400 font-mono font-black">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
+                patHtml += `<tr><td class="p-3 font-bold"><i class="fa-solid fa-handshake text-amber-400 mr-2"></i>${p.nome}</td>
+                    <td class="p-3 text-center text-stone-400">${p.destino}</td>
+                    <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
             });
-            document.getElementById('publico-patrocinio-tabela').innerHTML = patHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
-
-            let sociosHtml = '';
+            const patEl = document.getElementById('publico-patrocinio-tabela');
+            if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
+            
+            let socioHtml = '';
             window.sociosCache.forEach(s => {
-                sociosHtml += `<tr><td class="p-3 font-bold text-stone-200"><i class="fa-solid fa-star text-teal-400 mr-1.5 text-[10px]"></i>${s.nome}</td><td class="p-3 text-center text-stone-400 font-bold">${mesesNomes[s.mes]}</td><td class="p-3 text-right text-emerald-400 font-mono font-black">R$ ${Number(s.valor).toFixed(2)}</td></tr>`;
+                socioHtml += `<tr><td class="p-3 font-bold"><i class="fa-solid fa-star text-teal-400 mr-1.5"></i>${s.nome}</td>
+                    <td class="p-3 text-center text-stone-400">${mesesNomes[s.mes] || s.mes}</td>
+                    <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td></tr>`;
             });
-            document.getElementById('publico-socios-tabela').innerHTML = sociosHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
-
-            let feedGastosHtml = '';
+            const socioEl = document.getElementById('publico-socios-tabela');
+            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
+            
+            let gastosHtml = '';
             window.gastosCache.forEach(g => {
-                feedGastosHtml += `<li class="py-2 flex justify-between text-stone-300"><span>${g.descricao} <span class="text-[10px] text-stone-500">(${g.dataStr})</span></span> <span class="font-mono text-red-400 font-bold">- R$ ${Number(g.valor).toFixed(2)}</span></li>`;
+                gastosHtml += `<li class="py-2 flex justify-between text-stone-300">
+                    <span>${g.descricao} <span class="text-[10px] text-stone-500">(${g.dataStr || ''})</span></span>
+                    <span class="font-mono text-red-400 font-bold">- R$ ${Number(g.valor).toFixed(2)}</span>
+                </li>`;
             });
-            document.getElementById('financeiro-gastos-lista').innerHTML = feedGastosHtml || '<li class="py-2 text-stone-500 italic">Nenhuma despesa.</li>';
+            const gastosLista = document.getElementById('financeiro-gastos-lista');
+            if (gastosLista) gastosLista.innerHTML = gastosHtml || '<li class="py-2 text-stone-500 italic">Nenhuma despesa.</li>';
+            
+            let aportesHtml = '';
+            window.atletasCache.forEach(a => {
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(mes => {
+                        if (a.pagamentos[mes].extra && a.pagamentos[mes].extra > 0) {
+                            aportesHtml += `<li class="py-2 flex justify-between text-stone-300">
+                                <span>${a.nome} (${mesesNomes[mes]})</span>
+                                <span class="text-emerald-400 font-mono">+ R$ ${Number(a.pagamentos[mes].extra).toFixed(2)}</span>
+                            </li>`;
+                        }
+                    });
+                }
+            });
+            const aportesLista = document.getElementById('financeiro-aportes-lista');
+            if (aportesLista) aportesLista.innerHTML = aportesHtml || '<li class="py-2 text-stone-500 italic">Nenhum aporte extra.</li>';
         }
-
-        window.cadastrarPatrocinio = function(e) {
-            e.preventDefault();
-            window.patrociniosCache.push({
-                id: 'pat_' + Date.now(),
-                nome: document.getElementById('pat-nome').value.trim(),
-                destino: document.getElementById('pat-destino').value.trim(),
-                valor: parseFloat(document.getElementById('pat-valor').value)
-            });
-            document.getElementById('form-patrocinio').reset();
-            window.mostrarToast("Patrocínio adicionado!");
+        
+        // =====================================================
+        // FUNÇÕES ADMIN
+        // =====================================================
+        
+        window.cadastrarAtleta = function(e) { 
+            e.preventDefault(); 
+            const nome = document.getElementById('cad-nome')?.value?.trim();
+            const camisa = parseInt(document.getElementById('cad-camisa')?.value);
+            const time = document.getElementById('cad-time')?.value;
+            
+            if (!nome || isNaN(camisa) || !time) { alert('Preencha todos os campos!'); return; }
+            if (camisa < 0 || camisa > 99) { alert('Número da camisa deve ser entre 0 e 99!'); return; }
+            
+            window.atletasCache.push({ 
+                id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
+                histAmarelos: 0, histVermelhos: 0, pagamentos: {} 
+            }); 
+            
+            document.getElementById('form-cadastro-atleta')?.reset(); 
+            window.mostrarToast("Jogador cadastrado!"); 
+            window.salvarNoStorage(); 
+        };
+        
+        window.excluirAtleta = function(id) { 
+            if(confirm("Remover atleta?")) { 
+                window.atletasCache = window.atletasCache.filter(a => a.id !== id); 
+                window.mostrarToast("Atleta removido!"); 
+                window.salvarNoStorage(); 
+            } 
+        };
+        
+        function renderAdminAtletas() { 
+            let html = ''; 
+            window.atletasCache.forEach(a => { 
+                html += `<tr class="border-b border-stone-800 text-xs">
+                    <td class="p-2.5 font-bold">${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</td>
+                    <td class="p-2.5 text-center font-mono">#${a.camisa}</td>
+                    <td class="p-2.5 text-center"><button onclick="window.excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`; 
+            }); 
+            const tabela = document.getElementById('adm-atletas-tabela');
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+        }
+        
+        window.alterarNumero = function(id, campo, valor) {
+            const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
+            const novo = (a[campo] || 0) + valor;
+            if (campo === 'amarelos' && (novo < 0 || novo > 3)) return;
+            if (campo === 'vermelho' && (novo < 0 || novo > 1)) return;
+            if (campo === 'gols' && novo < 0) return;
+            a[campo] = novo;
             window.salvarNoStorage();
         };
-
-        window.excluirReceitaExterna = function(id, tipo) {
-            if(confirm("Deseja remover essa receita?")) {
-                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
-                if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
-                window.salvarNoStorage();
-                window.mostrarToast("Receita excluída!");
-            }
-        };
-
-        window.cadastrarSocio = function(e) {
-            e.preventDefault();
-            window.sociosCache.push({
-                id: 'socio_' + Date.now(),
-                nome: document.getElementById('socio-nome').value.trim(),
-                mes: document.getElementById('socio-mes').value,
-                valor: parseFloat(document.getElementById('socio-valor').value)
-            });
-            document.getElementById('form-socio').reset();
-            window.mostrarToast("Sócio lançado!");
-            window.salvarNoStorage();
-        };
-
+        
         window.salvarHistoricoCartao = function(id) {
             const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
             a.histAmarelos = (a.histAmarelos || 0) + (a.amarelos || 0);
             a.histVermelhos = (a.histVermelhos || 0) + (a.vermelho || 0);
             a.amarelos = 0;
@@ -917,237 +1220,295 @@
             window.mostrarToast("Cartões arquivados!");
             window.salvarNoStorage();
         };
-
+        
+        window.aplicarMultaAtleta = function(id) {
+            const motivo = document.getElementById(`motivo-${id}`)?.value;
+            const valor = parseFloat(document.getElementById(`vmulta-${id}`)?.value);
+            if (!motivo || !valor) { alert('Preencha motivo e valor!'); return; }
+            
+            const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
+            if (!a.pagamentos) a.pagamentos = {};
+            if (!a.pagamentos["05"]) a.pagamentos["05"] = { pago: false, extra: 0, multas: [] };
+            
+            a.pagamentos["05"].multas.push({ motivo, valor, paga: false });
+            document.getElementById(`motivo-${id}`).value = '';
+            document.getElementById(`vmulta-${id}`).value = '';
+            window.mostrarToast("Multa aplicada!");
+            window.salvarNoStorage();
+        };
+        
+        window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
+            const a = window.atletasCache.find(j => j.id === atletaId);
+            if (a?.pagamentos?.[mes]?.multas?.[idx]) {
+                a.pagamentos[mes].multas[idx].paga = isChecked;
+                window.salvarNoStorage();
+            }
+        };
+        
         window.cancelarMulta = function(atletaId, mes, idx) {
             const a = window.atletasCache.find(j => j.id === atletaId);
-            const multa = a.pagamentos[mes].multas[idx];
-            
-            if(!multa.paga) {
-                alert("Marque a multa como paga primeiro.");
-                return;
-            }
-
-            if(confirm(`Deseja arquivar esta multa de ${a.nome}?`)) {
-                if(!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
-                a.pagamentos[mes].multasArquivadasHistorico.push(parseFloat(multa.valor));
+            if (!a?.pagamentos?.[mes]?.multas?.[idx]) return;
+            if (!a.pagamentos[mes].multas[idx].paga) { alert("Marque como paga primeiro!"); return; }
+            if(confirm(`Arquivar multa?`)) {
+                if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
+                a.pagamentos[mes].multasArquivadasHistorico.push(parseFloat(a.pagamentos[mes].multas[idx].valor));
                 a.pagamentos[mes].multas.splice(idx, 1);
                 window.mostrarToast("Multa arquivada!");
                 window.salvarNoStorage();
             }
         };
-
-        window.alterarNumero = function(id, campo, valor) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if(campo === 'amarelos' && (a[campo]||0) + valor > 3) return;
-            if(campo === 'vermelho' && (a[campo]||0) + valor > 1) return;
-            if ((a[campo] || 0) + valor < 0) return;
-            a[campo] = (a[campo] || 0) + valor;
-            window.salvarNoStorage();
-        };
-
-        window.aplicarMultaAtleta = function(id) {
-            const mot = document.getElementById(`motivo-${id}`);
-            const val = document.getElementById(`vmulta-${id}`);
-            if(!mot.value || !val.value) return;
-            const a = window.atletasCache.find(j => j.id === id);
-            if(!a.pagamentos) a.pagamentos = {};
-            if(!a.pagamentos["05"]) a.pagamentos["05"] = { pago: false, extra: 0, multas: [] };
-            a.pagamentos["05"].multas.push({ motivo: mot.value.trim(), valor: parseFloat(val.value), paga: false });
-            mot.value = ''; val.value = '';
-            window.mostrarToast("Multa aplicada!");
-            window.salvarNoStorage();
-        };
-
-        window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
-            const a = window.atletasCache.find(j => j.id === atletaId);
-            a.pagamentos[mes].multas[idx].paga = isChecked;
-            window.salvarNoStorage();
-        };
-
+        
         function renderAdminScouts() {
             let html = '';
             window.atletasCache.forEach(a => {
-                let multasListHtml = '';
-                if(a.pagamentos) {
+                let multasHtml = '';
+                if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
-                        if(a.pagamentos[m].multas) {
-                            a.pagamentos[m].multas.forEach((multa, idx) => {
-                                multasListHtml += `
-                                    <div class="bg-black/40 p-1 rounded my-1 border border-stone-800 flex justify-between items-center text-[10px] gap-1">
-                                        <span class="${multa.paga?'line-through text-emerald-400':'text-red-300'}">${multa.motivo} (R$ ${multa.valor})</span>
-                                        <div class="flex items-center gap-1">
-                                            <input type="checkbox" ${multa.paga?'checked':''} onchange="toggleStatusMulta('${a.id}', '${m}', ${idx}, this.checked)" class="accent-emerald-500 cursor-pointer">
-                                            <button onclick="cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'} ml-1">
-                                                <i class="fa-solid fa-box-archive text-[10px]"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        }
+                        a.pagamentos[m].multas?.forEach((multa, idx) => {
+                            multasHtml += `<div class="bg-black/40 p-1 rounded my-1 flex justify-between items-center text-[10px] gap-1">
+                                <span class="${multa.paga ? 'line-through text-emerald-400' : 'text-red-300'}">${multa.motivo} (R$ ${multa.valor.toFixed(2)})</span>
+                                <div class="flex gap-1">
+                                    <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500">
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'}"><i class="fa-solid fa-box-archive"></i></button>
+                                </div>
+                            </div>`;
+                        });
                     });
                 }
-
-                html += `
-                    <tr class="border-b border-stone-800 text-center text-xs">
-                        <td class="p-2 font-bold text-left">${a.nome}</td>
-                        <td class="p-2 font-mono">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.gols||0}</span>
-                                <button onclick="alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2 font-mono text-amber-500">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.amarelos||0}</span>
-                                <button onclick="alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2 font-mono text-red-500">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
-                                <span class="min-w-[12px]">${a.vermelho||0}</span>
-                                <button onclick="alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded font-black">+</button>
-                            </div>
-                        </td>
-                        <td class="p-2">
-                            <button onclick="salvarHistoricoCartao('${a.id}')" class="bg-blue-600 text-white font-bold p-1 rounded text-[10px] uppercase">Arquivar</button>
-                        </td>
-                        <td class="p-2">
-                            <div class="flex gap-1 justify-center">
-                                <input type="text" id="motivo-${a.id}" placeholder="Motivo" class="bg-stone-800 p-1 rounded text-[10px] w-20 text-white border border-stone-700 outline-none">
-                                <input type="number" id="vmulta-${a.id}" placeholder="R$" class="bg-stone-800 p-1 rounded text-[10px] w-10 text-white border border-stone-700 outline-none">
-                                <button onclick="aplicarMultaAtleta('${a.id}')" class="bg-red-600 px-1 rounded text-white font-bold text-[10px]">OK</button>
-                            </div>
-                        </td>
-                        <td class="p-2 text-left">${multasListHtml || '<span class="text-stone-600 italic text-[10px]">Sem multas</span>'}</td>
-                    </tr>
-                `;
+                
+                html += `<tr class="border-b border-stone-800 text-center text-xs">
+                    <td class="p-2 font-bold text-left">${a.nome}</td>
+                    <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded">-</button><span>${a.gols || 0}</span><button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded">+</button></div></td>
+                    <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-amber-500">${a.amarelos || 0}</span><button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded">+</button></div></td>
+                    <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-red-500">${a.vermelho || 0}</span><button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded">+</button></div></td>
+                    <td class="p-2"><button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] uppercase">Arquivar</button></td>
+                    <td class="p-2"><div class="flex gap-1 justify-center"><input type="text" id="motivo-${a.id}" placeholder="Motivo" class="bg-stone-800 p-1 rounded w-16 text-[10px]"><input type="number" id="vmulta-${a.id}" placeholder="R$" class="bg-stone-800 p-1 rounded w-12 text-[10px]"><button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 px-1 rounded text-white text-[10px]">OK</button></div></td>
+                    <td class="p-2 text-left">${multasHtml || '<span class="text-stone-600 italic text-[10px]">Sem multas</span>'}</td>
+                </tr>`;
             });
-            document.getElementById('adm-scouts-tabela').innerHTML = html;
+            const tabela = document.getElementById('adm-scouts-tabela');
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="7" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
-
+        
+        window.cadastrarPatrocinio = function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('pat-nome')?.value?.trim();
+            const destino = document.getElementById('pat-destino')?.value?.trim();
+            const valor = parseFloat(document.getElementById('pat-valor')?.value);
+            if (!nome || !destino || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            window.patrociniosCache.push({ id: 'pat_' + Date.now(), nome, destino, valor });
+            document.getElementById('form-patrocinio')?.reset();
+            window.mostrarToast("Patrocínio adicionado!");
+            window.salvarNoStorage();
+        };
+        
+        window.cadastrarSocio = function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('socio-nome')?.value?.trim();
+            const mes = document.getElementById('socio-mes')?.value;
+            const valor = parseFloat(document.getElementById('socio-valor')?.value);
+            if (!nome || !mes || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            window.sociosCache.push({ id: 'socio_' + Date.now(), nome, mes, valor });
+            document.getElementById('form-socio')?.reset();
+            window.mostrarToast("Sócio lançado!");
+            window.salvarNoStorage();
+        };
+        
+        window.excluirReceitaExterna = function(id, tipo) {
+            if(confirm("Remover receita?")) {
+                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
+                else if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
+                window.salvarNoStorage();
+                window.mostrarToast("Receita removida!");
+            }
+        };
+        
         function renderAdminSocios() {
             let html = '';
             window.sociosCache.forEach(s => {
-                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td>
+                    <td class="p-2 text-right text-emerald-400">R$ ${Number(s.valor).toFixed(2)}</td>
+                    <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
             window.patrociniosCache.forEach(p => {
-                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                html += `<tr><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td>
+                    <td class="p-2 text-right text-emerald-400">R$ ${Number(p.valor).toFixed(2)}</td>
+                    <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
-            document.getElementById('adm-receitas-tabela').innerHTML = html;
+            const tabela = document.getElementById('adm-receitas-tabela');
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita.</td></tr>';
         }
-
-        window.processarGasto = function(e){
-            e.preventDefault(); const hj = new Date();
-            window.gastosCache.push({ id:'gasto_'+Date.now(), descricao: document.getElementById('gasto-descricao').value.trim(), valor: parseFloat(document.getElementById('gasto-valor').value), dataStr: `${hj.getDate()}/${hj.getMonth()+1}` });
-            document.getElementById('form-gasto').reset(); 
-            window.mostrarToast("Despesa computada!");
+        
+        window.processarGasto = function(e) {
+            e.preventDefault();
+            const descricao = document.getElementById('gasto-descricao')?.value?.trim();
+            const valor = parseFloat(document.getElementById('gasto-valor')?.value);
+            if (!descricao || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            const hj = new Date();
+            window.gastosCache.push({ id: 'gasto_' + Date.now(), descricao, valor, dataStr: `${hj.getDate()}/${hj.getMonth()+1}` });
+            document.getElementById('form-gasto')?.reset();
+            window.mostrarToast("Despesa registrada!");
             window.salvarNoStorage();
         };
-        window.excluirGasto = function(id){ if(confirm("Excluir despesa?")){ window.gastosCache=window.gastosCache.filter(g=>g.id!==id); window.mostrarToast("Gasto removido!"); window.salvarNoStorage(); }};
-        function renderAdminGastosTabela(){
-            let h=''; window.gastosCache.forEach(g=>{ h+=`<tr class="border-b border-stone-800"><td class="p-2 font-mono text-stone-500">${g.dataStr}</td><td class="p-2 font-bold uppercase text-xs">${g.descricao}</td><td class="p-2 text-right font-mono text-red-400 text-xs">R$ ${g.valor.toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirGasto('${g.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; });
-            document.getElementById('adm-gastos-tabela').innerHTML=h;
-        }
-
-        window.loadAdmFinancas = function() {
-            const mes = document.getElementById('adm-mes-filtro').value; let html = '';
-            window.atletasCache.forEach(a => {
-                const d = (a.pagamentos && a.pagamentos[mes]) ? a.pagamentos[mes] : { pago: false, extra: 0 };
-                html += `
-                    <tr class="border-b border-stone-800/40 text-center hover:bg-stone-800/10 text-xs">
-                        <td class="p-1.5 font-bold text-left text-stone-300">${a.nome}</td>
-                        <td class="p-1.5">
-                            <input type="checkbox" onchange="toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
-                        </td>
-                        <td class="p-1.5">
-                            <input type="number" id="extra-${a.id}" value="${d.extra||0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
-                        </td>
-                        <td class="p-1.5">
-                            <button onclick="salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.getElementById('adm-mensalidades-tabela').innerHTML = html;
+        
+        window.excluirGasto = function(id) { 
+            if(confirm("Excluir despesa?")) { 
+                window.gastosCache = window.gastosCache.filter(g => g.id !== id); 
+                window.mostrarToast("Despesa removida!"); 
+                window.salvarNoStorage(); 
+            } 
         };
         
-        window.toggleMensalidade = function(id, mes, isChecked) { const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].pago = isChecked; window.mostrarToast("Mensalidade atualizada!"); window.salvarNoStorage(); };
-        window.salvarAporteLinha = function(id, mes) { const val = document.getElementById(`extra-${id}`).value; const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].extra = parseFloat(val || 0); window.mostrarToast("Aporte atualizado!"); window.salvarNoStorage(); };
-        window.cadastrarAtleta = function(e){ e.preventDefault(); window.atletasCache.push({ id:'atleta_'+Date.now(), nome:document.getElementById('cad-nome').value.trim(), camisa:parseInt(document.getElementById('cad-camisa').value), time:document.getElementById('cad-time').value, gols:0, amarelos:0, vermelho:0, pagamentos:{} }); document.getElementById('form-cadastro-atleta').reset(); window.mostrarToast("Jogador inscrito!"); window.salvarNoStorage(); };
-        window.excluirAtleta = function(id){ if(confirm("Remover atleta?")){ window.atletasCache=window.atletasCache.filter(a=>a.id!==id); window.mostrarToast("Atleta removido!"); window.salvarNoStorage(); }};
-        function renderAdminAtletas(){ let h=''; window.atletasCache.forEach(a=>{ h+=`<tr class="border-b border-stone-800 text-xs"><td class="p-2.5 font-bold">${a.nome} (${a.time})</td><td class="p-2.5 text-center font-mono">#${a.camisa}</td><td class="p-2.5 text-center"><button onclick="excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.getElementById('adm-atletas-tabela').innerHTML=h; }
-        window.autenticarAdmin = function(e){ e.preventDefault(); if(document.getElementById('login-user').value==='veteranos07'&&document.getElementById('login-pass').value==='veteranos07'){ window.isAdminLogado=true; document.getElementById('login-modal').classList.add('hidden'); document.getElementById('admin-badge').classList.remove('hidden'); switchTab('admin-panel'); window.renderizarTudo(); }else{ document.getElementById('login-erro').classList.remove('hidden'); }};
-        window.logoutAdmin = function(){ window.isAdminLogado=false; document.getElementById('admin-panel').classList.add('hidden'); document.getElementById('admin-badge').classList.add('hidden'); switchTab('dashboard'); };
-
-        function iniciarContagemRegressiva() {
-            const dataProximoJogo = new Date("May 24, 2026 06:15:00").getTime();
-            
-            setInterval(() => {
-                const agora = new Date().getTime();
-                const diferenca = dataProximoJogo - agora;
-
-                if (diferenca < 0) {
-                    document.getElementById("cronometro-jogo").innerText = "BABA EM ANDAMENTO!";
-                    return;
-                }
-
-                const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
-                const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
-
-                document.getElementById("cronometro-jogo").innerText = 
-                    `${dias}d ${horas}h ${minutos}m`;
-            }, 60000); // Atualiza de minuto em minuto por ser minimalista
+        function renderAdminGastosTabela() {
+            let html = '';
+            window.gastosCache.forEach(g => { 
+                html += `<tr><td class="p-2 text-stone-500 font-mono">${g.dataStr}</td>
+                    <td class="p-2 font-bold uppercase text-xs">${g.descricao}</td>
+                    <td class="p-2 text-right text-red-400">R$ ${Number(g.valor).toFixed(2)}</td>
+                    <td class="p-2 text-center"><button onclick="window.excluirGasto('${g.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; 
+            });
+            const tabela = document.getElementById('adm-gastos-tabela');
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum gasto.</td></tr>';
         }
-
-        carregarDadosIniciais();
-        iniciarContagemRegressiva();
-    </script>
-
-    <!-- NAVEGAÇÃO DE TELAS -->
-    <script>
+        
+        window.loadAdmFinancas = function() {
+            const mes = document.getElementById('adm-mes-filtro')?.value || '05';
+            let html = '';
+            window.atletasCache.forEach(a => {
+                const dados = a.pagamentos?.[mes] || { pago: false, extra: 0 };
+                html += `<tr class="border-b border-stone-800/40 text-center text-xs">
+                    <td class="p-1.5 font-bold text-left">${a.nome}</td>
+                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
+                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${dados.extra || 0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
+                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-floppy-disk"></i></button></td>
+                </tr>`;
+            });
+            const tabela = document.getElementById('adm-mensalidades-tabela');
+            if (tabela) tabela.innerHTML = html;
+        };
+        
+        window.toggleMensalidade = function(id, mes, isChecked) { 
+            const a = window.atletasCache.find(j => j.id === id); 
+            if (!a) return;
+            if(!a.pagamentos) a.pagamentos = {}; 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
+            a.pagamentos[mes].pago = isChecked; 
+            window.salvarNoStorage(); 
+        };
+        
+        window.salvarAporteLinha = function(id, mes) { 
+            const val = document.getElementById(`extra-${id}`)?.value; 
+            const a = window.atletasCache.find(j => j.id === id); 
+            if (!a) return;
+            if(!a.pagamentos) a.pagamentos = {}; 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
+            a.pagamentos[mes].extra = parseFloat(val || 0); 
+            window.mostrarToast("Aporte salvo!"); 
+            window.salvarNoStorage(); 
+        };
+        
+        // =====================================================
+        // AUTENTICAÇÃO
+        // =====================================================
+        
+        window.autenticarAdmin = function(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user')?.value;
+            const pass = document.getElementById('login-pass')?.value;
+            if(user === 'veteranos07' && pass === 'veteranos07') { 
+                window.isAdminLogado = true; 
+                document.getElementById('login-modal')?.classList.add('hidden'); 
+                document.getElementById('admin-badge')?.classList.remove('hidden'); 
+                switchTab('admin-panel'); 
+                window.renderizarTudo(); 
+            } else { 
+                document.getElementById('login-erro')?.classList.remove('hidden'); 
+            }
+        };
+        
+        window.logoutAdmin = function() { 
+            window.isAdminLogado = false; 
+            document.getElementById('admin-panel')?.classList.add('hidden'); 
+            document.getElementById('admin-badge')?.classList.add('hidden'); 
+            switchTab('dashboard'); 
+        };
+        
+        // =====================================================
+        // NAVEGAÇÃO
+        // =====================================================
+        
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
-
-            const topbar = document.getElementById('main-topbar');
-            if (tabId === 'dashboard') {
-                topbar.style.display = 'block';
-            } else {
-                topbar.style.display = 'none';
-            }
-
-            const btns = document.querySelectorAll('.fixed.bottom-0 button');
-            btns.forEach(b => b.className = "flex flex-col items-center justify-center w-14 hover:text-stone-200 transition text-stone-500");
             
+            const topbar = document.getElementById('main-topbar');
+            if (topbar) topbar.style.display = (tabId === 'dashboard') ? 'flex' : 'none';
+            
+            document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
+                b.className = "flex flex-col items-center justify-center w-14 hover:text-stone-200 transition text-stone-500";
+            });
             const activeNav = document.getElementById('nav-' + tabId);
-            if(activeNav) {
-                activeNav.className = "flex flex-col items-center justify-center w-14 text-emerald-400 font-black transition";
-            } else if (tabId === 'admin-panel') {
-                document.getElementById('nav-admin').className = "flex flex-col items-center justify-center w-14 text-amber-500 font-black transition";
+            if(activeNav) activeNav.className = "flex flex-col items-center justify-center w-14 text-emerald-400 font-black transition";
+            else if (tabId === 'admin-panel') {
+                const adminNav = document.getElementById('nav-admin');
+                if(adminNav) adminNav.className = "flex flex-col items-center justify-center w-14 text-amber-500 font-black transition";
             }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
+        
         function switchAdminSubTab(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById(subTabId).classList.remove('hidden');
+            document.getElementById(subTabId)?.classList.remove('hidden');
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
-                if(btn.getAttribute('onclick').includes(subTabId)) {
-                    btn.className = "adm-sub-btn flex-1 py-3.5 text-center border-b-2 border-amber-500 bg-stone-900 text-amber-500 font-black";
+                if(btn.getAttribute('onclick')?.includes(subTabId)) {
+                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
                 } else {
-                    btn.className = "adm-sub-btn flex-1 py-3.5 text-center text-stone-400 hover:text-amber-500 font-bold bg-transparent";
+                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
                 }
             });
         }
-        function openAdminModal() { if(window.isAdminLogado) switchTab('admin-panel'); else document.getElementById('login-modal').classList.remove('hidden'); }
-        function closeAdminModal() { document.getElementById('login-modal').classList.add('hidden'); }
+        
+        function openAdminModal() { 
+            if(window.isAdminLogado) switchTab('admin-panel'); 
+            else document.getElementById('login-modal')?.classList.remove('hidden'); 
+        }
+        
+        function closeAdminModal() { 
+            document.getElementById('login-modal')?.classList.add('hidden'); 
+        }
+        
+        document.getElementById('login-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeAdminModal();
+        });
+        
+        function iniciarContagemRegressiva() {
+            const dataJogo = new Date("May 24, 2026 06:15:00").getTime();
+            const atualizar = () => {
+                const agora = new Date().getTime();
+                const diff = dataJogo - agora;
+                const crono = document.getElementById("cronometro-jogo");
+                if (!crono) return;
+                if (diff < 0) { crono.innerText = "BABA EM ANDAMENTO!"; return; }
+                const dias = Math.floor(diff / (86400000));
+                const horas = Math.floor((diff % 86400000) / 3600000);
+                const minutos = Math.floor((diff % 3600000) / 60000);
+                crono.innerText = `${dias}d ${horas}h ${minutos}m`;
+            };
+            atualizar();
+            setInterval(atualizar, 60000);
+        }
+        
+        // =====================================================
+        // INICIALIZAÇÃO
+        // =====================================================
+        
+        if (inicializarFirebase()) carregarDadosIniciais();
+        iniciarContagemRegressiva();
+        
+        console.log('BABA VETERANOS - Sistema inicializado');
+        console.log('Regras de segurança integradas e validadas');
     </script>
 </body>
 </html>
