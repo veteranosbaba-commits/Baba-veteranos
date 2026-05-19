@@ -22,15 +22,15 @@
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
 
     <!-- TOPBAR COMPACTA -->
-    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
+    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-2 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50 transition-all duration-200">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
                 <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
-                <span id="topbar-temporada" class="text-[9px] text-gray-400 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
+                <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
             <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded font-black tracking-wider flex items-center gap-1 border border-amber-300 shadow">
-                <i class="fa-solid fa-user-gear"></i> ADMIN <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1">SAIR</button>
+                <i class="fa-solid fa-user-gear"></i> ADMIN <button onclick="logoutAdmin()" class="underline font-bold text-stone-900 ml-1">SAIR</button>
             </div>
         </div>
     </nav>
@@ -60,7 +60,7 @@
                 </div>
             </div>
             
-            <!-- EXIBIÇÃO DA PARTIDA -->
+            <!-- EXIBIÇÃO DA PARTIDA EM TEMPO REAL -->
             <div class="bg-black/95 rounded-3xl border-2 border-emerald-500 p-6 shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-500 text-black font-black text-[10px] px-4 py-1 rounded-b-xl uppercase tracking-widest flex flex-col items-center">
                     <span>Última Partida</span>
@@ -96,13 +96,15 @@
                 </div>
             </div>
 
-            <!-- HISTÓRICO DE PLACARES -->
+            <!-- HISTÓRICO DE PLACARES DA LIGA -->
             <div class="bg-stone-900/95 p-4 rounded-2xl border border-stone-700 shadow-xl">
                 <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-3 flex items-center gap-2 border-b border-stone-800 pb-2">
                     <i class="fa-solid fa-clock-rotate-left text-teal-400"></i> Histórico de Resultados das Rodadas
                 </h4>
                 <div class="max-h-48 overflow-y-auto pr-1">
-                    <ul id="lista-historico-placares" class="divide-y divide-stone-800 font-bold text-xs text-stone-300 space-y-1"></ul>
+                    <ul id="lista-historico-placares" class="divide-y divide-stone-800 font-bold text-xs text-stone-300 space-y-1">
+                        <!-- Gerado dinamicamente -->
+                    </ul>
                 </div>
             </div>
         </div>
@@ -114,7 +116,7 @@
                     <h4 class="font-black text-gray-200 uppercase tracking-wider text-sm flex items-center gap-2">
                         <i class="fa-solid fa-fire text-amber-500 animate-bounce"></i> Artilharia da Liga
                     </h4>
-                    <select id="artilharia-filtro" onchange="window.renderizerTudo()" class="text-xs bg-stone-800 border border-stone-700 p-1.5 rounded-lg text-emerald-400 font-bold focus:outline-none">
+                    <select id="artilharia-filtro" onchange="renderizerTudo()" class="text-xs bg-stone-800 border border-stone-700 p-1.5 rounded-lg text-emerald-400 font-bold focus:outline-none">
                         <option value="geral">Geral (Todos)</option>
                         <option value="FLUMINENSE">Fluminense FC</option>
                         <option value="BOTAFOGO">Botafogo FR</option>
@@ -127,8 +129,8 @@
         <!-- ABA 2: ELENCOS -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
             <div class="flex space-x-3 mb-1">
-                <button onclick="window.filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
-                <button onclick="window.filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
+                <button onclick="filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
+                <button onclick="filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-2.5 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
@@ -152,6 +154,7 @@
 
         <!-- ABA 3: BALANÇO -->
         <div id="financeiro-ver" class="tab-content space-y-6 pt-4">
+            <!-- Patrocínios e Doações -->
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                 <h4 class="font-black text-amber-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800"><i class="fa-solid fa-handshake-angle mr-2"></i>Patrocínios e Doações de Incentivo</h4>
                 <div class="overflow-x-auto">
@@ -237,7 +240,7 @@
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
                 <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3"><i class="fa-solid fa-id-card-clip mr-1"></i> Central de Monitoramento de Atleta</p>
                 <div class="relative">
-                    <input type="text" id="search-input" oninput="window.searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="search-input" oninput="searchPlayer()" placeholder="Nome ou Nº da Camisa..." class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <i class="fa-solid fa-search text-stone-500 absolute right-3 top-3.5"></i>
                 </div>
                 <div id="search-result" class="hidden mt-4 space-y-2"></div>
@@ -250,7 +253,7 @@
                 <div>
                     <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Técnico Administrativo</h3>
                 </div>
-                <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-black rounded-lg uppercase transition">Fechar</button>
+                <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-black rounded-lg uppercase transition">Fechar</button>
             </div>
 
             <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-hidden">
@@ -264,7 +267,7 @@
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
                 <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-t-0 border-stone-700 shadow-xl">
                     <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Inscrever Novo Jogador</h4>
-                    <form id="form-cadastro-atleta" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <form id="form-cadastro-atleta" onsubmit="cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input type="text" id="cad-nome" placeholder="Nome do Jogador" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <input type="number" id="cad-camisa" placeholder="Nº Camisa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
@@ -296,7 +299,7 @@
                                 <th class="p-2 text-center">🟥 Atual</th>
                                 <th class="p-2 text-center">Salvar Cartões Ano</th>
                                 <th class="p-2 text-center">Aplicar Nova Multa</th>
-                                <th class="p-2 text-center">Multas Ativas</th>
+                                <th class="p-2 text-center">Multas Ativas (Pague para Arquivar)</th>
                             </tr>
                         </thead>
                         <tbody id="adm-scouts-tabela" class="divide-y divide-stone-800"></tbody>
@@ -309,10 +312,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
                         <h4 class="font-bold text-teal-400 text-xs uppercase mb-3"><i class="fa-solid fa-plus mr-1"></i> Contribuição de Sócio</h4>
-                        <form id="form-socio" class="space-y-3">
+                        <form id="form-socio" onsubmit="cadastrarSocio(event)" class="space-y-3">
                             <input type="text" id="socio-nome" placeholder="Nome Completo do Sócio" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
+                                    <option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option>
                                 </select>
                                 <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
@@ -322,7 +326,7 @@
 
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
                         <h4 class="font-bold text-amber-400 text-xs uppercase mb-3"><i class="fa-solid fa-handshake-angle mr-1"></i> Entrada de Patrocínio / Doação</h4>
-                        <form id="form-patrocinio" class="space-y-3">
+                        <form id="form-patrocinio" onsubmit="cadastrarPatrocinio(event)" class="space-y-3">
                             <input type="text" id="pat-nome" placeholder="Empresa / Doador" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="text" id="pat-destino" placeholder="Ex: Uniforme, Arena..." required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
@@ -344,6 +348,7 @@
 
             <!-- SUB-ABA: CAIXA & CONTROLADORES DE PLACAR -->
             <div id="adm-financas" class="adm-sub-content hidden space-y-6">
+                <!-- PAINEL DE CONTROLE DO PLACAR COM BOTÃO SALVAR -->
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
                     <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2"><i class="fa-solid fa-gamepad mr-1"></i> Painel de Controle do Jogo (Placar de Hoje)</h4>
                     <div class="grid grid-cols-2 gap-4 text-xs max-w-md mx-auto">
@@ -357,19 +362,15 @@
                         </div>
                     </div>
                     <div class="text-center pt-2">
-                        <button onclick="window.atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
+                        <button onclick="atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar do Jogo
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-stone-800 pb-2">
-                        <h4 class="font-bold text-amber-500 text-xs uppercase"><i class="fa-solid fa-eraser mr-1"></i> Moderação de Rodadas Gravadas</h4>
-                        <button onclick="window.resetTotalRodadas()" class="bg-red-600 hover:bg-red-700 text-white font-black text-[10px] px-3 py-1.5 rounded uppercase tracking-wider transition flex items-center gap-1 shadow">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Resetar Tudo
-                        </button>
-                    </div>
+                <!-- CONTROLE E EXCLUSÃO DE RODADAS -->
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3"><i class="fa-solid fa-eraser mr-1"></i> Moderação de Rodadas Gravadas (Excluir Involuntários)</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead>
@@ -379,14 +380,16 @@
                                     <th class="p-2 text-center">Ação</th>
                                 </tr>
                             </thead>
-                            <tbody id="adm-historico-exclusao-tabela" class="divide-y divide-stone-800 font-medium"></tbody>
+                            <tbody id="adm-historico-exclusao-tabela" class="divide-y divide-stone-800 font-medium">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-red-400 text-xs uppercase mb-3"><i class="fa-solid fa-minus mr-1"></i> Lançar Despesa / Gasto do Baba</h4>
-                    <form id="form-gasto" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <form id="form-gasto" onsubmit="processarGasto(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input type="text" id="gasto-descricao" placeholder="Descrição da Despesa" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none md:col-span-2">
                         <input type="number" step="0.01" id="gasto-valor" placeholder="Valor Pago (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar Gasto</button>
@@ -400,11 +403,13 @@
                     </table>
                 </div>
 
-                <!-- SEÇÃO MENSALIDADES DINÂMICAS -->
+                <!-- SEÇÃO BOLETOS -->
                 <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
                     <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2">
                         <h4 class="font-bold text-emerald-400 text-xs uppercase tracking-tight">Boleto de Mensalidades (Atletas)</h4>
-                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
+                        <select id="adm-mes-filtro" onchange="loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
+                            <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+                            <option value="04">Abril</option><option value="05" selected>Maio</option><option value="06">Junho</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -425,8 +430,9 @@
         </div>
     </div>
 
-    <!-- RODAPÉ FIXO -->
+    <!-- RECIPIENTE FIXO NO RODAPÉ -->
     <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
+        
         <!-- ANÚNCIO MINIMALISTA -->
         <div class="bg-stone-950 border-b border-stone-800 px-4 py-2 flex items-center justify-between gap-3 text-xs">
             <div class="flex items-center gap-2 truncate">
@@ -438,16 +444,16 @@
             </a>
         </div>
 
-        <!-- RECONTAGEM REGRESSIVA -->
+        <!-- RECONTAGEM REGRESSIVA COMPACTA EM DIAS -->
         <div class="bg-emerald-950/90 border-b border-emerald-900/60 px-4 py-1.5 text-center text-xs">
             <div class="flex justify-center items-center gap-2 text-[11px]">
                 <span class="text-emerald-400 font-bold uppercase tracking-wider"><i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:</span>
                 <span id="cronometro-jogo" class="text-amber-400 font-mono font-black bg-stone-950 px-1.5 py-0.5 rounded border border-emerald-800/40">0d 00h 00m</span>
-                <span class="text-stone-400 text-[10px]">| Arena Coqueiros (Domingo às 06:15)</span>
+                <span class="text-stone-400 text-[10px]">| Arena Coqueiros (24/05 às 06:15)</span>
             </div>
         </div>
 
-        <!-- MENU DE NAVEGAÇÃO -->
+        <!-- MENU DE NAVEGAÇÃO COMPACTADO -->
         <div class="container mx-auto flex justify-around items-center py-2 max-w-xl text-center text-[10px] font-black uppercase tracking-wider text-stone-500">
             <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-14 text-emerald-400 transition"><i class="fa-solid fa-chart-line text-lg mb-0.5"></i>Painel</button>
             <button onclick="switchTab('jogadores')" id="nav-jogadores" class="flex flex-col items-center justify-center w-14 hover:text-stone-200 transition"><i class="fa-solid fa-shirt text-lg mb-0.5"></i>Times</button>
@@ -466,7 +472,7 @@
                 <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider"><i class="fa-solid fa-lock text-amber-500 mr-1"></i> Acesso à Súmula</h3>
                 <button onclick="closeAdminModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="form-autenticar-admin" class="space-y-4">
+            <form onsubmit="autenticarAdmin(event)" class="space-y-4">
                 <div>
                     <input type="text" id="login-user" placeholder="Comandante" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
                 </div>
@@ -479,10 +485,10 @@
         </div>
     </div>
 
-    <!-- SCRIPT: MOTOR DO FIREBASE CORRIGIDO -->
+    <!-- SCRIPT: MOTOR DO FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
@@ -505,37 +511,24 @@
 
         window.timeFiltroAtual = 'FLUMINENSE';
         window.isAdminLogado = false;
-        let tokenAdmin = null; 
         let toastTimeout = null;
 
-        const mesesNomes = { 
-            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
-            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", 
-            "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro" 
-        };
-
-        function getMesAtualStr() {
-            return String(new Date().getMonth() + 1).padStart(2, '0');
-        }
+        const mesesNomes = { "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", "05": "Maio", "06": "Junho" };
 
         window.salvarNoStorage = function() {
-            if(window.isAdminLogado && tokenAdmin) {
-                set(ref(db, 'baba/auth_token'), tokenAdmin);
-            }
-            
             set(ref(db, 'baba/atletas'), window.atletasCache);
             set(ref(db, 'baba/gastos'), window.gastosCache);
             set(ref(db, 'baba/socios'), window.sociosCache);
             set(ref(db, 'baba/patrocinios'), window.patrociniosCache);
             set(ref(db, 'baba/partidaEstatisticas'), window.partidaEstatisticas);
             set(ref(db, 'baba/historicoPlacares'), window.historicoPlacares);
+            window.renderizarTudo();
         };
 
         async function carregarDadosIniciais() {
-            buildDynamicSelectors();
-            const babaRef = ref(db, 'baba');
-            
-            onValue(babaRef, (snapshot) => {
+            const dbRef = ref(db);
+            try {
+                const snapshot = await get(child(dbRef, 'baba'));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     window.atletasCache = data.atletas || [];
@@ -544,44 +537,27 @@
                     window.patrociniosCache = data.patrocinios || [];
                     window.historicoPlacares = data.historicoPlacares || [];
                     window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
-                    
-                    window.renderizerTudo();
-                } else {
-                    window.renderizerTudo();
                 }
-            }, (error) => {
-                console.error("Erro na escuta em tempo real do Firebase:", error);
-            });
-        }
-
-        function buildDynamicSelectors() {
-            const currentYear = new Date().getFullYear();
-            document.getElementById('topbar-temporada').innerText = `| Temporada ${currentYear}`;
-            
-            let selectorHtml = '';
-            let formSelectorHtml = '';
-            const mAtual = getMesAtualStr();
-            
-            Object.keys(mesesNomes).forEach(key => {
-                const selected = key === mAtual ? 'selected' : '';
-                selectorHtml += `<option value="${key}" ${selected}>${mesesNomes[key]}</option>`;
-                formSelectorHtml += `<option value="${key}">${mesesNomes[key]}</option>`;
-            });
-            
-            document.getElementById('adm-mes-filtro').innerHTML = selectorHtml;
-            document.getElementById('socio-mes').innerHTML = formSelectorHtml;
-            document.getElementById('socio-mes').value = mAtual;
+            } catch (error) {
+                console.error("Erro ao ler Firebase:", error);
+            }
+            window.renderizarTudo();
         }
 
         window.mostrarToast = function(mensaje) {
             const toast = document.getElementById('toast-notificacao');
             document.getElementById('toast-mensagem').innerText = mensaje;
+            
             if (toastTimeout) clearTimeout(toastTimeout);
+            
             toast.classList.remove('translate-x-96');
-            toastTimeout = setTimeout(() => { toast.classList.add('translate-x-96'); }, 2500);
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-x-96');
+            }, 2500);
         };
 
-        window.renderizerTudo = function() {
+        window.renderizarTudo = function() {
             recalcularClassificacaoGeral();
             loadDashboard();
             renderListaJogadoresPublica();
@@ -594,17 +570,22 @@
                 renderAdminSocios();
                 renderAdminGastosTabela();
                 renderAdminHistoricoExclusao();
-                window.loadAdmFinancas();
+                loadAdmFinancas();
             }
         };
 
         function recalcularClassificacaoGeral() {
             let celulasFlu = 0;
             let celulasBota = 0;
+
             window.historicoPlacares.forEach(rodada => {
-                if (parseInt(rodada.golsFlu) > parseInt(rodada.golsBota)) celulasFlu++;
-                else if (parseInt(rodada.golsBota) > parseInt(rodada.golsFlu)) celulasBota++;
+                if (parseInt(rodada.golsFlu) > parseInt(rodada.golsBota)) {
+                    celulasFlu++;
+                } else if (parseInt(rodada.golsBota) > parseInt(rodada.golsFlu)) {
+                    celulasBota++;
+                }
             });
+
             window.partidaEstatisticas.vitFlu = celulasFlu;
             window.partidaEstatisticas.vitBota = celulasBota;
         }
@@ -612,6 +593,7 @@
         function loadDashboard() {
             document.getElementById('placar-flu').innerText = window.partidaEstatisticas.placarFlu ?? 0;
             document.getElementById('placar-bota').innerText = window.partidaEstatisticas.placarBota ?? 0;
+            
             document.getElementById('placar-temporada-flu').innerText = window.partidaEstatisticas.vitFlu || 0;
             document.getElementById('placar-temporada-bota').innerText = window.partidaEstatisticas.vitBota || 0;
 
@@ -621,29 +603,28 @@
                 document.getElementById('dash-data-ultima-partida').innerText = "(--/--)";
             }
 
-            const inputFlu = document.getElementById('adm-placar-flu');
-            const inputBota = document.getElementById('adm-placar-bota');
-            if(inputFlu && document.activeElement !== inputFlu) {
-                inputFlu.value = window.partidaEstatisticas.placarFlu ?? 0;
-            }
-            if(inputBota && document.activeElement !== inputBota) {
-                inputBota.value = window.partidaEstatisticas.placarBota ?? 0;
+            if(document.getElementById('adm-placar-flu') && !document.getElementById('adm-placar-flu').dataset.loaded) {
+                document.getElementById('adm-placar-flu').value = window.partidaEstatisticas.placarFlu ?? 0;
+                document.getElementById('adm-placar-bota').value = window.partidaEstatisticas.placarBota ?? 0;
+                document.getElementById('adm-placar-flu').dataset.loaded = "true";
             }
 
             let totalArrecadado = 0;
             let totalGastos = 0;
-            const mAtual = getMesAtualStr();
 
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (a.pagamentos[mes].pago) totalArrecadado += 25;
                         totalArrecadado += Number(a.pagamentos[mes].extra || 0);
+                        
                         if (a.pagamentos[mes].multas) {
                             a.pagamentos[mes].multas.forEach(m => { if(m.paga) totalArrecadado += Number(m.valor); });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(val => totalArrecadado += Number(val));
+                            a.pagamentos[mes].multasArquivadasHistorico.forEach(valorHistorico => {
+                                totalArrecadado += Number(valorHistorico);
+                            });
                         }
                     });
                 }
@@ -674,7 +655,7 @@
             let textSuspensosHtml = '';
             window.atletasCache.forEach(a => {
                 let debitoTotal = 0;
-                const pagoNoMes = a.pagamentos && a.pagamentos[mAtual] && a.pagamentos[mAtual].pago;
+                const pagoNoMes = a.pagamentos && a.pagamentos["05"] && a.pagamentos["05"].pago;
                 if (!pagoNoMes) debitoTotal += 25;
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
@@ -684,6 +665,7 @@
                 if (debitoTotal > 0) {
                     textPendentesHtml += `<li class="flex justify-between py-2 items-center text-stone-300"><span>${a.nome} <span class="text-[10px] text-stone-400">(${a.time})</span></span> <span class="font-black text-[11px] text-red-400 font-mono">Devendo R$ ${debitoTotal.toFixed(2)}</span></li>`;
                 }
+
                 if ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) {
                     textSuspensosHtml += `<li class="flex justify-between py-2 items-center"><span>${a.nome}</span> <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho Direto' : '🟨 3 Amarelos'}</span></li>`;
                 }
@@ -695,14 +677,23 @@
         window.atualizarPlacarGeral = function() {
             const fluVal = document.getElementById('adm-placar-flu').value;
             const botaVal = document.getElementById('adm-placar-bota').value;
-            if (fluVal === "" || botaVal === "") { alert("Erro: Preencha os campos de placar."); return; }
+
+            if (fluVal === "" || botaVal === "") {
+                alert("Erro: Preencha os campos de placar.");
+                return;
+            }
 
             const placarFlu = parseInt(fluVal);
             const placarBota = parseInt(botaVal);
+
             const hoje = new Date();
             const dataHojeStr = `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
 
-            window.historicoPlacares = window.historicoPlacares.filter(r => r.data !== dataHojeStr);
+            const dataJaExiste = window.historicoPlacares.some(rodada => rodada.data === dataHojeStr);
+            if (dataJaExiste) {
+                alert(`Atenção: Já existe um resultado salvo na data de hoje (${dataHojeStr}). Remova o anterior na listagem de exclusão se desejar mudar.`);
+                return;
+            }
 
             window.partidaEstatisticas.placarFlu = placarFlu;
             window.partidaEstatisticas.placarBota = placarBota;
@@ -720,8 +711,9 @@
         };
 
         window.excluirRodadaHistorico = function(id) {
-            if(confirm("Deseja apagar permanentemente esta rodada?")) {
+            if(confirm("Deseja apagar permanentemente esta rodada? O placar geral anual será recalculado.")) {
                 window.historicoPlacares = window.historicoPlacares.filter(r => r.id !== id);
+                
                 if(window.historicoPlacares.length > 0){
                     window.partidaEstatisticas.placarFlu = window.historicoPlacares[0].golsFlu;
                     window.partidaEstatisticas.placarBota = window.historicoPlacares[0].golsBota;
@@ -729,24 +721,10 @@
                     window.partidaEstatisticas.placarFlu = 0;
                     window.partidaEstatisticas.placarBota = 0;
                 }
+
                 recalcularClassificacaoGeral();
                 window.salvarNoStorage();
                 window.mostrarToast("Rodada removida!");
-            }
-        };
-
-        window.resetTotalRodadas = function() {
-            if(confirm("ATENÇÃO: Deseja zerar todo o histórico?")) {
-                window.historicoPlacares = [];
-                window.partidaEstatisticas.placarFlu = 0;
-                window.partidaEstatisticas.placarBota = 0;
-                if(document.getElementById('adm-placar-flu')) {
-                    document.getElementById('adm-placar-flu').value = 0;
-                    document.getElementById('adm-placar-bota').value = 0;
-                }
-                recalcularClassificacaoGeral();
-                window.salvarNoStorage();
-                window.mostrarToast("Histórico resetado!");
             }
         };
 
@@ -758,7 +736,7 @@
                         <td class="p-2 text-stone-400 font-mono">${item.data}</td>
                         <td class="p-2 font-mono text-stone-200">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
                         <td class="p-2">
-                            <button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded border border-stone-700 transition">
+                            <button onclick="excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded border border-stone-700 transition">
                                 <i class="fa-solid fa-trash-can"></i> Excluir
                             </button>
                         </td>
@@ -826,10 +804,8 @@
         function renderListaJogadoresPublica() {
             const atletasFiltrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
-            const mAtual = getMesAtualStr();
             atletasFiltrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const estaPago = a.pagamentos && a.pagamentos[mAtual] && a.pagamentos[mAtual].pago;
                 html += `
                     <tr class="hover:bg-stone-800/30 transition text-center">
                         <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa}</td>
@@ -839,7 +815,7 @@
                         <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
                         <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
                         <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                        <td class="p-1.5 text-[10px] font-black ${estaPago ? 'text-emerald-400' : 'text-red-500'}">${estaPago ? 'PAGO' : 'PEND'}</td>
+                        <td class="p-1.5 text-[10px] font-black ${(a.pagamentos && a.pagamentos['05'] && a.pagamentos['05'].pago)?'text-emerald-400':'text-red-500'}">${(a.pagamentos && a.pagamentos['05'] && a.pagamentos['05'].pago)?'PAGO':'PEND'}</td>
                     </tr>
                 `;
             });
@@ -854,13 +830,16 @@
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (mensalMap[mes]) {
-                            if (a.pagamentos[mes].pago) mensalMap[mes].fixo += 25;
+                            if (a.pagamentos[mes].pago)  mensalMap[mes].fixo += 25;
                             if (a.pagamentos[mes].extra) mensalMap[mes].extra += Number(a.pagamentos[mes].extra);
+                            
                             if (a.pagamentos[mes].multas) {
                                 a.pagamentos[mes].multas.forEach(ml => { if(ml.paga) mensalMap[mes].multas += Number(ml.valor); });
                             }
                             if (a.pagamentos[mes].multasArquivadasHistorico) {
-                                a.pagamentos[mes].multasArquivadasHistorico.forEach(v => mensalMap[mes].multas += Number(v));
+                                a.pagamentos[mes].multasArquivadasHistorico.forEach(valHist => {
+                                    mensalMap[mes].multas += Number(valHist);
+                                });
                             }
                         }
                     });
@@ -894,8 +873,7 @@
             document.getElementById('financeiro-gastos-lista').innerHTML = feedGastosHtml || '<li class="py-2 text-stone-500 italic">Nenhuma despesa.</li>';
         }
 
-        // --- SUBMISSÃO DE FORMULÁRIOS CORRIGIDA (Gatilhos escopo Module) ---
-        document.getElementById('form-patrocinio').addEventListener('submit', function(e) {
+        window.cadastrarPatrocinio = function(e) {
             e.preventDefault();
             window.patrociniosCache.push({
                 id: 'pat_' + Date.now(),
@@ -906,9 +884,18 @@
             document.getElementById('form-patrocinio').reset();
             window.mostrarToast("Patrocínio adicionado!");
             window.salvarNoStorage();
-        });
+        };
 
-        document.getElementById('form-socio').addEventListener('submit', function(e) {
+        window.excluirReceitaExterna = function(id, tipo) {
+            if(confirm("Deseja remover essa receita?")) {
+                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
+                if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
+                window.salvarNoStorage();
+                window.mostrarToast("Receita excluída!");
+            }
+        };
+
+        window.cadastrarSocio = function(e) {
             e.preventDefault();
             window.sociosCache.push({
                 id: 'socio_' + Date.now(),
@@ -919,60 +906,6 @@
             document.getElementById('form-socio').reset();
             window.mostrarToast("Sócio lançado!");
             window.salvarNoStorage();
-        });
-
-        document.getElementById('form-gasto').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            const hj = new Date();
-            window.gastosCache.push({ 
-                id:'gasto_'+Date.now(), 
-                descricao: document.getElementById('gasto-descricao').value.trim(), 
-                valor: parseFloat(document.getElementById('gasto-valor').value), 
-                dataStr: `${hj.getDate()}/${hj.getMonth()+1}` 
-            });
-            document.getElementById('form-gasto').reset(); 
-            window.mostrarToast("Despesa computada!");
-            window.salvarNoStorage();
-        });
-
-        document.getElementById('form-cadastro-atleta').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            window.atletasCache.push({ 
-                id:'atleta_'+Date.now(), 
-                nome:document.getElementById('cad-nome').value.trim(), 
-                camisa:parseInt(document.getElementById('cad-camisa').value), 
-                time:document.getElementById('cad-time').value, 
-                gols:0, amarelos:0, vermelho:0, pagamentos:{} 
-            }); 
-            document.getElementById('form-cadastro-atleta').reset(); 
-            window.mostrarToast("Jogador inscrito!"); 
-            window.salvarNoStorage();
-        });
-
-        document.getElementById('form-autenticar-admin').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            const userIn = document.getElementById('login-user').value;
-            const passIn = document.getElementById('login-pass').value;
-            if(userIn === 'veteranos07' && passIn === 'veteranos07'){ 
-                window.isAdminLogado = true; 
-                tokenAdmin = passIn; 
-                document.getElementById('login-modal').classList.add('hidden'); 
-                document.getElementById('admin-badge').classList.remove('hidden'); 
-                switchTab('admin-panel'); 
-                window.renderizerTudo(); 
-            }else{ 
-                document.getElementById('login-erro').classList.remove('hidden'); 
-            }
-        });
-
-        // --- SISTEMA DE GESTÃO DO COMANDANTE ---
-        window.excluirReceitaExterna = function(id, tipo) {
-            if(confirm("Deseja remover essa receita?")) {
-                if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
-                if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
-                window.salvarNoStorage();
-                window.mostrarToast("Receita excluída!");
-            }
         };
 
         window.salvarHistoricoCartao = function(id) {
@@ -988,9 +921,13 @@
         window.cancelarMulta = function(atletaId, mes, idx) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             const multa = a.pagamentos[mes].multas[idx];
-            if(!multa.paga) { alert("Marque a multa como paga primeiro."); return; }
+            
+            if(!multa.paga) {
+                alert("Marque a multa como paga primeiro.");
+                return;
+            }
 
-            if(confirm(`Deseja arquivar esta multa?`)) {
+            if(confirm(`Deseja arquivar esta multa de ${a.nome}?`)) {
                 if(!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
                 a.pagamentos[mes].multasArquivadasHistorico.push(parseFloat(multa.valor));
                 a.pagamentos[mes].multas.splice(idx, 1);
@@ -1013,13 +950,9 @@
             const val = document.getElementById(`vmulta-${id}`);
             if(!mot.value || !val.value) return;
             const a = window.atletasCache.find(j => j.id === id);
-            const mSelec = document.getElementById('adm-mes-filtro').value;
-
             if(!a.pagamentos) a.pagamentos = {};
-            if(!a.pagamentos[mSelec]) a.pagamentos[mSelec] = { pago: false, extra: 0, multas: [] };
-            if(!a.pagamentos[mSelec].multas) a.pagamentos[mSelec].multas = [];
-            
-            a.pagamentos[mSelec].multas.push({ motivo: mot.value.trim(), valor: parseFloat(val.value), paga: false });
+            if(!a.pagamentos["05"]) a.pagamentos["05"] = { pago: false, extra: 0, multas: [] };
+            a.pagamentos["05"].multas.push({ motivo: mot.value.trim(), valor: parseFloat(val.value), paga: false });
             mot.value = ''; val.value = '';
             window.mostrarToast("Multa aplicada!");
             window.salvarNoStorage();
@@ -1031,42 +964,110 @@
             window.salvarNoStorage();
         };
 
-        window.excluirGasto = function(id){ 
-            if(confirm("Excluir despesa?")){ 
-                window.gastosCache=window.gastosCache.filter(g=>g.id!==id); 
-                window.mostrarToast("Gasto removido!"); 
-                window.salvarNoStorage(); 
-            }
-        };
+        function renderAdminScouts() {
+            let html = '';
+            window.atletasCache.forEach(a => {
+                let multasListHtml = '';
+                if(a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(m => {
+                        if(a.pagamentos[m].multas) {
+                            a.pagamentos[m].multas.forEach((multa, idx) => {
+                                multasListHtml += `
+                                    <div class="bg-black/40 p-1 rounded my-1 border border-stone-800 flex justify-between items-center text-[10px] gap-1">
+                                        <span class="${multa.paga?'line-through text-emerald-400':'text-red-300'}">${multa.motivo} (R$ ${multa.valor})</span>
+                                        <div class="flex items-center gap-1">
+                                            <input type="checkbox" ${multa.paga?'checked':''} onchange="toggleStatusMulta('${a.id}', '${m}', ${idx}, this.checked)" class="accent-emerald-500 cursor-pointer">
+                                            <button onclick="cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'} ml-1">
+                                                <i class="fa-solid fa-box-archive text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        }
+                    });
+                }
 
-        window.excluirAtleta = function(id){ 
-            if(confirm("Remover atleta?")){ 
-                window.atletasCache=window.atletasCache.filter(a=>a.id!==id); 
-                window.mostrarToast("Atleta removido!"); 
-                window.salvarNoStorage(); 
-            }
+                html += `
+                    <tr class="border-b border-stone-800 text-center text-xs">
+                        <td class="p-2 font-bold text-left">${a.nome}</td>
+                        <td class="p-2 font-mono">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded font-black">-</button>
+                                <span class="min-w-[12px]">${a.gols||0}</span>
+                                <button onclick="alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded font-black">+</button>
+                            </div>
+                        </td>
+                        <td class="p-2 font-mono text-amber-500">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
+                                <span class="min-w-[12px]">${a.amarelos||0}</span>
+                                <button onclick="alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded font-black">+</button>
+                            </div>
+                        </td>
+                        <td class="p-2 font-mono text-red-500">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 text-stone-400 rounded font-black">-</button>
+                                <span class="min-w-[12px]">${a.vermelho||0}</span>
+                                <button onclick="alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded font-black">+</button>
+                            </div>
+                        </td>
+                        <td class="p-2">
+                            <button onclick="salvarHistoricoCartao('${a.id}')" class="bg-blue-600 text-white font-bold p-1 rounded text-[10px] uppercase">Arquivar</button>
+                        </td>
+                        <td class="p-2">
+                            <div class="flex gap-1 justify-center">
+                                <input type="text" id="motivo-${a.id}" placeholder="Motivo" class="bg-stone-800 p-1 rounded text-[10px] w-20 text-white border border-stone-700 outline-none">
+                                <input type="number" id="vmulta-${a.id}" placeholder="R$" class="bg-stone-800 p-1 rounded text-[10px] w-10 text-white border border-stone-700 outline-none">
+                                <button onclick="aplicarMultaAtleta('${a.id}')" class="bg-red-600 px-1 rounded text-white font-bold text-[10px]">OK</button>
+                            </div>
+                        </td>
+                        <td class="p-2 text-left">${multasListHtml || '<span class="text-stone-600 italic text-[10px]">Sem multas</span>'}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('adm-scouts-tabela').innerHTML = html;
+        }
+
+        function renderAdminSocios() {
+            let html = '';
+            window.sociosCache.forEach(s => {
+                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+            window.patrociniosCache.forEach(p => {
+                html += `<tr class="border-b border-stone-800"><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td><td class="p-2 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+            document.getElementById('adm-receitas-tabela').innerHTML = html;
+        }
+
+        window.processarGasto = function(e){
+            e.preventDefault(); const hj = new Date();
+            window.gastosCache.push({ id:'gasto_'+Date.now(), descricao: document.getElementById('gasto-descricao').value.trim(), valor: parseFloat(document.getElementById('gasto-valor').value), dataStr: `${hj.getDate()}/${hj.getMonth()+1}` });
+            document.getElementById('form-gasto').reset(); 
+            window.mostrarToast("Despesa computada!");
+            window.salvarNoStorage();
         };
+        window.excluirGasto = function(id){ if(confirm("Excluir despesa?")){ window.gastosCache=window.gastosCache.filter(g=>g.id!==id); window.mostrarToast("Gasto removido!"); window.salvarNoStorage(); }};
+        function renderAdminGastosTabela(){
+            let h=''; window.gastosCache.forEach(g=>{ h+=`<tr class="border-b border-stone-800"><td class="p-2 font-mono text-stone-500">${g.dataStr}</td><td class="p-2 font-bold uppercase text-xs">${g.descricao}</td><td class="p-2 text-right font-mono text-red-400 text-xs">R$ ${g.valor.toFixed(2)}</td><td class="p-2 text-center"><button onclick="excluirGasto('${g.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; });
+            document.getElementById('adm-gastos-tabela').innerHTML=h;
+        }
 
         window.loadAdmFinancas = function() {
             const mes = document.getElementById('adm-mes-filtro').value; let html = '';
             window.atletasCache.forEach(a => {
                 const d = (a.pagamentos && a.pagamentos[mes]) ? a.pagamentos[mes] : { pago: false, extra: 0 };
-                
-                const inputExtraId = `extra-${a.id}`;
-                const inputExtraElement = document.getElementById(inputExtraId);
-                const valorExtra = (inputExtraElement && document.activeElement === inputExtraElement) ? inputExtraElement.value : (d.extra || 0);
-
                 html += `
                     <tr class="border-b border-stone-800/40 text-center hover:bg-stone-800/10 text-xs">
                         <td class="p-1.5 font-bold text-left text-stone-300">${a.nome}</td>
                         <td class="p-1.5">
-                            <input type="checkbox" onchange="window.toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
+                            <input type="checkbox" onchange="toggleMensalidade('${a.id}', '${mes}', this.checked)" ${d.pago?'checked':''} class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer mx-auto">
                         </td>
                         <td class="p-1.5">
-                            <input type="number" id="${inputExtraId}" value="${valorExtra}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
+                            <input type="number" id="extra-${a.id}" value="${d.extra||0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none border border-stone-700/60 font-mono">
                         </td>
                         <td class="p-1.5">
-                            <button onclick="window.salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
+                            <button onclick="salvarAporteLinha('${a.id}', '${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1.5 py-1 rounded text-[9px] font-black transition">
                                 <i class="fa-solid fa-floppy-disk"></i>
                             </button>
                         </td>
@@ -1076,55 +1077,33 @@
             document.getElementById('adm-mensalidades-tabela').innerHTML = html;
         };
         
-        window.toggleMensalidade = function(id, mes, isChecked) { 
-            const a = window.atletasCache.find(j => j.id === id); 
-            if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
-            a.pagamentos[mes].pago = isChecked; 
-            window.mostrarToast("Mensalidade salva!"); 
-            window.salvarNoStorage(); 
-        };
-
-        window.salvarAporteLinha = function(id, mes) { 
-            const val = document.getElementById(`extra-${id}`).value; 
-            const a = window.atletasCache.find(j => j.id === id); 
-            if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
-            a.pagamentos[mes].extra = parseFloat(val || 0); 
-            window.mostrarToast("Aporte salvo!"); 
-            window.salvarNoStorage(); 
-        };
-
-        window.logoutAdmin = function(){ 
-            window.isAdminLogado = false; 
-            tokenAdmin = null; 
-            document.getElementById('admin-panel').classList.add('hidden'); 
-            document.getElementById('admin-badge').classList.add('hidden'); 
-            switchTab('dashboard'); 
-        };
+        window.toggleMensalidade = function(id, mes, isChecked) { const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].pago = isChecked; window.mostrarToast("Mensalidade atualizada!"); window.salvarNoStorage(); };
+        window.salvarAporteLinha = function(id, mes) { const val = document.getElementById(`extra-${id}`).value; const a = window.atletasCache.find(j => j.id === id); if(!a.pagamentos) a.pagamentos = {}; if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; a.pagamentos[mes].extra = parseFloat(val || 0); window.mostrarToast("Aporte atualizado!"); window.salvarNoStorage(); };
+        window.cadastrarAtleta = function(e){ e.preventDefault(); window.atletasCache.push({ id:'atleta_'+Date.now(), nome:document.getElementById('cad-nome').value.trim(), camisa:parseInt(document.getElementById('cad-camisa').value), time:document.getElementById('cad-time').value, gols:0, amarelos:0, vermelho:0, pagamentos:{} }); document.getElementById('form-cadastro-atleta').reset(); window.mostrarToast("Jogador inscrito!"); window.salvarNoStorage(); };
+        window.excluirAtleta = function(id){ if(confirm("Remover atleta?")){ window.atletasCache=window.atletasCache.filter(a=>a.id!==id); window.mostrarToast("Atleta removido!"); window.salvarNoStorage(); }};
+        function renderAdminAtletas(){ let h=''; window.atletasCache.forEach(a=>{ h+=`<tr class="border-b border-stone-800 text-xs"><td class="p-2.5 font-bold">${a.nome} (${a.time})</td><td class="p-2.5 text-center font-mono">#${a.camisa}</td><td class="p-2.5 text-center"><button onclick="excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`; }); document.getElementById('adm-atletas-tabela').innerHTML=h; }
+        window.autenticarAdmin = function(e){ e.preventDefault(); if(document.getElementById('login-user').value==='veteranos07'&&document.getElementById('login-pass').value==='veteranos07'){ window.isAdminLogado=true; document.getElementById('login-modal').classList.add('hidden'); document.getElementById('admin-badge').classList.remove('hidden'); switchTab('admin-panel'); window.renderizarTudo(); }else{ document.getElementById('login-erro').classList.remove('hidden'); }};
+        window.logoutAdmin = function(){ window.isAdminLogado=false; document.getElementById('admin-panel').classList.add('hidden'); document.getElementById('admin-badge').classList.add('hidden'); switchTab('dashboard'); };
 
         function iniciarContagemRegressiva() {
+            const dataProximoJogo = new Date("May 24, 2026 06:15:00").getTime();
+            
             setInterval(() => {
-                const agora = new Date();
-                const proximoJogo = new Date();
-                
-                const diasAteDomingo = (7 - agora.getDay()) % 7;
-                proximoJogo.setDate(agora.getDate() + (diasAteDomingo === 0 && agora.getHours() >= 9 ? 7 : diasAteDomingo));
-                proximoJogo.setHours(6, 15, 0, 0);
+                const agora = new Date().getTime();
+                const diferenca = dataProximoJogo - agora;
 
-                const diferenca = proximoJogo.getTime() - agora.getTime();
-
-                if (agora.getDay() === 0 && agora.getHours() >= 6 && agora.getHours() < 9) {
+                if (diferenca < 0) {
                     document.getElementById("cronometro-jogo").innerText = "BABA EM ANDAMENTO!";
                     return;
                 }
 
                 const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
                 const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
+                const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
 
-                document.getElementById("cronometro-jogo").innerText = `${dias}d ${horas}h ${minutes}m`;
-            }, 1000);
+                document.getElementById("cronometro-jogo").innerText = 
+                    `${dias}d ${horas}h ${minutos}m`;
+            }, 60000); // Atualiza de minuto em minuto por ser minimalista
         }
 
         carregarDadosIniciais();
@@ -1137,6 +1116,13 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
+
+            const topbar = document.getElementById('main-topbar');
+            if (tabId === 'dashboard') {
+                topbar.style.display = 'block';
+            } else {
+                topbar.style.display = 'none';
+            }
 
             const btns = document.querySelectorAll('.fixed.bottom-0 button');
             btns.forEach(b => b.className = "flex flex-col items-center justify-center w-14 hover:text-stone-200 transition text-stone-500");
