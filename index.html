@@ -1201,10 +1201,16 @@
         
         function renderAdminAtletas() { 
             let html = ''; 
-            window.atletasCache.forEach(a => { 
-                html += `<tr class="border-b border-stone-800 text-xs">
-                    <td class="p-2.5 font-bold">${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</td>
-                    <td class="p-2.5 text-center font-mono">#${a.camisa}</td>
+            window.atletasCache.forEach(a => {
+                const isFlu = a.time === 'FLUMINENSE';
+                const rowBg = isFlu ? 'bg-red-950/60 border-red-900' : 'bg-stone-900/60 border-stone-700';
+                const nameColor = isFlu ? 'text-red-300' : 'text-white';
+                const badge = isFlu
+                    ? '<span class="ml-1 bg-red-700 text-white text-[9px] px-1.5 py-0.5 rounded font-black">FLU</span>'
+                    : '<span class="ml-1 bg-stone-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black">BOTA</span>';
+                html += `<tr class="border-b ${rowBg} text-xs">
+                    <td class="p-2.5 font-bold ${nameColor}">${a.nome}${badge}</td>
+                    <td class="p-2.5 text-center font-mono text-stone-300">#${a.camisa}</td>
                     <td class="p-2.5 text-center"><button onclick="window.excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`; 
             }); 
@@ -1290,8 +1296,14 @@
                     });
                 }
                 
-                html += `<tr class="border-b border-stone-800 text-center text-xs">
-                    <td class="p-2 font-bold text-left">${a.nome}</td>
+                const isFlu = a.time === 'FLUMINENSE';
+                const rowBg = isFlu ? 'bg-red-950/60 border-red-900' : 'bg-stone-900/60 border-stone-700';
+                const nameColor = isFlu ? 'text-red-300 font-black' : 'text-white font-bold';
+                const badge = isFlu
+                    ? '<span class="ml-1 bg-red-700 text-white text-[9px] px-1.5 py-0.5 rounded font-black">FLU</span>'
+                    : '<span class="ml-1 bg-stone-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black">BOTA</span>';
+                html += `<tr class="border-b ${rowBg} text-center text-xs">
+                    <td class="p-2 text-left ${nameColor}">${a.nome}${badge}</td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded">-</button><span>${a.gols || 0}</span><button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded">+</button></div></td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-amber-500">${a.amarelos || 0}</span><button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded">+</button></div></td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-red-500">${a.vermelho || 0}</span><button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded">+</button></div></td>
