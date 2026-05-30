@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>BABA VETERANOS - Flu vs Bota</title>
     
+    <!-- PWA Support -->
+    <meta name="theme-color" content="#064e3b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Baba Veteranos">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
@@ -396,7 +402,7 @@
         </div>
 
         <!-- ADMIN PANEL -->
-        <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
+        <div id="admin-panel" class="tab-content space-y-6 pt-4">
             <div class="bg-stone-950 border-2 border-amber-500 p-4 rounded-2xl flex justify-between items-center shadow-xl">
                 <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
                 <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black rounded-lg uppercase transition">Fechar</button>
@@ -646,6 +652,10 @@
         let toastTimeout = null;
         let syncEmAndamento = false;
         
+        function getMesAtual() {
+            return String(new Date().getMonth() + 1).padStart(2, '0');
+        }
+        
         const mesesNomes = { 
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -762,11 +772,13 @@
                 const data = snapshot.val();
                 
                 if (data) {
-                    window.atletasCache = data.atletas || [];
-                    window.gastosCache = data.gastos || [];
-                    window.sociosCache = data.socios || [];
-                    window.patrociniosCache = data.patrocinios || [];
-                    window.historicoPlacares = data.historicoPlacares || [];
+                    
+                    const toArray = v => v ? (Array.isArray(v) ? v : Object.values(v)).filter(Boolean) : [];
+                    window.atletasCache = toArray(data.atletas);
+                    window.gastosCache = toArray(data.gastos);
+                    window.sociosCache = toArray(data.socios);
+                    window.patrociniosCache = toArray(data.patrocinios);
+                    window.historicoPlacares = toArray(data.historicoPlacares);
                     window.partidaEstatisticas = data.partidaEstatisticas || { 
                         placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
                     };
@@ -883,11 +895,12 @@
             const filtro = document.getElementById('artilharia-filtro')?.value || 'geral';
             let artilheiros = [...window.atletasCache];
             if (filtro !== 'geral') artilheiros = artilheiros.filter(a => a.time === filtro);
+            artilheiros = artilheiros.filter(a => (a.gols || 0) > 0);
             artilheiros.sort((a, b) => (b.gols || 0) - (a.gols || 0));
             
             let artilhariaHtml = '';
             artilheiros.slice(0, 10).forEach((a, idx) => {
-                if ((a.gols || 0) > 0) {
+                if (true) {
                     artilhariaHtml += `<li class="flex justify-between py-2 border-b border-stone-800/60 items-center">
                         <span><span class="font-mono text-stone-500 mr-2">${idx+1}º</span>
                         <strong>${a.nome}</strong> <span class="text-[10px] text-gray-400">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
@@ -902,7 +915,7 @@
             let pendentesHtml = '', suspensosHtml = '';
             window.atletasCache.forEach(a => {
                 let debito = 0;
-                const pagoMes = a.pagamentos?.["05"]?.pago;
+                const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
                 if (!pagoMes) debito += 25;
                 
                 if (a.pagamentos) {
@@ -955,7 +968,7 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.["05"]?.pago;
+                const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
@@ -1229,9 +1242,9 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos["05"]) a.pagamentos["05"] = { pago: false, extra: 0, multas: [] };
+            if (!a.pagamentos[getMesAtual()]) a.pagamentos[getMesAtual()] = { pago: false, extra: 0, multas: [] };
             
-            a.pagamentos["05"].multas.push({ motivo, valor, paga: false });
+            a.pagamentos[getMesAtual()].multas.push({ motivo, valor, paga: false });
             document.getElementById(`motivo-${id}`).value = '';
             document.getElementById(`vmulta-${id}`).value = '';
             window.mostrarToast("Multa aplicada!");
@@ -1429,7 +1442,6 @@
         
         window.logoutAdmin = function() { 
             window.isAdminLogado = false; 
-            document.getElementById('admin-panel')?.classList.add('hidden'); 
             document.getElementById('admin-badge')?.classList.add('hidden'); 
             switchTab('dashboard'); 
         };
@@ -1443,8 +1455,7 @@
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
             
-            const topbar = document.getElementById('main-topbar');
-            if (topbar) topbar.style.display = (tabId === 'dashboard') ? 'flex' : 'none';
+            // topbar sempre visivel em todas as abas
             
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
                 b.className = "flex flex-col items-center justify-center w-14 hover:text-stone-200 transition text-stone-500";
@@ -1483,21 +1494,34 @@
             if (e.target === this) closeAdminModal();
         });
         
-        function iniciarContagemRegressiva() {
-            const dataJogo = new Date("May 24, 2026 06:15:00").getTime();
+        let _cronometroInterval = null;
+        function iniciarContagemRegressiva(dataAlvo) {
+            if (_cronometroInterval) clearInterval(_cronometroInterval);
+            let dataJogo;
+            if (dataAlvo) {
+                dataJogo = new Date(dataAlvo).getTime();
+            } else {
+                const agora = new Date();
+                const diaSemana = agora.getDay();
+                const diasAteDomingo = diaSemana === 0 ? 7 : (7 - diaSemana);
+                const proximoDomingo = new Date(agora);
+                proximoDomingo.setDate(agora.getDate() + diasAteDomingo);
+                proximoDomingo.setHours(6, 15, 0, 0);
+                dataJogo = proximoDomingo.getTime();
+            }
             const atualizar = () => {
                 const agora = new Date().getTime();
                 const diff = dataJogo - agora;
                 const crono = document.getElementById("cronometro-jogo");
                 if (!crono) return;
-                if (diff < 0) { crono.innerText = "BABA EM ANDAMENTO!"; return; }
-                const dias = Math.floor(diff / (86400000));
+                if (diff <= 0) { crono.innerText = "BABA EM ANDAMENTO!"; return; }
+                const dias = Math.floor(diff / 86400000);
                 const horas = Math.floor((diff % 86400000) / 3600000);
                 const minutos = Math.floor((diff % 3600000) / 60000);
-                crono.innerText = `${dias}d ${horas}h ${minutos}m`;
+                crono.innerText = `${dias}d ${horas.toString().padStart(2,'0')}h ${minutos.toString().padStart(2,'0')}m`;
             };
             atualizar();
-            setInterval(atualizar, 60000);
+            _cronometroInterval = setInterval(atualizar, 30000);
         }
         
         // =====================================================
@@ -1505,7 +1529,7 @@
         // =====================================================
         
         if (inicializarFirebase()) carregarDadosIniciais();
-        iniciarContagemRegressiva();
+        iniciarContagemRegressiva(null);
         
         console.log('BABA VETERANOS - Sistema inicializado');
         console.log('Regras de segurança integradas e validadas');
