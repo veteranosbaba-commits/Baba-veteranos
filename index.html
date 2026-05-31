@@ -462,7 +462,7 @@
                             <input type="text" id="socio-nome" placeholder="Nome" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
                                 <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
-                                    <option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option>
+                                    <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
                                 </select>
                                 <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
@@ -554,7 +554,7 @@
                         <h4 class="font-bold text-emerald-400 text-xs uppercase">Mensalidades</h4>
                         <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
                             <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                            <option value="04">Abril</option><option value="05" selected>Maio</option><option value="06">Junho</option>
+                            <option value="04">Abril</option><option value="05" selected>Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -901,9 +901,13 @@
             let artilhariaHtml = '';
             artilheiros.slice(0, 10).forEach((a, idx) => {
                 if (true) {
+                    const corNomeArt = a.time === 'FLUMINENSE' ? 'text-red-400' : 'text-white';
+                    const badgeArt = a.time === 'FLUMINENSE'
+                        ? '<span class="ml-1 bg-red-800 text-red-200 text-[9px] px-1 py-0.5 rounded font-black">FLU</span>'
+                        : '<span class="ml-1 bg-stone-700 text-white text-[9px] px-1 py-0.5 rounded font-black">BOTA</span>';
                     artilhariaHtml += `<li class="flex justify-between py-2 border-b border-stone-800/60 items-center">
                         <span><span class="font-mono text-stone-500 mr-2">${idx+1}º</span>
-                        <strong>${a.nome}</strong> <span class="text-[10px] text-gray-400">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
+                        <strong class="${corNomeArt}">${a.nome}</strong>${badgeArt}</span>
                         <span class="font-bold text-emerald-400 font-mono"><i class="fa-solid fa-soccer-ball text-[11px] mr-1 text-stone-400"></i>${a.gols}</span>
                     </li>`;
                 }
@@ -925,15 +929,23 @@
                 }
                 
                 if (debito > 0) {
-                    pendentesHtml += `<li class="flex justify-between py-2 items-center text-stone-300">
-                        <span>${a.nome} <span class="text-[10px] text-stone-400">(${a.time})</span></span>
+                    const corPend = a.time === 'FLUMINENSE' ? 'text-red-400 font-black' : 'text-white font-bold';
+                    const badgePend = a.time === 'FLUMINENSE'
+                        ? '<span class="ml-1 bg-red-800 text-red-200 text-[9px] px-1 py-0.5 rounded font-black">FLU</span>'
+                        : '<span class="ml-1 bg-stone-700 text-white text-[9px] px-1 py-0.5 rounded font-black">BOTA</span>';
+                    pendentesHtml += `<li class="flex justify-between py-2 items-center">
+                        <span class="${corPend}">${a.nome}${badgePend}</span>
                         <span class="font-black text-[11px] text-red-400 font-mono">R$ ${debito.toFixed(2)}</span>
                     </li>`;
                 }
                 
                 if ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) {
+                    const corSusp = a.time === 'FLUMINENSE' ? 'text-red-400 font-black' : 'text-white font-bold';
+                    const badgeSusp = a.time === 'FLUMINENSE'
+                        ? '<span class="ml-1 bg-red-800 text-red-200 text-[9px] px-1 py-0.5 rounded font-black">FLU</span>'
+                        : '<span class="ml-1 bg-stone-700 text-white text-[9px] px-1 py-0.5 rounded font-black">BOTA</span>';
                     suspensosHtml += `<li class="flex justify-between py-2 items-center">
-                        <span>${a.nome}</span>
+                        <span class="${corSusp}">${a.nome}${badgeSusp}</span>
                         <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho' : '🟨 3 Amarelos'}</span>
                     </li>`;
                 }
@@ -969,9 +981,12 @@
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
                 const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
-                html += `<tr class="hover:bg-stone-800/30 transition text-center">
+                const isFluLista = a.time === 'FLUMINENSE';
+                const rowBgLista = isFluLista ? 'bg-red-950/40 hover:bg-red-950/60' : 'hover:bg-stone-800/30';
+                const nameColorLista = isFluLista ? 'text-red-300 font-black' : 'text-white font-bold';
+                html += `<tr class="transition text-center ${rowBgLista}">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
-                    <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
+                    <td class="p-1.5 text-left truncate ${nameColorLista}">${a.nome || 'Sem nome'}</td>
                     <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
                     <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
                     <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
@@ -996,9 +1011,16 @@
             if (achados.length) {
                 let html = '';
                 achados.forEach(a => {
-                    html += `<div class="p-4 bg-stone-800 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-2 shadow-md">
-                        <p class="font-black text-stone-200 text-sm flex justify-between">
-                            <span>${a.nome}</span><span class="text-amber-400 font-mono">#${a.camisa}</span>
+                    const isFluBusca = a.time === 'FLUMINENSE';
+                    const borderBusca = isFluBusca ? 'border-red-500' : 'border-stone-400';
+                    const bgBusca = isFluBusca ? 'bg-red-950/50' : 'bg-stone-800';
+                    const nameColorBusca = isFluBusca ? 'text-red-300' : 'text-white';
+                    const badgeBusca = isFluBusca
+                        ? '<span class="bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">FLU</span>'
+                        : '<span class="bg-stone-600 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">BOTA</span>';
+                    html += `<div class="p-4 ${bgBusca} rounded-xl border-l-4 ${borderBusca} text-xs space-y-2 shadow-md">
+                        <p class="font-black text-sm flex justify-between items-center">
+                            <span class="${nameColorBusca}">${a.nome}${badgeBusca}</span><span class="text-amber-400 font-mono">#${a.camisa}</span>
                         </p>
                         <p class="text-[10px] text-stone-400 font-bold uppercase">Time: ${a.time}</p>
                         <div class="grid grid-cols-2 gap-2 text-stone-300">
@@ -1302,8 +1324,14 @@
                 const badge = isFlu
                     ? '<span class="ml-1 bg-red-700 text-white text-[9px] px-1.5 py-0.5 rounded font-black">FLU</span>'
                     : '<span class="ml-1 bg-stone-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black">BOTA</span>';
-                html += `<tr class="border-b ${rowBg} text-center text-xs">
-                    <td class="p-2 text-left ${nameColor}">${a.nome}${badge}</td>
+                const isFluScout = a.time === 'FLUMINENSE';
+                const rowBgScout = isFluScout ? 'bg-red-950/60 border-red-900' : 'bg-stone-900/60 border-stone-700';
+                const nameColorScout = isFluScout ? 'text-red-300 font-black' : 'text-white font-bold';
+                const badgeScout = isFluScout
+                    ? '<span class="ml-1 bg-red-700 text-white text-[9px] px-1.5 py-0.5 rounded font-black">FLU</span>'
+                    : '<span class="ml-1 bg-stone-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black">BOTA</span>';
+                html += `<tr class="border-b ${rowBgScout} text-center text-xs">
+                    <td class="p-2 text-left ${nameColorScout}">${a.nome}${badgeScout}</td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-5 h-5 bg-stone-800 text-red-400 rounded">-</button><span>${a.gols || 0}</span><button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-5 h-5 bg-stone-800 text-emerald-400 rounded">+</button></div></td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-amber-500">${a.amarelos || 0}</span><button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-5 h-5 bg-stone-800 text-amber-500 rounded">+</button></div></td>
                     <td class="p-2"><div class="flex items-center justify-center gap-1"><button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-5 h-5 bg-stone-800 rounded">-</button><span class="text-red-500">${a.vermelho || 0}</span><button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-5 h-5 bg-stone-800 text-red-500 rounded">+</button></div></td>
