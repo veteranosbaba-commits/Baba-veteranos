@@ -1399,11 +1399,30 @@
         window.salvarHistoricoCartao = function(id) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
-            a.histAmarelos = (a.histAmarelos || 0) + (a.amarelos || 0);
-            a.histVermelhos = (a.histVermelhos || 0) + (a.vermelho || 0);
-            a.amarelos = 0;
-            a.vermelho = 0;
-            window.mostrarToast("Cartões arquivados!");
+            
+            const amarelos = a.amarelos || 0;
+            const vermelho = a.vermelho || 0;
+            
+            // Validação: só arquiva se tiver atingido o máximo (3 amarelos OU 1 vermelho)
+            if (vermelho < 1 && amarelos < 3) {
+                alert('Não é possível arquivar ainda!\n\n🟨 Amarelos: ' + amarelos + '/3\n🟥 Vermelho: ' + vermelho + '/1\n\nArquive somente quando atingir o máximo (3 amarelos ou 1 vermelho).');
+                return;
+            }
+            
+            // Se tiver vermelho, arquiva apenas o vermelho e zera só ele
+            if (vermelho >= 1) {
+                a.histVermelhos = (a.histVermelhos || 0) + 1;
+                a.vermelho = 0;
+                // Amarelos abaixo de 3 permanecem (não foram atingidos)
+                window.mostrarToast("🟥 Cartão vermelho arquivado!");
+            }
+            // Se tiver 3 amarelos (sem vermelho), arquiva os 3 amarelos
+            else if (amarelos >= 3) {
+                a.histAmarelos = (a.histAmarelos || 0) + amarelos;
+                a.amarelos = 0;
+                window.mostrarToast("🟨 3 Amarelos arquivados!");
+            }
+            
             window.salvarNoStorage();
         };
         
