@@ -6,7 +6,7 @@
     <title>BABA VETERANOS - Flu vs Bota</title>
     
     <!-- PWA Support -->
-    <meta name="theme-color" content="#064e3b">
+    <meta name="theme-color" content="#064e3b" id="meta-theme-color">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,12 +38,125 @@
             display: block; 
         }
         
+        /* ===== SISTEMA DE TEMAS ===== */
+        :root {
+            --bg-primary: #1c1917;
+            --bg-secondary: #292524;
+            --bg-card: rgba(0,0,0,0.9);
+            --bg-card2: rgba(28,25,23,0.95);
+            --border-color: #44403c;
+            --text-primary: #f5f5f4;
+            --text-secondary: #a8a29e;
+            --text-muted: #78716c;
+            --topbar-bg: rgba(0,0,0,0.92);
+            --bottom-nav-bg: rgba(0,0,0,0.97);
+            --input-bg: #292524;
+            --table-header-bg: #292524;
+            --hover-bg: rgba(255,255,255,0.05);
+            --shadow: 0 4px 24px rgba(0,0,0,0.5);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f0fdf4;
+            --bg-secondary: #dcfce7;
+            --bg-card: rgba(255,255,255,0.97);
+            --bg-card2: rgba(240,253,244,0.97);
+            --border-color: #bbf7d0;
+            --text-primary: #14532d;
+            --text-secondary: #166534;
+            --text-muted: #4ade80;
+            --topbar-bg: rgba(20,83,45,0.97);
+            --bottom-nav-bg: rgba(20,83,45,0.98);
+            --input-bg: #dcfce7;
+            --table-header-bg: #bbf7d0;
+            --hover-bg: rgba(0,0,0,0.04);
+            --shadow: 0 4px 24px rgba(0,0,0,0.12);
+        }
+        
+        body {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
         .soccer-bg {
-            background-color: #064e3b;
-            background-image: radial-gradient(#047857 1px, transparent 0), 
-                            radial-gradient(#047857 1px, transparent 0);
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(rgba(16,185,129,0.15) 1px, transparent 0),
+                            radial-gradient(rgba(16,185,129,0.15) 1px, transparent 0);
             background-size: 24px 24px;
             background-position: 0 0, 12px 12px;
+        }
+        
+        [data-theme="light"] .soccer-bg {
+            background-image: radial-gradient(rgba(16,185,129,0.25) 1px, transparent 0),
+                            radial-gradient(rgba(16,185,129,0.25) 1px, transparent 0);
+        }
+        
+        /* Cards */
+        [data-theme="light"] .bg-black\/90,
+        [data-theme="light"] .bg-black\/95,
+        [data-theme="light"] .bg-black\/80,
+        [data-theme="light"] .bg-black\/40 {
+            background-color: var(--bg-card) !important;
+        }
+        [data-theme="light"] .bg-stone-900\/95,
+        [data-theme="light"] .bg-stone-900\/60,
+        [data-theme="light"] .bg-stone-900\/40,
+        [data-theme="light"] .bg-stone-900,
+        [data-theme="light"] .bg-stone-950,
+        [data-theme="light"] .bg-stone-800 {
+            background-color: var(--bg-card) !important;
+        }
+        [data-theme="light"] .border-stone-700,
+        [data-theme="light"] .border-stone-800,
+        [data-theme="light"] .border-stone-600 {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] .text-gray-100,
+        [data-theme="light"] .text-gray-200,
+        [data-theme="light"] .text-stone-300,
+        [data-theme="light"] .text-stone-200,
+        [data-theme="light"] .text-white {
+            color: var(--text-primary) !important;
+        }
+        [data-theme="light"] .text-stone-400,
+        [data-theme="light"] .text-stone-500,
+        [data-theme="light"] .text-gray-400 {
+            color: var(--text-secondary) !important;
+        }
+        [data-theme="light"] .divide-stone-800 > * {
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] nav#main-topbar {
+            background-color: var(--topbar-bg) !important;
+        }
+        [data-theme="light"] #bottom-nav {
+            background-color: var(--bottom-nav-bg) !important;
+        }
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="light"] thead tr {
+            background-color: var(--table-header-bg) !important;
+        }
+        [data-theme="light"] tbody tr:hover {
+            background-color: var(--hover-bg) !important;
+        }
+        [data-theme="light"] .bg-stone-950.border-2.border-amber-500 {
+            background-color: #fefce8 !important;
+        }
+        
+        /* Botão de tema */
+        #btn-tema {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        #btn-tema:active {
+            transform: scale(0.9);
         }
         
         @media (max-width: 640px) {
@@ -134,7 +247,7 @@
         }
     </style>
 </head>
-<body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
+<body class="font-sans pb-48 soccer-bg" id="app-body">
 
     <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
@@ -157,9 +270,14 @@
                 <i class="fa-solid fa-user-gear"></i> ADMIN 
                 <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
             </div>
-            <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
-                <span class="hidden sm:inline">Online</span>
+            <div class="flex items-center gap-2">
+                <button id="btn-tema" onclick="window.alternarTema()" title="Alternar tema" class="text-emerald-400 hover:text-emerald-300 transition p-1 rounded-lg">
+                    <i id="icon-tema" class="fa-solid fa-moon text-sm"></i>
+                </button>
+                <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i>
+                    <span class="hidden sm:inline">Online</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -1584,6 +1702,36 @@
             atualizar();
             _cronometroInterval = setInterval(atualizar, 30000);
         }
+        
+        // =====================================================
+        // SISTEMA DE TEMAS
+        // =====================================================
+        
+        window.alternarTema = function() {
+            const body = document.getElementById('app-body');
+            const iconTema = document.getElementById('icon-tema');
+            const temaAtual = body.getAttribute('data-theme');
+            if (temaAtual === 'light') {
+                body.removeAttribute('data-theme');
+                if (iconTema) { iconTema.className = 'fa-solid fa-moon text-sm'; }
+                localStorage.setItem('baba-tema', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+                if (iconTema) { iconTema.className = 'fa-solid fa-sun text-sm text-amber-400'; }
+                localStorage.setItem('baba-tema', 'light');
+            }
+        };
+        
+        // Carregar tema salvo
+        (function() {
+            const temaSalvo = localStorage.getItem('baba-tema');
+            const body = document.getElementById('app-body');
+            const iconTema = document.getElementById('icon-tema');
+            if (temaSalvo === 'light') {
+                body.setAttribute('data-theme', 'light');
+                if (iconTema) { iconTema.className = 'fa-solid fa-sun text-sm text-amber-400'; }
+            }
+        })();
         
         // =====================================================
         // INICIALIZAÇÃO
