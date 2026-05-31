@@ -1426,12 +1426,18 @@
         }
         
         window.loadAdmFinancas = function() {
-            const mes = document.getElementById('adm-mes-filtro')?.value || '05';
+            const mes = document.getElementById('adm-mes-filtro')?.value || getMesAtual();
             let html = '';
             window.atletasCache.forEach(a => {
                 const dados = a.pagamentos?.[mes] || { pago: false, extra: 0 };
-                html += `<tr class="border-b border-stone-800/40 text-center text-xs">
-                    <td class="p-1.5 font-bold text-left">${a.nome}</td>
+                const isFlu = a.time === 'FLUMINENSE';
+                const rowBg = isFlu ? 'bg-red-950/50 border-red-900/50' : 'bg-stone-900/40 border-stone-800/40';
+                const nameColor = isFlu ? 'text-red-300 font-black' : 'text-white font-bold';
+                const badge = isFlu
+                    ? '<span class="ml-1 bg-red-700 text-white text-[9px] px-1.5 py-0.5 rounded font-black">FLU</span>'
+                    : '<span class="ml-1 bg-stone-600 text-white text-[9px] px-1.5 py-0.5 rounded font-black">BOTA</span>';
+                html += `<tr class="border-b ${rowBg} text-center text-xs">
+                    <td class="p-1.5 text-left ${nameColor}">${a.nome}${badge}</td>
                     <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
                     <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${dados.extra || 0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
                     <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-floppy-disk"></i></button></td>
