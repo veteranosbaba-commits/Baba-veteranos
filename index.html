@@ -878,39 +878,66 @@
                 });
         };
         
-        async function carregarDadosIniciais() {
+        function carregarDadosIniciais() {
             if (!window.firebaseInicializado) {
                 if (!inicializarFirebase()) return;
             }
             
             document.getElementById('loading-overlay')?.classList.remove('hidden');
             
-            try {
-                const snapshot = await window.dbRef.once('value');
-                const data = snapshot.val();
-                
-                if (data) {
-                    
+            // on('value') escuta em tempo real — atualiza automaticamente em todos os aparelhos
+            window.dbRef.on('value', function(snapshot) {
+                try {
+                    const data = snapshot.val();
                     const toArray = v => v ? (Array.isArray(v) ? v : Object.values(v)).filter(Boolean) : [];
-                    window.atletasCache = toArray(data.atletas);
-                    window.gastosCache = toArray(data.gastos);
-                    window.sociosCache = toArray(data.socios);
-                    window.patrociniosCache = toArray(data.patrocinios);
-                    window.historicoPlacares = toArray(data.historicoPlacares);
-                    window.partidaEstatisticas = data.partidaEstatisticas || { 
-                        placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
-                    };
-                    console.log('Dados carregados:', window.atletasCache.length, 'atletas');
-                } else {
-                    console.log('Sem dados, iniciando vazio');
+                    
+                    if (data) {
+                        window.atletasCache = toArray(data.atletas);
+                        window.gastosCache = toArray(data.gastos);
+                        window.sociosCache = toArray(data.socios);
+                        window.patrociniosCache = toArray(data.patrocinios);
+                        window.historicoPlacares = toArray(data.historicoPlacares);
+                        window.partidaEstatisticas = data.partidaEstatisticas || {
+                            placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0
+                        };
+                        if (window.partidaEstatisticas.proximoBaba) {
+                            iniciarContagemRegressiva(window.partidaEstatisticas.proximoBaba);
+                            const dt = new Date(window.partidaEstatisticas.proximoBaba + ':00');
+                            const d = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
+                            const h = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+                            const label = document.getElementById('proxima-data-label');
+                            if (label) label.textContent = '| Arena Coqueiros (' + d + ' às ' + h + ')';
+                            const admInput = document.getElementById('adm-data-proximo-baba');
+                            if (admInput) admInput.value = window.partidaEstatisticas.proximoBaba;
+                        }
+                        console.log('Dados sincronizados:', window.atletasCache.length, 'atletas');
+                    } else {
+                        window.atletasCache = [];
+                        window.gastosCache = [];
+                        window.sociosCache = [];
+                        window.patrociniosCache = [];
+                        window.historicoPlacares = [];
+                        window.partidaEstatisticas = { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
+                    }
+                    
+                    // Indicador online
+                    const syncEl = document.getElementById('sync-indicator');
+                    if (syncEl) syncEl.innerHTML = '<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
+                    
+                } catch (error) {
+                    console.error('Erro ao processar dados:', error);
+                    window.mostrarToast('Erro ao sincronizar!', true);
+                } finally {
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                    window.renderizarTudo();
                 }
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-                window.mostrarToast('Erro ao carregar dados!', true);
-            } finally {
+            }, function(error) {
+                console.error('Erro no listener Firebase:', error);
                 document.getElementById('loading-overlay')?.classList.add('hidden');
-                window.renderizarTudo();
-            }
+                const syncEl = document.getElementById('sync-indicator');
+                if (syncEl) syncEl.innerHTML = '<i class="fa-solid fa-circle text-[6px] text-red-500"></i> <span class="hidden sm:inline">Offline</span>';
+                window.mostrarToast('Sem conexão com o servidor!', true);
+            });
         }
         
         // =====================================================
