@@ -595,7 +595,7 @@
                     <i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:
                 </span>
                 <span id="cronometro-jogo" class="text-amber-400 font-mono font-black bg-stone-950 px-1.5 py-0.5 rounded border border-emerald-800/40">0d 00h 00m</span>
-                <span class="text-stone-400 text-[10px]">| Arena Coqueiros (24/05 às 06:15)</span>
+                <span id="proxima-data-label" class="text-stone-400 text-[10px]">| Arena Coqueiros</span>
             </div>
         </div>
 
@@ -1555,12 +1555,27 @@
                 proximoDomingo.setHours(6, 15, 0, 0);
                 dataJogo = proximoDomingo.getTime();
             }
+            // Atualizar label do rodapé com a data calculada
+            const dt = new Date(dataJogo);
+            const d = `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`;
+            const h = `${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}`;
+            const label = document.getElementById('proxima-data-label');
+            if (label) label.textContent = `| Arena Coqueiros (${d} às ${h})`;
+            
             const atualizar = () => {
                 const agora = new Date().getTime();
                 const diff = dataJogo - agora;
                 const crono = document.getElementById("cronometro-jogo");
                 if (!crono) return;
-                if (diff <= 0) { crono.innerText = "BABA EM ANDAMENTO!"; return; }
+                if (diff <= 0) {
+                    crono.innerText = "BABA EM ANDAMENTO!";
+                    // Quando o baba começa, agenda próximo domingo automaticamente
+                    if (!dataAlvo) {
+                        clearInterval(_cronometroInterval);
+                        setTimeout(() => iniciarContagemRegressiva(null), 86400000); // tenta no dia seguinte
+                    }
+                    return;
+                }
                 const dias = Math.floor(diff / 86400000);
                 const horas = Math.floor((diff % 86400000) / 3600000);
                 const minutos = Math.floor((diff % 3600000) / 60000);
