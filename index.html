@@ -695,17 +695,7 @@
 
     <!-- RODAPÉ FIXO -->
     <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
-        <div class="bg-stone-950 border-b border-stone-800 px-4 py-2 flex items-center justify-between gap-3 text-xs">
-            <div class="flex items-center gap-2 truncate">
-                <span class="bg-gradient-to-r from-amber-500 to-red-500 text-black font-black text-[9px] px-1.5 py-0.5 rounded uppercase shrink-0">
-                    <i class="fa-solid fa-bolt"></i> ODDS ALTAS
-                </span>
-                <p class="text-stone-300 font-medium text-[11px] truncate">Multiplique seus palpites da rodada!</p>
-            </div>
-            <button onclick="window.abrirAnuncio()" class="bg-amber-500 active:bg-amber-400 text-stone-950 px-3 py-1 rounded font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shrink-0 transition">
-                Acessar <i class="fa-solid fa-circle-arrow-right text-[11px]"></i>
-            </button>
-        </div>
+
 
         <div class="bg-emerald-950/90 border-b border-emerald-900/60 px-4 py-1.5 text-center text-xs">
             <div class="flex justify-center items-center gap-2 text-[11px] flex-wrap">
@@ -1748,29 +1738,6 @@
             atualizar();
             _cronometroInterval = setInterval(atualizar, 30000);
         }
-        
-        // =====================================================
-        // ANÚNCIO — abre em nova aba sem afetar o app
-        // =====================================================
-        
-        window.abrirAnuncio = function() {
-            try {
-                const nova = window.open('https://15A.com/?pid=1744505426', '_blank', 'noopener,noreferrer');
-                if (!nova || nova.closed || typeof nova.closed === 'undefined') {
-                    // Popup bloqueado — fallback: cria link temporário e clica
-                    const link = document.createElement('a');
-                    link.href = 'https://15A.com/?pid=1744505426';
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            } catch(e) {
-                // Último recurso
-                location.href = 'https://15A.com/?pid=1744505426';
-            }
-        };
         
         // =====================================================
         // SISTEMA DE TEMAS
