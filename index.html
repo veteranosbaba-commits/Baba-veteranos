@@ -1369,7 +1369,12 @@
         
         function renderAdminAtletas() { 
             let html = ''; 
-            window.atletasCache.forEach(a => {
+            // Ordenar por Time (FLU primeiro) e depois Nome
+            const ordenados = [...window.atletasCache].sort((a, b) => {
+                if (a.time !== b.time) return a.time === 'FLUMINENSE' ? -1 : 1;
+                return (a.nome || "").localeCompare(b.nome || "");
+            });
+            ordenados.forEach(a => {
                 const isFlu = a.time === 'FLUMINENSE';
                 const rowBg = isFlu ? 'bg-red-950/60 border-red-900' : 'bg-stone-900/60 border-stone-700';
                 const nameColor = isFlu ? 'text-red-300' : 'text-white';
