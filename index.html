@@ -490,7 +490,8 @@
 
         <!-- PENDÊNCIAS -->
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- INADIMPLENTES -->
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <div class="mb-4 pb-2 border-b border-stone-800">
                         <h4 class="font-black text-red-500 uppercase tracking-wide text-xs">
@@ -499,6 +500,7 @@
                     </div>
                     <ul id="dash-pendentes" class="divide-y divide-stone-800 text-sm max-h-80 overflow-y-auto"></ul>
                 </div>
+                <!-- SUSPENSOS -->
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <div class="mb-4 pb-2 border-b border-stone-800">
                         <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs">
@@ -507,6 +509,16 @@
                         <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">3 amarelos ou 1 vermelho</p>
                     </div>
                     <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm"></ul>
+                </div>
+                <!-- MULTAS ATIVAS -->
+                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                    <div class="mb-4 pb-2 border-b border-stone-800">
+                        <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs">
+                            <i class="fa-solid fa-receipt mr-2"></i>Multas Pendentes
+                        </h4>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Cartões e Disciplina</p>
+                    </div>
+                    <ul id="dash-multas" class="divide-y divide-stone-800 text-sm max-h-80 overflow-y-auto"></ul>
                 </div>
             </div>
         </div>
@@ -1091,12 +1103,38 @@
                         <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho' : '🟨 3 Amarelos'}</span>
                     </li>`;
                 }
+
+                // Lógica de Multas Ativas (Não pagas)
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(mes => {
+                        const mesObj = a.pagamentos[mes];
+                        if (mesObj.multas && mesObj.multas.length > 0) {
+                            mesObj.multas.forEach(m => {
+                                if (!m.paga) {
+                                    const corM = a.time === 'FLUMINENSE' ? 'text-red-400' : 'text-white';
+                                    multasHtml += `<li class="py-2 border-b border-stone-800/50">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <strong class="${corM} text-[11px]">${a.nome}</strong>
+                                            <span class="text-orange-400 font-mono font-bold text-[10px]">R$ ${Number(m.valor).toFixed(2)}</span>
+                                        </div>
+                                        <div class="flex justify-between text-[9px] text-stone-500 italic uppercase">
+                                            <span>${m.motivo}</span>
+                                            <span>${mesesNomes[mes]}</span>
+                                        </div>
+                                    </li>`;
+                                }
+                            });
+                        }
+                    });
+                }
             });
             
             const pendEl = document.getElementById('dash-pendentes');
             const suspEl = document.getElementById('dash-suspensos');
+            const multEl = document.getElementById('dash-multas');
             if (pendEl) pendEl.innerHTML = pendentesHtml || '<p class="text-xs text-emerald-400 p-2">Tudo em dia!</p>';
             if (suspEl) suspEl.innerHTML = suspensosHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhum suspenso.</p>';
+            if (multEl) multEl.innerHTML = multasHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhuma multa pendente.</p>';
         }
         
         window.filterTimeList = function(time) {
