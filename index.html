@@ -1056,8 +1056,9 @@
             let pendentesHtml = '', suspensosHtml = '';
             window.atletasCache.forEach(a => {
                 let debito = 0;
+                const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase());
                 const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
-                if (!pagoMes) debito += 25;
+                if (!pagoMes && !isIsento) debito += 25;
                 
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
