@@ -1069,7 +1069,7 @@
             const artEl = document.getElementById('dash-artilharia');
             if (artEl) artEl.innerHTML = artilhariaHtml || '<p class="text-xs text-stone-500 italic py-2">Nenhum gol computado.</p>';
             
-            let pendentesHtml = '', suspensosHtml = '';
+            let pendentesHtml = '', suspensosHtml = '', multasHtml = '';
             window.atletasCache.forEach(a => {
                 let debito = 0;
                 const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase());
