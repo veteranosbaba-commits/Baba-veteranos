@@ -1232,31 +1232,10 @@
                                 const p = a.pagamentos[mes];
                                 if (!p) return;
 
-                                // Mensalidade com Regra do Dia 15
+                                // Mensalidade: Se não está pago, consta como pendente independente do dia
                                 if (!p.pago && !isIsento) {
-                                    const hoje = new Date();
-                                    const diaAtual = hoje.getDate();
-                                    const mesAtualNum = hoje.getMonth() + 1; // 1-12
-                                    const anoAtual = hoje.getFullYear();
-                                    
-                                    const mesReg = parseInt(mes); // 1-12
-                                    
-                                    let deveMostrarPendencia = false;
-                                    
-                                    if (mesReg < mesAtualNum) {
-                                        // Meses passados sempre mostram pendência
-                                        deveMostrarPendencia = true;
-                                    } else if (mesReg === mesAtualNum) {
-                                        // Mês atual só mostra pendência após o dia 15
-                                        if (diaAtual > 15) {
-                                            deveMostrarPendencia = true;
-                                        }
-                                    }
-                                    
-                                    if (deveMostrarPendencia) {
-                                        const nomeMes = (window.mesesNomes && window.mesesNomes[mes]) ? window.mesesNomes[mes] : `Mês ${mes}`;
-                                        mensalidadesPendentes.push(nomeMes);
-                                    }
+                                    const nomeMes = (window.mesesNomes && window.mesesNomes[mes]) ? window.mesesNomes[mes] : `Mês ${mes}`;
+                                    mensalidadesPendentes.push(nomeMes);
                                 }
                                 
                                 // Multas
