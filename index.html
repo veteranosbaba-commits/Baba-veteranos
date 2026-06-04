@@ -1881,59 +1881,78 @@
         }
         
 
-        window.renderArquivados = function() {
+                window.renderArquivados = function() {
+            console.log("Renderizando arquivados...");
             const container = document.getElementById('lista-arquivados-container');
             if (!container) return;
             
-            let html = '';
+            let finalHtml = '';
             
+            if (!window.atletasCache || window.atletasCache.length === 0) {
+                container.innerHTML = '<p class="text-center text-stone-600 py-10 italic text-xs">Nenhum atleta carregado.</p>';
+                return;
+            }
+
             window.atletasCache.forEach(a => {
-                let temArquivo = false;
-                let subHtml = `<div class="bg-black/40 border border-stone-800 rounded-xl p-3 space-y-2">
-                    <div class="flex justify-between items-center border-b border-stone-800 pb-1 mb-2">
-                        <span class="font-black text-xs text-stone-300 uppercase">${a.nome}</span>
-                        <span class="text-[9px] text-stone-500 font-mono">#${a.camisa || '--'}</span>
-                    </div>`;
+                let temAlgumArquivo = false;
+                let sectionsHtml = '';
 
                 // 1. Cartões Arquivados (Histórico Acumulado)
-                if ((a.histAmarelos || 0) > 0 || (a.histVermelhos || 0) > 0) {
-                    temArquivo = true;
-                    subHtml += `<div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg">
-                        <div class="text-[10px] space-x-2">
-                            <span class="text-amber-500 font-bold">🟨 ${a.histAmarelos || 0} Amarelos</span>
-                            <span class="text-red-500 font-bold">🟥 ${a.histVermelhos || 0} Vermelhos</span>
-                        </div>
-                        <button onclick="window.limparHistoricoCartoes('${a.id}')" class="text-red-500 hover:text-red-400 p-1 transition">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                    </div>`;
+                const hAm = parseInt(a.histAmarelos || 0);
+                const hVm = parseInt(a.histVermelhos || 0);
+                
+                if (hAm > 0 || hVm > 0) {
+                    temAlgumArquivo = true;
+                    sectionsHtml += `
+                        <div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg border border-stone-800/50">
+                            <div class="text-[10px] flex gap-3">
+                                <span class="text-amber-500 font-black">🟨 ${hAm} AMARELOS</span>
+                                <span class="text-red-500 font-black">🟥 ${hVm} VERMELHOS</span>
+                            </div>
+                            <button onclick="window.limparHistoricoCartoes('${a.id}')" class="text-red-500 hover:text-red-400 p-1.5 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>`;
                 }
 
                 // 2. Multas Arquivadas
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         const mArq = a.pagamentos[mes].multasArquivadasHistorico;
-                        if (mArq && mArq.length > 0) {
-                            temArquivo = true;
-                            const totalM = mArq.reduce((s, v) => s + v, 0);
-                            subHtml += `<div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg">
-                                <div class="text-[10px]">
-                                    <span class="text-stone-400 uppercase font-bold">Multas (${(window.mesesNomes || {})[mes] || mes}):</span>
-                                    <span class="text-emerald-400 font-mono ml-1">R$ ${totalM.toFixed(2)}</span>
-                                </div>
-                                <button onclick="window.limparHistoricoMultas('${a.id}', '${mes}')" class="text-red-500 hover:text-red-400 p-1 transition">
-                                    <i class="fa-solid fa-trash-can text-xs"></i>
-                                </button>
-                            </div>`;
+                        if (mArq && Array.isArray(mArq) && mArq.length > 0) {
+                            temAlgumArquivo = true;
+                            const totalM = mArq.reduce((s, v) => s + parseFloat(v || 0), 0);
+                            const nomeMes = (window.mesesNomes || {})[mes] || ("Mês " + mes);
+                            
+                            sectionsHtml += `
+                                <div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg border border-stone-800/50">
+                                    <div class="text-[10px]">
+                                        <span class="text-stone-500 uppercase font-bold">MULTAS ${nomeMes}:</span>
+                                        <span class="text-emerald-400 font-black ml-1">R$ ${totalM.toFixed(2)}</span>
+                                    </div>
+                                    <button onclick="window.limparHistoricoMultas('${a.id}', '${mes}')" class="text-red-500 hover:text-red-400 p-1.5 transition">
+                                        <i class="fa-solid fa-trash-can text-xs"></i>
+                                    </button>
+                                </div>`;
                         }
                     });
                 }
 
-                subHtml += `</div>`;
-                if (temArquivo) html += subHtml;
+                if (temAlgumArquivo) {
+                    finalHtml += `
+                    <div class="bg-stone-950/40 border border-stone-800/60 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between items-center border-b border-stone-800 pb-2 mb-2">
+                            <span class="font-black text-[11px] text-amber-500 uppercase">${a.nome || 'SEM NOME'}</span>
+                            <span class="text-[9px] text-stone-600 font-mono font-bold">CAMISA #${a.camisa || '--'}</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${sectionsHtml}
+                        </div>
+                    </div>`;
+                }
             });
 
-            container.innerHTML = html || '<p class="text-center text-stone-600 py-10 italic text-xs">Nenhum item arquivado no momento.</p>';
+            container.innerHTML = finalHtml || '<div class="text-center py-10"><i class="fa-solid fa-box-open text-stone-800 text-3xl mb-2 block"></i><p class="text-stone-600 italic text-xs uppercase font-bold tracking-widest">Pasta Vazia</p><p class="text-[9px] text-stone-700 mt-1 uppercase">Nenhum histórico arquivado foi encontrado.</p></div>';
         };
 
         window.limparHistoricoCartoes = function(atletaId) {
