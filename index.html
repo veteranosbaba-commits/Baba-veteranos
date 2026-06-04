@@ -787,6 +787,24 @@
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
+
+        function isMensalidadePendente(atleta, mesId) {
+            const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes((atleta.nome || "").toUpperCase());
+            if (isIsento) return false;
+
+            const pg = atleta.pagamentos?.[mesId];
+            if (pg && pg.pago) return false;
+
+            const hoje = new Date();
+            const diaAtual = hoje.getDate();
+            const mesAtualNum = hoje.getMonth() + 1;
+            const mesAlvoNum = parseInt(mesId);
+
+            if (mesAlvoNum < mesAtualNum) return true;
+            if (mesAlvoNum === mesAtualNum && diaAtual > 15) return true;
+            
+            return false;
+        }
         
         const firebaseConfig = {
             apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
@@ -1119,7 +1137,7 @@
                                         </div>
                                         <div class="flex justify-between text-[9px] text-stone-500 italic uppercase">
                                             <span>${m.motivo}</span>
-                                            <span>${mesesNomes[mes]}</span>
+                                            <span>${(window.mesesNomes || {})[mes] || mes}</span>
                                         </div>
                                     </li>`;
                                 }
