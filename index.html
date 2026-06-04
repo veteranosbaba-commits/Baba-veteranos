@@ -1190,12 +1190,12 @@
             const resultBox = document.getElementById('search-result');
             if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
             
-            // Busca inteligente: procura por nome OU número da camisa ao mesmo tempo
+            // Busca por início: filtra nomes ou números de camisa que COMEÇAM com o termo digitado
             const achados = window.atletasCache.filter(a => {
-                const nomeMatch = a.nome?.toLowerCase().includes(termo);
-                const camisaMatch = a.camisa?.toString().toLowerCase().includes(termo);
+                const nomeMatch = a.nome?.toLowerCase().startsWith(termo);
+                const camisaMatch = a.camisa?.toString().toLowerCase().startsWith(termo);
                 return nomeMatch || camisaMatch;
-            });
+            }).sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
             
             if (achados.length) {
                 let html = '';
