@@ -1074,9 +1074,7 @@
             let pendentesHtml = '', suspensosHtml = '', multasHtml = '';
             window.atletasCache.forEach(a => {
                 let debito = 0;
-                const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase());
-                const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
-                if (!pagoMes && !isIsento) debito += 25;
+                if (isMensalidadePendente(a, getMesAtual())) debito += 25;
                 
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
@@ -1164,7 +1162,8 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.[getMesAtual()]?.pago;
+                const isPendente = isMensalidadePendente(a, getMesAtual());
+                const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes((a.nome || "").toUpperCase());
                 const isFluLista = a.time === 'FLUMINENSE';
                 const rowBgLista = isFluLista ? 'bg-red-950/40 hover:bg-red-950/60' : 'hover:bg-stone-800/30';
                 const nameColorLista = isFluLista ? 'text-red-300 font-black' : 'text-white font-bold';
@@ -1176,8 +1175,8 @@
                     <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
                     <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
                     <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : (["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase()) ? 'text-amber-400' : 'text-red-500')}">
-                    ${pagoMes ? 'PAGO' : (["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase()) ? 'ISENTO' : 'PEND')}
+                    <td class="p-1.5 text-[10px] font-black ${isPendente ? 'text-red-500' : (isIsento ? 'text-amber-400' : 'text-emerald-400')}">
+                    ${isPendente ? 'PEND' : (isIsento ? 'ISENTO' : 'PAGO')}
                 </td>
                 </tr>`;
             });
