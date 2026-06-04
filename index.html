@@ -1219,31 +1219,37 @@
                         ? '<span class="bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">FLU</span>'
                         : '<span class="bg-stone-600 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">BOTA</span>';
                     let financeiroInfo = '';
-                    if (a.pagamentos) {
-                        let totalMultas = 0;
-                        let multasList = [];
-                        let mensalidadesPendentes = [];
-                        
-                        // Lista de isentos
-                        const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase());
-                        
-                        Object.keys(a.pagamentos).forEach(mes => {
-                            // Mensalidade
-                            if (!a.pagamentos[mes].pago && !isIsento) {
-                                mensalidadesPendentes.push(window.mesesNomes[mes] || mes);
-                            }
+                    try {
+                        if (a.pagamentos) {
+                            let totalMultas = 0;
+                            let multasList = [];
+                            let mensalidadesPendentes = [];
                             
-                            // Multas
-                            if (a.pagamentos[mes].multas) {
-                                a.pagamentos[mes].multas.forEach(m => {
-                                    totalMultas += Number(m.valor);
-                                    if (!m.paga) multasList.push(`<span class="text-red-400">R$ ${m.valor.toFixed(2)} (${m.motivo})</span>`);
-                                });
-                            }
-                            if (a.pagamentos[mes].multasArquivadasHistorico) {
-                                a.pagamentos[mes].multasArquivadasHistorico.forEach(v => totalMultas += Number(v));
-                            }
-                        });
+                            // Lista de isentos
+                            const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes((a.nome || "").toUpperCase());
+                            
+                            Object.keys(a.pagamentos).forEach(mes => {
+                                const p = a.pagamentos[mes];
+                                if (!p) return;
+
+                                // Mensalidade
+                                if (!p.pago && !isIsento) {
+                                    const nomeMes = (window.mesesNomes && window.mesesNomes[mes]) ? window.mesesNomes[mes] : `Mês ${mes}`;
+                                    mensalidadesPendentes.push(nomeMes);
+                                }
+                                
+                                // Multas
+                                if (p.multas && Array.isArray(p.multas)) {
+                                    p.multas.forEach(m => {
+                                        if (!m) return;
+                                        totalMultas += Number(m.valor || 0);
+                                        if (!m.paga) multasList.push(`<span class="text-red-400">R$ ${Number(m.valor || 0).toFixed(2)} (${m.motivo || 'Multa'})</span>`);
+                                    });
+                                }
+                                if (p.multasArquivadasHistorico && Array.isArray(p.multasArquivadasHistorico)) {
+                                    p.multasArquivadasHistorico.forEach(v => totalMultas += Number(v || 0));
+                                }
+                            });
                         
                         let mensalidadeHtml = '';
                         if (isIsento) {
@@ -1266,6 +1272,10 @@
                             ${mensalidadeHtml}
                             ${multasHtml}
                         </div>`;
+                        }
+                    } catch (e) {
+                        console.error("Erro no financeiro:", e);
+                        financeiroInfo = '<p class="text-[9px] text-stone-500 italic">Erro ao carregar dados financeiros.</p>';
                     }
 
                     html += `<div class="p-4 ${bgBusca} rounded-xl border-l-4 ${borderBusca} text-xs space-y-2 shadow-md">
