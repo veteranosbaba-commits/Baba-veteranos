@@ -1990,7 +1990,21 @@
             }
         };
 
-                window.switchAdminSubTab = function(subTabId) {
+                
+        window.openAdminModal = function() { 
+            if(window.isAdminLogado) switchTab('admin-panel'); 
+            else document.getElementById('login-modal')?.classList.remove('hidden'); 
+        };
+        
+        window.closeAdminModal = function() { 
+            document.getElementById('login-modal')?.classList.add('hidden'); 
+        };
+        
+        document.getElementById('login-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) window.closeAdminModal();
+        });
+
+        window.switchAdminSubTab = function(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(subTabId);
             if (target) target.classList.remove('hidden');
