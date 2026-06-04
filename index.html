@@ -549,6 +549,7 @@
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
+                <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Arquivados</button>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
@@ -1879,6 +1880,84 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
+
+        window.renderArquivados = function() {
+            const container = document.getElementById('lista-arquivados-container');
+            if (!container) return;
+            
+            let html = '';
+            
+            window.atletasCache.forEach(a => {
+                let temArquivo = false;
+                let subHtml = `<div class="bg-black/40 border border-stone-800 rounded-xl p-3 space-y-2">
+                    <div class="flex justify-between items-center border-b border-stone-800 pb-1 mb-2">
+                        <span class="font-black text-xs text-stone-300 uppercase">${a.nome}</span>
+                        <span class="text-[9px] text-stone-500 font-mono">#${a.camisa || '--'}</span>
+                    </div>`;
+
+                // 1. Cartões Arquivados (Histórico Acumulado)
+                if ((a.histAmarelos || 0) > 0 || (a.histVermelhos || 0) > 0) {
+                    temArquivo = true;
+                    subHtml += `<div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg">
+                        <div class="text-[10px] space-x-2">
+                            <span class="text-amber-500 font-bold">🟨 ${a.histAmarelos || 0} Amarelos</span>
+                            <span class="text-red-500 font-bold">🟥 ${a.histVermelhos || 0} Vermelhos</span>
+                        </div>
+                        <button onclick="window.limparHistoricoCartoes('${a.id}')" class="text-red-500 hover:text-red-400 p-1 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>`;
+                }
+
+                // 2. Multas Arquivadas
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(mes => {
+                        const mArq = a.pagamentos[mes].multasArquivadasHistorico;
+                        if (mArq && mArq.length > 0) {
+                            temArquivo = true;
+                            const totalM = mArq.reduce((s, v) => s + v, 0);
+                            subHtml += `<div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg">
+                                <div class="text-[10px]">
+                                    <span class="text-stone-400 uppercase font-bold">Multas (${window.mesesNomes[mes] || mes}):</span>
+                                    <span class="text-emerald-400 font-mono ml-1">R$ ${totalM.toFixed(2)}</span>
+                                </div>
+                                <button onclick="window.limparHistoricoMultas('${a.id}', '${mes}')" class="text-red-500 hover:text-red-400 p-1 transition">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>`;
+                        }
+                    });
+                }
+
+                subHtml += `</div>`;
+                if (temArquivo) html += subHtml;
+            });
+
+            container.innerHTML = html || '<p class="text-center text-stone-600 py-10 italic text-xs">Nenhum item arquivado no momento.</p>';
+        };
+
+        window.limparHistoricoCartoes = function(atletaId) {
+            if (!confirm("Deseja apagar o histórico de cartões acumulados deste atleta? Isso não pode ser desfeito.")) return;
+            const a = window.atletasCache.find(x => x.id === atletaId);
+            if (a) {
+                a.histAmarelos = 0;
+                a.histVermelhos = 0;
+                window.salvarNoStorage();
+                window.renderArquivados();
+                window.renderAdminAtletas();
+            }
+        };
+
+        window.limparHistoricoMultas = function(atletaId, mes) {
+            if (!confirm("Deseja excluir permanentemente o registro de multas arquivadas deste mês?")) return;
+            const a = window.atletasCache.find(x => x.id === atletaId);
+            if (a && a.pagamentos && a.pagamentos[mes]) {
+                delete a.pagamentos[mes].multasArquivadasHistorico;
+                window.salvarNoStorage();
+                window.renderArquivados();
+            }
+        };
+
         function switchAdminSubTab(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
             document.getElementById(subTabId)?.classList.remove('hidden');
