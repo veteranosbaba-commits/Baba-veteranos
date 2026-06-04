@@ -1204,11 +1204,22 @@
                     const badgeBusca = isFluBusca
                         ? '<span class="bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">FLU</span>'
                         : '<span class="bg-stone-600 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">BOTA</span>';
-                    let multasInfo = '';
+                    let financeiroInfo = '';
                     if (a.pagamentos) {
                         let totalMultas = 0;
                         let multasList = [];
+                        let mensalidadesPendentes = [];
+                        
+                        // Lista de isentos
+                        const isIsento = ["GUTO", "MARCOS", "KITÃO"].includes(a.nome?.toUpperCase());
+                        
                         Object.keys(a.pagamentos).forEach(mes => {
+                            // Mensalidade
+                            if (!a.pagamentos[mes].pago && !isIsento) {
+                                mensalidadesPendentes.push(window.mesesNomes[mes] || mes);
+                            }
+                            
+                            // Multas
                             if (a.pagamentos[mes].multas) {
                                 a.pagamentos[mes].multas.forEach(m => {
                                     totalMultas += Number(m.valor);
@@ -1219,12 +1230,28 @@
                                 a.pagamentos[mes].multasArquivadasHistorico.forEach(v => totalMultas += Number(v));
                             }
                         });
+                        
+                        let mensalidadeHtml = '';
+                        if (isIsento) {
+                            mensalidadeHtml = `<p class="text-[9px] text-teal-400 font-bold uppercase mb-1">⭐ Atleta Isento</p>`;
+                        } else if (mensalidadesPendentes.length > 0) {
+                            mensalidadeHtml = `<p class="text-[9px] text-red-400 font-bold uppercase mb-1">💸 Mensalidade Pendente: ${mensalidadesPendentes.join(', ')}</p>`;
+                        } else {
+                            mensalidadeHtml = `<p class="text-[9px] text-emerald-500 font-bold uppercase mb-1">✅ Mensalidades em dia</p>`;
+                        }
+
+                        let multasHtml = '';
                         if (totalMultas > 0) {
-                            multasInfo = `<div class="mt-2 pt-2 border-t border-stone-700/50">
+                            multasHtml = `<div class="mt-2 pt-2 border-t border-stone-700/50">
                                 <p class="text-[10px] font-bold text-orange-400 uppercase mb-1">⚖️ Histórico de Multas: R$ ${totalMultas.toFixed(2)}</p>
                                 ${multasList.length > 0 ? `<div class="flex flex-col gap-0.5 text-[9px]">${multasList.join('')}</div>` : '<p class="text-[9px] text-emerald-500">Nenhuma multa pendente</p>'}
                             </div>`;
                         }
+                        
+                        financeiroInfo = `<div class="mt-2 pt-2 border-t border-stone-700/50">
+                            ${mensalidadeHtml}
+                            ${multasHtml}
+                        </div>`;
                     }
 
                     html += `<div class="p-4 ${bgBusca} rounded-xl border-l-4 ${borderBusca} text-xs space-y-2 shadow-md">
@@ -1238,7 +1265,7 @@
                             <p>🟥 Vermelhos: <strong>${a.vermelho || 0}/1</strong></p>
                             <p class="text-amber-400">📜 Histórico: 🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</p>
                         </div>
-                        ${multasInfo}
+                        ${financeiroInfo}
                     </div>`;
                 });
                 resultBox.innerHTML = html;
