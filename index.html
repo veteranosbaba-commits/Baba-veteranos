@@ -549,7 +549,7 @@
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
-                <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Arquivados</button>
+                <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap" title="Arquivados"><i class="fa-solid fa-folder-open text-base"></i></button>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
@@ -1287,7 +1287,7 @@
                                     }
                                     
                                     if (deveMostrarPendencia) {
-                                        const nomeMes = (window.mesesNomes && window.mesesNomes[mes]) ? window.mesesNomes[mes] : `Mês ${mes}`;
+                                        const nomeMes = (window.mesesNomes && (window.mesesNomes || {})[mes]) ? (window.mesesNomes || {})[mes] : `Mês ${mes}`;
                                         mensalidadesPendentes.push(nomeMes);
                                     }
                                 }
@@ -1918,7 +1918,7 @@
                             const totalM = mArq.reduce((s, v) => s + v, 0);
                             subHtml += `<div class="flex items-center justify-between bg-stone-900/50 p-2 rounded-lg">
                                 <div class="text-[10px]">
-                                    <span class="text-stone-400 uppercase font-bold">Multas (${window.mesesNomes[mes] || mes}):</span>
+                                    <span class="text-stone-400 uppercase font-bold">Multas (${(window.mesesNomes || {})[mes] || mes}):</span>
                                     <span class="text-emerald-400 font-mono ml-1">R$ ${totalM.toFixed(2)}</span>
                                 </div>
                                 <button onclick="window.limparHistoricoMultas('${a.id}', '${mes}')" class="text-red-500 hover:text-red-400 p-1 transition">
