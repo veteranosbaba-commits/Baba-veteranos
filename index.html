@@ -1190,9 +1190,12 @@
             const resultBox = document.getElementById('search-result');
             if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
             
-            let achados;
-            if (isNaN(termo)) achados = window.atletasCache.filter(a => a.nome?.toLowerCase().includes(termo));
-            else achados = window.atletasCache.filter(a => parseInt(a.camisa) === parseInt(termo));
+            // Busca inteligente: procura por nome OU número da camisa ao mesmo tempo
+            const achados = window.atletasCache.filter(a => {
+                const nomeMatch = a.nome?.toLowerCase().includes(termo);
+                const camisaMatch = a.camisa?.toString().toLowerCase().includes(termo);
+                return nomeMatch || camisaMatch;
+            });
             
             if (achados.length) {
                 let html = '';
