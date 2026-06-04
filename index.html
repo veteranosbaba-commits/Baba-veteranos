@@ -1978,22 +1978,11 @@
             }
         };
 
-                function switchAdminSubTab(subTabId) {
-            // Esconde todos os conteúdos
+        window.switchAdminSubTab = function(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            
-            // Mostra o selecionado
             const target = document.getElementById(subTabId);
-            if (target) {
-                target.classList.remove('hidden');
-            }
-
-            // Se for arquivados, força a renderização
-            if (subTabId === 'adm-arquivos') {
-                window.renderArquivados();
-            }
-            
-            // Atualiza botões
+            if (target) target.classList.remove('hidden');
+            if (subTabId === 'adm-arquivos') window.renderArquivados();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
@@ -2001,7 +1990,7 @@
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
                 }
             });
-        } else {
+        }; else {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
                 }
             });
