@@ -1887,6 +1887,7 @@
             if (!container) return;
             
             let finalHtml = '';
+            container.innerHTML = '';
             
             if (!window.atletasCache || window.atletasCache.length === 0) {
                 container.innerHTML = '<p class="text-center text-stone-600 py-10 italic text-xs">Nenhum atleta carregado.</p>';
