@@ -1186,14 +1186,25 @@
         }
         
         window.searchPlayer = function() {
-            const termo = document.getElementById('search-input')?.value?.toLowerCase().trim() || '';
+            const input = document.getElementById('search-input');
             const resultBox = document.getElementById('search-result');
-            if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
+            if (!input || !resultBox) return;
+            
+            const termo = input.value.toLowerCase().trim();
+            
+            if (!termo) {
+                resultBox.classList.add('hidden');
+                return;
+            }
             
             // Busca por início: filtra nomes ou números de camisa que COMEÇAM com o termo digitado
             const achados = window.atletasCache.filter(a => {
-                const nomeMatch = a.nome?.toLowerCase().startsWith(termo);
-                const camisaMatch = a.camisa?.toString().toLowerCase().startsWith(termo);
+                const nomeStr = (a.nome || "").toString().toLowerCase().trim();
+                const camisaStr = (a.camisa || "").toString().toLowerCase().trim();
+                
+                const nomeMatch = nomeStr.startsWith(termo);
+                const camisaMatch = camisaStr.startsWith(termo);
+                
                 return nomeMatch || camisaMatch;
             }).sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
             
