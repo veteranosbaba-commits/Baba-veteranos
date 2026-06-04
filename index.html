@@ -1992,32 +1992,14 @@
         };
 
                 
-        window.openAdminModal = function() { 
-            if(window.isAdminLogado) switchTab('admin-panel'); 
-            else document.getElementById('login-modal')?.classList.remove('hidden'); 
-        };
         
-        window.closeAdminModal = function() { 
-            document.getElementById('login-modal')?.classList.add('hidden'); 
-        };
         
-        document.getElementById('login-modal')?.addEventListener('click', function(e) {
-            if (e.target === this) window.closeAdminModal();
+        
+        
+        
         });
 
-        window.switchAdminSubTab = function(subTabId) {
-            document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            const target = document.getElementById(subTabId);
-            if (target) target.classList.remove('hidden');
-            if (subTabId === 'adm-arquivos') window.renderArquivados();
-            document.querySelectorAll('.adm-sub-btn').forEach(btn => {
-                if(btn.getAttribute('onclick')?.includes(subTabId)) {
-                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
-                } else {
-                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
-                }
-            });
-        };
+        
         
         // =====================================================
         
@@ -2025,6 +2007,46 @@
         window.renderAdminAtletas = renderAdminAtletas;
         window.loadAdmFinancas = loadAdmFinancas;
         window.renderizarTudo = renderizarTudo;
+
+        
+        function openAdminModal() { 
+            if(window.isAdminLogado) switchTab('admin-panel'); 
+            else {
+                const modal = document.getElementById('login-modal');
+                if(modal) modal.classList.remove('hidden');
+            }
+        }
+        window.openAdminModal = openAdminModal;
+        
+        function closeAdminModal() { 
+            const modal = document.getElementById('login-modal');
+            if(modal) modal.classList.add('hidden'); 
+        }
+        window.closeAdminModal = closeAdminModal;
+        
+        function switchAdminSubTab(subTabId) {
+            document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(subTabId);
+            if (target) {
+                target.classList.remove('hidden');
+                if (subTabId === 'adm-arquivos') renderArquivados();
+            }
+            document.querySelectorAll('.adm-sub-btn').forEach(btn => {
+                if(btn.getAttribute('onclick')?.includes(subTabId)) {
+                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
+                } else {
+                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
+                }
+            });
+        }
+        window.switchAdminSubTab = switchAdminSubTab;
+
+        
+        // Listener de clique fora do modal
+        document.addEventListener("click", function(e) {
+            const modal = document.getElementById("login-modal");
+            if (e.target === modal) closeAdminModal();
+        });
 
         // INICIALIZAÇÃO
         // =====================================================
