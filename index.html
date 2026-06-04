@@ -1092,13 +1092,29 @@
             let pendentesHtml = '', suspensosHtml = '', multasHtml = '';
             window.atletasCache.forEach(a => {
                 let debito = 0;
-                if (isMensalidadePendente(a, getMesAtual())) debito += 25;
                 
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(m => {
-                        a.pagamentos[m].multas?.forEach(ml => { if(!ml.paga) debito += Number(ml.valor); });
-                    });
+                // Percorre todos os meses registrados para ver se há mensalidades pendentes
+                const mesesRegistrados = a.pagamentos ? Object.keys(a.pagamentos) : [];
+                
+                // Garante que o mês atual seja verificado mesmo que não tenha registro explícito
+                const mesAtual = getMesAtual();
+                if (!mesesRegistrados.includes(mesAtual)) {
+                    mesesRegistrados.push(mesAtual);
                 }
+
+                mesesRegistrados.forEach(m => {
+                    // Mensalidades
+                    if (isMensalidadePendente(a, m)) {
+                        debito += 25;
+                    }
+                    
+                    // Multas (aproveitando o loop dos meses)
+                    if (a.pagamentos && a.pagamentos[m] && a.pagamentos[m].multas) {
+                        a.pagamentos[m].multas.forEach(ml => { 
+                            if(!ml.paga) debito += Number(ml.valor); 
+                        });
+                    }
+                });
                 
                 if (debito > 0) {
                     const corPend = a.time === 'FLUMINENSE' ? 'text-red-400 font-black' : 'text-white font-bold';
