@@ -1471,19 +1471,45 @@
         };
         
         window.aplicarMultaAtleta = function(id) {
-            const motivo = document.getElementById(`motivo-${id}`)?.value;
-            const valor = parseFloat(document.getElementById(`vmulta-${id}`)?.value);
-            if (!motivo || !valor) { alert('Preencha motivo e valor!'); return; }
+            const motivoEl = document.getElementById(`motivo-${id}`);
+            const valorEl = document.getElementById(`vmulta-${id}`);
+            const motivo = motivoEl?.value?.trim();
+            const valor = parseFloat(valorEl?.value);
+            
+            if (!motivo || isNaN(valor)) { 
+                alert('Preencha motivo e valor corretamente!'); 
+                return; 
+            }
             
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
-            if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[getMesAtual()]) a.pagamentos[getMesAtual()] = { pago: false, extra: 0, multas: [] };
             
-            a.pagamentos[getMesAtual()].multas.push({ motivo, valor, paga: false });
-            document.getElementById(`motivo-${id}`).value = '';
-            document.getElementById(`vmulta-${id}`).value = '';
-            window.mostrarToast("Multa aplicada!");
+            if (!a.pagamentos) a.pagamentos = {};
+            const mes = getMesAtual();
+            
+            // Garantir que o objeto do mês exista
+            if (!a.pagamentos[mes]) {
+                a.pagamentos[mes] = { pago: false, extra: 0, multas: [] };
+            }
+            
+            // Garantir que a propriedade 'multas' seja um array (segurança para dados antigos)
+            if (!Array.isArray(a.pagamentos[mes].multas)) {
+                a.pagamentos[mes].multas = [];
+            }
+            
+            // Adiciona a nova multa (permite múltiplas)
+            a.pagamentos[mes].multas.push({ 
+                motivo: motivo, 
+                valor: valor, 
+                paga: false,
+                data: new Date().toISOString() 
+            });
+            
+            // Limpa os campos para o próximo lançamento
+            if (motivoEl) motivoEl.value = '';
+            if (valorEl) valorEl.value = '';
+            
+            window.mostrarToast(`Multa de R$ ${valor.toFixed(2)} aplicada!`);
             window.salvarNoStorage();
         };
         
