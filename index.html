@@ -1202,6 +1202,29 @@
                     const badgeBusca = isFluBusca
                         ? '<span class="bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">FLU</span>'
                         : '<span class="bg-stone-600 text-white text-[9px] px-2 py-0.5 rounded font-black ml-1">BOTA</span>';
+                    let multasInfo = '';
+                    if (a.pagamentos) {
+                        let totalMultas = 0;
+                        let multasList = [];
+                        Object.keys(a.pagamentos).forEach(mes => {
+                            if (a.pagamentos[mes].multas) {
+                                a.pagamentos[mes].multas.forEach(m => {
+                                    totalMultas += Number(m.valor);
+                                    if (!m.paga) multasList.push(`<span class="text-red-400">R$ ${m.valor.toFixed(2)} (${m.motivo})</span>`);
+                                });
+                            }
+                            if (a.pagamentos[mes].multasArquivadasHistorico) {
+                                a.pagamentos[mes].multasArquivadasHistorico.forEach(v => totalMultas += Number(v));
+                            }
+                        });
+                        if (totalMultas > 0) {
+                            multasInfo = `<div class="mt-2 pt-2 border-t border-stone-700/50">
+                                <p class="text-[10px] font-bold text-orange-400 uppercase mb-1">⚖️ Histórico de Multas: R$ ${totalMultas.toFixed(2)}</p>
+                                ${multasList.length > 0 ? `<div class="flex flex-col gap-0.5 text-[9px]">${multasList.join('')}</div>` : '<p class="text-[9px] text-emerald-500">Nenhuma multa pendente</p>'}
+                            </div>`;
+                        }
+                    }
+
                     html += `<div class="p-4 ${bgBusca} rounded-xl border-l-4 ${borderBusca} text-xs space-y-2 shadow-md">
                         <p class="font-black text-sm flex justify-between items-center">
                             <span class="${nameColorBusca}">${a.nome}${badgeBusca}</span><span class="text-amber-400 font-mono">#${a.camisa}</span>
@@ -1213,6 +1236,7 @@
                             <p>🟥 Vermelhos: <strong>${a.vermelho || 0}/1</strong></p>
                             <p class="text-amber-400">📜 Histórico: 🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</p>
                         </div>
+                        ${multasInfo}
                     </div>`;
                 });
                 resultBox.innerHTML = html;
