@@ -1978,7 +1978,7 @@
             }
         };
 
-        window.switchAdminSubTab = function(subTabId) {
+                window.switchAdminSubTab = function(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(subTabId);
             if (target) target.classList.remove('hidden');
@@ -1990,99 +1990,7 @@
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
                 }
             });
-        }; else {
-                    btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
-                }
-            });
-        }
-        
-        function openAdminModal() { 
-            if(window.isAdminLogado) switchTab('admin-panel'); 
-            else document.getElementById('login-modal')?.classList.remove('hidden'); 
-        }
-        
-        function closeAdminModal() { 
-            document.getElementById('login-modal')?.classList.add('hidden'); 
-        }
-        
-        document.getElementById('login-modal')?.addEventListener('click', function(e) {
-            if (e.target === this) closeAdminModal();
-        });
-        
-        let _cronometroInterval = null;
-        function iniciarContagemRegressiva(dataAlvo) {
-            if (_cronometroInterval) clearInterval(_cronometroInterval);
-            let dataJogo;
-            if (dataAlvo) {
-                dataJogo = new Date(dataAlvo).getTime();
-            } else {
-                const agora = new Date();
-                const diaSemana = agora.getDay();
-                const diasAteDomingo = diaSemana === 0 ? 7 : (7 - diaSemana);
-                const proximoDomingo = new Date(agora);
-                proximoDomingo.setDate(agora.getDate() + diasAteDomingo);
-                proximoDomingo.setHours(6, 15, 0, 0);
-                dataJogo = proximoDomingo.getTime();
-            }
-            // Atualizar label do rodapé com a data calculada
-            const dt = new Date(dataJogo);
-            const d = `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`;
-            const h = `${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}`;
-            const label = document.getElementById('proxima-data-label');
-            if (label) label.textContent = `| Arena Coqueiros (${d} às ${h})`;
-            
-            const atualizar = () => {
-                const agora = new Date().getTime();
-                const diff = dataJogo - agora;
-                const crono = document.getElementById("cronometro-jogo");
-                if (!crono) return;
-                if (diff <= 0) {
-                    crono.innerText = "BABA EM ANDAMENTO!";
-                    // Quando o baba começa, agenda próximo domingo automaticamente
-                    if (!dataAlvo) {
-                        clearInterval(_cronometroInterval);
-                        setTimeout(() => iniciarContagemRegressiva(null), 86400000); // tenta no dia seguinte
-                    }
-                    return;
-                }
-                const dias = Math.floor(diff / 86400000);
-                const horas = Math.floor((diff % 86400000) / 3600000);
-                const minutos = Math.floor((diff % 3600000) / 60000);
-                crono.innerText = `${dias}d ${horas.toString().padStart(2,'0')}h ${minutos.toString().padStart(2,'0')}m`;
-            };
-            atualizar();
-            _cronometroInterval = setInterval(atualizar, 30000);
-        }
-        
-        // =====================================================
-        // SISTEMA DE TEMAS
-        // =====================================================
-        
-        window.alternarTema = function() {
-            const body = document.getElementById('app-body');
-            const iconTema = document.getElementById('icon-tema');
-            const temaAtual = body.getAttribute('data-theme');
-            if (temaAtual === 'light') {
-                body.removeAttribute('data-theme');
-                if (iconTema) { iconTema.className = 'fa-solid fa-moon text-sm'; }
-                localStorage.setItem('baba-tema', 'dark');
-            } else {
-                body.setAttribute('data-theme', 'light');
-                if (iconTema) { iconTema.className = 'fa-solid fa-sun text-sm text-amber-400'; }
-                localStorage.setItem('baba-tema', 'light');
-            }
-        };
-        
-        // Carregar tema salvo
-        (function() {
-            const temaSalvo = localStorage.getItem('baba-tema');
-            const body = document.getElementById('app-body');
-            const iconTema = document.getElementById('icon-tema');
-            if (temaSalvo === 'light') {
-                body.setAttribute('data-theme', 'light');
-                if (iconTema) { iconTema.className = 'fa-solid fa-sun text-sm text-amber-400'; }
-            }
-        })();
+        };)();
         
         // =====================================================
         // INICIALIZAÇÃO
