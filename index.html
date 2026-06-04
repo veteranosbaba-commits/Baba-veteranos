@@ -1959,8 +1959,17 @@
         };
 
         function switchAdminSubTab(subTabId) {
+            // Se for a aba de arquivados, renderiza o conteúdo
+            if (subTabId === 'adm-arquivos') window.renderArquivados();
+            
+            // Esconde todos os conteúdos de sub-abas
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById(subTabId)?.classList.remove('hidden');
+            
+            // Mostra apenas a sub-aba selecionada
+            const target = document.getElementById(subTabId);
+            if (target) target.classList.remove('hidden');
+            
+            // Atualiza os botões do menu
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
