@@ -644,6 +644,12 @@
                         </div>
                     </div>
                     <div class="text-center pt-2">
+                        
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center max-w-md mx-auto mt-4">
+                        <label class="block font-bold text-amber-500 uppercase text-[10px] mb-1">Data do Próximo Baba</label>
+                        <input type="datetime-local" id="adm-data-proximo-baba" class="w-full bg-stone-800 rounded-lg p-2 text-center font-bold text-xs text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                    </div>
+
                         <button onclick="window.atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar
                         </button>
@@ -1368,6 +1374,12 @@
         };
         
         window.atualizarPlacarGeral = function() {
+            const dataBaba = document.getElementById('adm-data-proximo-baba')?.value;
+            if(dataBaba) {
+                if(!window.partidaEstatisticas) window.partidaEstatisticas = {};
+                window.partidaEstatisticas.proximoBaba = dataBaba;
+            }
+        
             const fluVal = document.getElementById('adm-placar-flu')?.value;
             const botaVal = document.getElementById('adm-placar-bota')?.value;
             if (!fluVal || !botaVal) { alert("Preencha os placares!"); return; }
