@@ -733,14 +733,12 @@
                     </div>
                     <p class="text-[10px] text-stone-500 uppercase font-bold mb-4">Gerenciamento de histórico de cartões e multas.</p>
 
-                    <div class="space-y-4" id="lista-arquivados-container" style="min-height: 200px; display: block !important;" class="space-y-4">
+                    <div id="lista-arquivados-container" class="space-y-4 min-h-[250px] block">
                         <!-- Conteúdo injetado -->
                     </div>
                 </div>
             </div>
-            </div>
         </div>
-    </div>
 
     <!-- RODAPÉ FIXO -->
     <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
@@ -1920,11 +1918,13 @@
         
 
                 function renderArquivados() {
-            console.log("Renderizando arquivados...", window.atletasCache?.length);
+            console.log("Chamando renderArquivados. Atletas no cache:", window.atletasCache?.length);
             const container = document.getElementById('lista-arquivados-container');
+            if (!container) { console.error("Container de arquivos não encontrado!"); return; }
             if (!container) return;
             
             let finalHtml = '';
+            container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-amber-500 text-2xl mb-2"></i></div>';
             container.innerHTML = '';
             
             if (!window.atletasCache || window.atletasCache.length === 0) {
