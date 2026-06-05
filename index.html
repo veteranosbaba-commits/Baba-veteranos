@@ -1016,7 +1016,7 @@
                     window.loadAdmFinancas();
                 }
             } catch (error) {
-                console.error('Erro ao renderizar:', error);
+                console.error('Erro ao renderizar:', error); window.mostrarToast('Erro ao atualizar tela!', true);
             }
         };
         
@@ -1951,7 +1951,7 @@
                 // 2. Multas Arquivadas
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
-                        const mArq = a.pagamentos[mes].multasArquivadasHistorico;
+                        const mArq = a.pagamentos[mes] ? a.pagamentos[mes].multasArquivadasHistorico : null;
                         if (mArq && Array.isArray(mArq) && mArq.length > 0) {
                             temAlgumArquivo = true;
                             const totalM = mArq.reduce((s, v) => s + parseFloat(v || 0), 0);
