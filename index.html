@@ -1907,7 +1907,7 @@
         
 
                 function renderArquivados() {
-            console.log("Renderizando arquivados...");
+            console.log("Renderizando arquivados...", window.atletasCache?.length);
             const container = document.getElementById('lista-arquivados-container');
             if (!container) return;
             
@@ -2009,6 +2009,7 @@
         window.renderAdminAtletas = renderAdminAtletas;
         window.loadAdmFinancas = loadAdmFinancas;
         window.renderizarTudo = renderizarTudo;
+        window.renderAdminScouts = renderAdminScouts;
 
         
         function openAdminModal() { 
