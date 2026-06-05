@@ -716,11 +716,18 @@
                 </div>
             <div id="adm-arquivos" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3 border-b border-stone-800 pb-2">
-                        <i class="fa-solid fa-box-archive mr-1"></i> Itens Arquivados
-                    </h4>
+
+                    <div class="flex justify-between items-center mb-4 border-b border-stone-800 pb-2">
+                        <h4 class="font-bold text-amber-500 text-xs uppercase">
+                            <i class="fa-solid fa-box-archive mr-1"></i> Itens Arquivados
+                        </h4>
+                        <button onclick="window.renderArquivados()" class="text-stone-500 hover:text-amber-500 transition">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                        </button>
+                    </div>
                     <p class="text-[10px] text-stone-500 uppercase font-bold mb-4">Gerenciamento de histórico de cartões e multas.</p>
-                    <div class="space-y-4" id="lista-arquivados-container">
+
+                    <div class="space-y-4" id="lista-arquivados-container" class="min-h-[200px]">
                         <!-- Conteúdo injetado -->
                     </div>
                 </div>
@@ -2028,10 +2035,14 @@
         window.closeAdminModal = closeAdminModal;
         
         function switchAdminSubTab(subTabId) {
-            document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.adm-sub-content').forEach(c => {
+                c.classList.add('hidden');
+                c.classList.remove('block');
+            });
             const target = document.getElementById(subTabId);
             if (target) {
                 target.classList.remove('hidden');
+                target.classList.add('block');
                 if (subTabId === 'adm-arquivos') renderArquivados();
             }
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
