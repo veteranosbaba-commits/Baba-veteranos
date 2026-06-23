@@ -559,6 +559,10 @@
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
+<div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center max-w-md mx-auto mt-4">
+                        <label class="block font-bold text-amber-500 uppercase text-[10px] mb-1">Data do Próximo Baba</label>
+                        <input type="datetime-local" id="adm-data-proximo-baba" class="w-full bg-stone-800 rounded-lg p-2 text-center font-bold text-xs text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                    </div>
                 <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Cadastrar Jogador</h4>
                     <form id="form-cadastro-atleta" onsubmit="window.cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -651,10 +655,7 @@
                     </div>
                     <div class="text-center pt-2">
                         
-                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center max-w-md mx-auto mt-4">
-                        <label class="block font-bold text-amber-500 uppercase text-[10px] mb-1">Data do Próximo Baba</label>
-                        <input type="datetime-local" id="adm-data-proximo-baba" class="w-full bg-stone-800 rounded-lg p-2 text-center font-bold text-xs text-white focus:ring-1 focus:ring-amber-500 outline-none">
-                    </div>
+                    
 
                         <button onclick="window.atualizarPlacarGeral()" class="bg-amber-500 hover:bg-amber-400 text-stone-950 px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar
