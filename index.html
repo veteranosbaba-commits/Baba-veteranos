@@ -895,6 +895,9 @@
             return String(new Date().getMonth() + 1).padStart(2, '0');
         }
         
+        const mesesNomes = {
+            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+        };
         window.mesesNomes = { 
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -1099,26 +1102,26 @@
         
         function renderizarTudo() {
             try {
-                recalcularClassificacaoGeral();
-                loadDashboard();
-                renderListaJogadoresPublica();
-                renderFinanceiroPublico();
-                renderHistoricoPlacares();
+                try { recalcularClassificacaoGeral(); } catch(e) { console.error("Erro em recalcularClassificacaoGeral();", e); }
+                try { loadDashboard(); } catch(e) { console.error("Erro em loadDashboard();", e); }
+                try { renderListaJogadoresPublica(); } catch(e) { console.error("Erro em renderListaJogadoresPublica();", e); }
+                try { renderFinanceiroPublico(); } catch(e) { console.error("Erro em renderFinanceiroPublico();", e); }
+                try { renderHistoricoPlacares(); } catch(e) { console.error("Erro em renderHistoricoPlacares();", e); }
                 
                 if (window.isAdminLogado) {
-                    renderAdminAtletas();
-                    renderAdminScouts();
-                    renderAdminSocios();
-                    renderAdminGastosTabela();
-                    renderAdminHistoricoExclusao();
-                    window.loadAdmFinancas();
+                    try { renderAdminAtletas(); } catch(e) { console.error("Erro em renderAdminAtletas();", e); }
+                    try { renderAdminScouts(); } catch(e) { console.error("Erro em renderAdminScouts();", e); }
+                    try { renderAdminSocios(); } catch(e) { console.error("Erro em renderAdminSocios();", e); }
+                    try { renderAdminGastosTabela(); } catch(e) { console.error("Erro em renderAdminGastosTabela();", e); }
+                    try { renderAdminHistoricoExclusao(); } catch(e) { console.error("Erro em renderAdminHistoricoExclusao();", e); }
+                    try { window.loadAdmFinancas(); } catch(e) { console.error("Erro em window.loadAdmFinancas();", e); }
                 }
             } catch (error) {
                 console.error('Erro ao renderizar:', error); window.mostrarToast('Erro ao atualizar tela!', true);
             }
         };
         
-        function recalcularClassificacaoGeral() {
+        function recalcularClassificacaoGeral() { try {
             let vitoriasFlu = 0, vitoriasBota = 0;
             
             if (window.historicoPlacares && window.historicoPlacares.length) {
@@ -1134,7 +1137,7 @@
             window.partidaEstatisticas.vitBota = vitoriasBota;
         }
         
-        function loadDashboard() {
+        function loadDashboard() { try {
             const placarFlu = document.getElementById('placar-flu');
             const placarBota = document.getElementById('placar-bota');
             if (placarFlu) placarFlu.innerText = window.partidaEstatisticas.placarFlu ?? 0;
@@ -1311,10 +1314,10 @@
                     ? "flex-1 bg-white text-stone-900 font-black p-3 rounded-xl shadow border-b-4 border-stone-400 uppercase tracking-wider text-center transition text-xs"
                     : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
             }
-            renderListaJogadoresPublica();
+            try { renderListaJogadoresPublica(); } catch(e) { console.error("Erro em renderListaJogadoresPublica();", e); }
         };
         
-        function renderListaJogadoresPublica() {
+        function renderListaJogadoresPublica() { try {
             const filtrados = window.atletasCache
                 .filter(a => a.time === window.timeFiltroAtual)
                 .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
@@ -1505,7 +1508,7 @@
             window.partidaEstatisticas.placarBota = placarBota;
             
             window.historicoPlacares.unshift({ id: 'rodada_' + Date.now(), data: dataStr, golsFlu: placarFlu, golsBota: placarBota });
-            recalcularClassificacaoGeral();
+            try { recalcularClassificacaoGeral(); } catch(e) { console.error("Erro em recalcularClassificacaoGeral();", e); }
             window.salvarNoStorage();
             window.mostrarToast("Placar salvo!");
         };
@@ -1520,13 +1523,13 @@
                     window.partidaEstatisticas.placarFlu = 0;
                     window.partidaEstatisticas.placarBota = 0;
                 }
-                recalcularClassificacaoGeral();
+                try { recalcularClassificacaoGeral(); } catch(e) { console.error("Erro em recalcularClassificacaoGeral();", e); }
                 window.salvarNoStorage();
                 window.mostrarToast("Rodada removida!");
             }
         };
         
-        function renderHistoricoPlacares() {
+        function renderHistoricoPlacares() { try {
             let html = '';
             (window.historicoPlacares || []).forEach(item => {
                 html += `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center">
@@ -1542,7 +1545,7 @@
             if (lista) lista.innerHTML = html || '<p class="text-xs text-stone-500 italic py-1">Sem rodadas.</p>';
         }
         
-        function renderAdminHistoricoExclusao() {
+        function renderAdminHistoricoExclusao() { try {
             let html = '';
             (window.historicoPlacares || []).forEach(item => {
                 html += `<tr class="border-b border-stone-800 text-center text-xs">
@@ -1555,7 +1558,7 @@
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="3" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
         }
         
-        function renderFinanceiroPublico() {
+        function renderFinanceiroPublico() { try {
             let mensalMap = {};
             Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, extra: 0, multas: 0 });
             
@@ -1666,7 +1669,7 @@
             } 
         };
         
-        function renderAdminAtletas() { 
+        function renderAdminAtletas() { try { 
             let html = ''; 
             // Ordenar por Time (FLU primeiro) e depois Nome
             const ordenados = [...window.atletasCache].sort((a, b) => {
@@ -1795,7 +1798,7 @@
             }
         };
         
-        function renderAdminScouts() {
+        function renderAdminScouts() { try {
             let html = '';
             window.atletasCache.forEach(a => {
                 let multasHtml = '';
@@ -1872,7 +1875,7 @@
             }
         };
         
-        function renderAdminSocios() {
+        function renderAdminSocios() { try {
             let html = '';
             window.sociosCache.forEach(s => {
                 html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td>
@@ -1908,7 +1911,7 @@
             } 
         };
         
-        function renderAdminGastosTabela() {
+        function renderAdminGastosTabela() { try {
             let html = '';
             window.gastosCache.forEach(g => { 
                 html += `<tr><td class="p-2 text-stone-500 font-mono">${g.dataStr}</td>
@@ -1920,7 +1923,7 @@
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum gasto.</td></tr>';
         }
         
-        function loadAdmFinancas() {
+        function loadAdmFinancas() { try {
             const mes = document.getElementById('adm-mes-filtro')?.value || getMesAtual();
             let html = '';
             window.atletasCache.forEach(a => {
@@ -2096,7 +2099,7 @@
                 a.histVermelhos = 0;
                 window.salvarNoStorage();
                 window.renderArquivados();
-                window.renderAdminAtletas();
+                window.try { renderAdminAtletas(); } catch(e) { console.error("Erro em renderAdminAtletas();", e); }
             }
         };
 
