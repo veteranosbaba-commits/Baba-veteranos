@@ -810,6 +810,82 @@
         
         let toastTimeout = null;
         let syncEmAndamento = false;
+
+        // =====================================================
+        // CONTROLE DE TEMA E CRONÔMETRO
+        // =====================================================
+        let intervaloContagem;
+        function iniciarContagemRegressiva(dataAlvo) {
+            if (intervaloContagem) clearInterval(intervaloContagem);
+            if (!dataAlvo) dataAlvo = window.partidaEstatisticas?.proximoBaba;
+            if (!dataAlvo) return;
+
+            const el = document.getElementById('cronometro-jogo');
+            if (!el) return;
+
+            intervaloContagem = setInterval(() => {
+                const agora = new Date().getTime();
+                const alvo = new Date(dataAlvo + ':00').getTime();
+                let dist = alvo - agora;
+
+                // Regra: Se passou mais de 12 horas do jogo, pula para a próxima semana
+                if (dist < -(12 * 60 * 60 * 1000)) {
+                    let novaData = new Date(alvo);
+                    novaData.setDate(novaData.getDate() + 7);
+                    
+                    const y = novaData.getFullYear();
+                    const mo = String(novaData.getMonth() + 1).padStart(2, '0');
+                    const d = String(novaData.getDate()).padStart(2, '0');
+                    const h = String(novaData.getHours()).padStart(2, '0');
+                    const mi = String(novaData.getMinutes()).padStart(2, '0');
+                    
+                    const formatada = `${y}-${mo}-${d}T${h}:${mi}`;
+                    window.partidaEstatisticas.proximoBaba = formatada;
+                    window.salvarNoStorage();
+                    return;
+                }
+
+                if (dist < 0) {
+                    el.innerHTML = '<span class="text-red-500 animate-pulse font-black">BOLA ROLANDO!</span>';
+                    return;
+                }
+
+                const d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((dist % (1000 * 60)) / 1000);
+                el.innerHTML = `${d}d ${h}h ${m}m ${s}s`;
+            }, 1000);
+        }
+        window.iniciarContagemRegressiva = iniciarContagemRegressiva;
+
+        function alternarTema() {
+            const html = document.documentElement;
+            const atual = html.getAttribute('data-theme') || 'dark';
+            const novo = atual === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', novo);
+            localStorage.setItem('theme', novo);
+            
+            const icon = document.getElementById('icon-tema');
+            if (icon) icon.className = novo === 'light' ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
+            
+            const meta = document.getElementById('meta-theme-color');
+            if (meta) meta.setAttribute('content', novo === 'light' ? '#f0fdf4' : '#064e3b');
+        }
+        window.alternarTema = alternarTema;
+
+        // Auto-load theme
+        (function() {
+            const tema = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', tema);
+            window.addEventListener('DOMContentLoaded', () => {
+                const icon = document.getElementById('icon-tema');
+                if (icon) icon.className = tema === 'light' ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
+                const meta = document.getElementById('meta-theme-color');
+                if (meta) meta.setAttribute('content', tema === 'light' ? '#f0fdf4' : '#064e3b');
+            });
+        })();
+
         
         function getMesAtual() {
             return String(new Date().getMonth() + 1).padStart(2, '0');
