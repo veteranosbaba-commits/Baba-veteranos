@@ -14,21 +14,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
     <!-- Firebase SDKs -->
-    <script>
-        window.onerror = function(msg, url, line) {
-            const div = document.createElement('div');
-            div.style.position = 'fixed';
-            div.style.bottom = '0';
-            div.style.left = '0';
-            div.style.background = 'red';
-            div.style.color = 'white';
-            div.style.fontSize = '10px';
-            div.style.zIndex = '9999';
-            div.innerHTML = 'Erro: ' + msg + ' L' + line;
-            // document.body.appendChild(div); // Desativado para não poluir se não precisar
-            console.error(msg);
-        };
-    </script>
+    
 
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
