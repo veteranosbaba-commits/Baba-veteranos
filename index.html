@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>BABA VETERANOS - Flu vs Bota</title>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
     
     <!-- PWA Support -->
     <meta name="theme-color" content="#064e3b" id="meta-theme-color">
@@ -16,8 +18,8 @@
     <!-- Firebase SDKs -->
     
 
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+    
+    
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -2170,15 +2172,25 @@
         window.limparHistoricoMultas = limparHistoricoMultas;
         // INICIALIZAÇÃO
         // =====================================================
+        console.log('Script final alcançado');
         
-        window.addEventListener("DOMContentLoaded", () => {
-            if (inicializarFirebase()) {
-                carregarDadosIniciais();
+        function inicializarAgora() {
+            console.log('Tentando inicializar...');
+            if (typeof firebase !== 'undefined') {
+                if (inicializarFirebase()) {
+                    carregarDadosIniciais();
+                }
+            } else {
+                console.log('Firebase ainda não carregado, repetindo...');
+                setTimeout(inicializarAgora, 500);
             }
-            iniciarContagemRegressiva(null);
-        });
+        }
         
-        console.log("BABA VETERANOS - Sistema inicializado");
+        // Tenta inicializar imediatamente e também no load
+        inicializarAgora();
+        window.addEventListener('load', () => {
+             if (!window.firebaseInicializado) inicializarAgora();
+        });
     </script>
 </body>
 </html>
