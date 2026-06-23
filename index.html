@@ -2188,8 +2188,22 @@
         
         // Tenta inicializar imediatamente e também no load
         inicializarAgora();
+        setTimeout(() => {
+            if (window.atletasCache && window.atletasCache.length > 0) {
+                console.log('Fallback: Renderizando por segurança');
+                window.renderizarTudo();
+            }
+        }, 3000);
+
         window.addEventListener('load', () => {
              if (!window.firebaseInicializado) inicializarAgora();
+        setTimeout(() => {
+            if (window.atletasCache && window.atletasCache.length > 0) {
+                console.log('Fallback: Renderizando por segurança');
+                window.renderizarTudo();
+            }
+        }, 3000);
+
         });
     </script>
 </body>
