@@ -1032,7 +1032,7 @@
             window.dbRef.set(dadosParaSalvar)
                 .then(() => {
                     console.log('Dados salvos');
-                    window.renderizarTudo();
+                    console.log("Renderizando tudo..."); window.renderizarTudo();
                     syncEmAndamento = false;
                     document.getElementById('loading-overlay')?.classList.add('hidden');
                 })
@@ -1096,7 +1096,7 @@
                     window.mostrarToast('Erro ao sincronizar!', true);
                 } finally {
                     document.getElementById('loading-overlay')?.classList.add('hidden');
-                    window.renderizarTudo();
+                    console.log("Renderizando tudo..."); window.renderizarTudo();
                 }
             }, function(error) {
                 console.error('Erro no listener Firebase:', error);
@@ -1989,7 +1989,7 @@
                 document.getElementById('login-modal')?.classList.add('hidden'); 
                 document.getElementById('admin-badge')?.classList.remove('hidden'); 
                 switchTab('admin-panel'); 
-                window.renderizarTudo(); 
+                console.log("Renderizando tudo..."); window.renderizarTudo(); 
             } else { 
                 document.getElementById('login-erro')?.classList.remove('hidden'); 
             }
