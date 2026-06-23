@@ -2166,7 +2166,20 @@
         // INICIALIZAÇÃO
         // =====================================================
         
-        if (inicializarFirebase()) carregarDadosIniciais();
+        
+        // INICIALIZAÇÃO FORÇADA
+        window.addEventListener('DOMContentLoaded', () => {
+            if (inicializarFirebase()) {
+                carregarDadosIniciais();
+            }
+            setTimeout(() => {
+                if (window.atletasCache.length === 0) {
+                     console.log('Tentando recarga manual...');
+                     renderizarTudo();
+                }
+            }, 3000);
+        });
+
         iniciarContagemRegressiva(null);
         
         console.log('BABA VETERANOS - Sistema inicializado');
