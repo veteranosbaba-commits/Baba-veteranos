@@ -966,7 +966,7 @@
                     firebase.initializeApp(firebaseConfig);
                     console.log('Firebase inicializado');
                 }
-                window.dbRef = firebase.database().ref('baba');
+                window.dbRef = firebase.database().ref('baba'); console.log("Referência do banco criada.");
                 window.firebaseInicializado = true;
                 document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
                 return true;
