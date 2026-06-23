@@ -562,6 +562,7 @@
 <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center max-w-md mx-auto mt-4">
                         <label class="block font-bold text-amber-500 uppercase text-[10px] mb-1">Data do Próximo Baba</label>
                         <input type="datetime-local" id="adm-data-proximo-baba" class="w-full bg-stone-800 rounded-lg p-2 text-center font-bold text-xs text-white focus:ring-1 focus:ring-amber-500 outline-none">
+<button onclick=\"window.salvarNoStorage()\" class=\"mt-2 w-full bg-emerald-600 text-white text-[10px] font-black py-1 rounded uppercase\">Atualizar Cronômetro</button>
                     </div>
                 <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Cadastrar Jogador</h4>
@@ -988,6 +989,13 @@
             syncEmAndamento = true;
             document.getElementById('loading-overlay')?.classList.remove('hidden');
             
+            
+            const inputData = document.getElementById('adm-data-proximo-baba');
+            if (inputData && inputData.value) {
+                if (!window.partidaEstatisticas) window.partidaEstatisticas = {};
+                window.partidaEstatisticas.proximoBaba = inputData.value;
+            }
+    
             const dadosParaSalvar = {
                 _authKey: 'VAlJUPi5cwOm0sM2hmbT32Qr',
                 atletas: window.atletasCache,
@@ -2003,8 +2011,8 @@
             if (!container) return;
             
             let finalHtml = '';
+            
             container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-amber-500 text-2xl mb-2"></i></div>';
-            container.innerHTML = '';
             
             if (!window.atletasCache || window.atletasCache.length === 0) {
                 container.innerHTML = '<p class="text-center text-stone-600 py-10 italic text-xs">Nenhum atleta carregado.</p>';
