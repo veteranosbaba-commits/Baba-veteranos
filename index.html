@@ -2166,24 +2166,14 @@
         // INICIALIZAÇÃO
         // =====================================================
         
-        
-        // INICIALIZAÇÃO FORÇADA
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener("DOMContentLoaded", () => {
             if (inicializarFirebase()) {
                 carregarDadosIniciais();
             }
-            setTimeout(() => {
-                if (window.atletasCache.length === 0) {
-                     console.log('Tentando recarga manual...');
-                     renderizarTudo();
-                }
-            }, 3000);
+            iniciarContagemRegressiva(null);
         });
-
-        iniciarContagemRegressiva(null);
         
-        console.log('BABA VETERANOS - Sistema inicializado');
-        console.log('Regras de segurança integradas e validadas');
+        console.log("BABA VETERANOS - Sistema inicializado");
     </script>
 </body>
 </html>
