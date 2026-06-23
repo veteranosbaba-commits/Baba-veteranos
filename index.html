@@ -974,6 +974,11 @@
         }
         
         window.salvarNoStorage = function() {
+            const inputData = document.getElementById("adm-data-proximo-baba");
+            if (inputData && inputData.value) {
+                if (!window.partidaEstatisticas) window.partidaEstatisticas = {};
+                window.partidaEstatisticas.proximoBaba = inputData.value;
+            }
             if (!window.firebaseInicializado || !window.dbRef) {
                 if (!inicializarFirebase()) {
                     window.mostrarToast('Sem conexão com banco!', true);
