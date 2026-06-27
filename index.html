@@ -1037,7 +1037,7 @@
             if (corpo) corpo.innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
         }
         
-        window.searchPlayer = function() {
+                window.searchPlayer = function() {
             const termo = document.getElementById('search-input')?.value?.toLowerCase().trim() || '';
             const resultBox = document.getElementById('search-result');
             if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
@@ -1048,7 +1048,7 @@
             
             if (achados.length) {
                 let html = '';
-                                achados.forEach(a => {
+                achados.forEach(a => {
                     const mesAtual = "06";
                     const pagoMes = a.pagamentos?.[mesAtual]?.pago;
                     
@@ -1066,6 +1066,19 @@
                                     <span>${status} R$ ${Number(ml.valor).toFixed(2)}</span>
                                 </div>`;
                             });
+                        });
+                    }
+
+                    let extrasHtml = "";
+                    if (a.pagamentos) {
+                        Object.keys(a.pagamentos).forEach(m => {
+                            const valExtra = Number(a.pagamentos[m].extra || 0);
+                            if (valExtra > 0) {
+                                extrasHtml += `<div class="flex justify-between text-emerald-400 font-mono mt-0.5">
+                                    <span>• Aporte Extra (${m})</span>
+                                    <span class="font-black">+ R$ ${valExtra.toFixed(2)}</span>
+                                </div>`;
+                            }
                         });
                     }
 
@@ -1089,19 +1102,29 @@
                             <p class="flex justify-between"><span>📜 Histórico:</span> <strong class="text-stone-400 font-mono">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</strong></p>
                         </div>
 
-                        <div class="border-t border-stone-800 pt-2">
-                            <p class="text-[10px] font-black text-stone-500 uppercase mb-1">Situação Financeira</p>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-stone-300">Mensalidade (Junho):</span>
+                        <div class="border-t border-stone-800 pt-2 space-y-2">
+                            <p class="text-[10px] font-black text-stone-500 uppercase">Situação Financeira</p>
+                            
+                            <div class="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-stone-800/50">
+                                <span class="text-stone-300">Mensalidade (Jun):</span>
                                 <span class="font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'} font-mono">${pagoMes ? 'PAGA' : 'PENDENTE R$ 25,00'}</span>
                             </div>
                             
                             <div class="bg-black/20 p-2 rounded-lg border border-stone-800/50">
-                                <p class="text-[9px] font-bold text-stone-400 uppercase mb-1 flex justify-between">
+                                <p class="text-[9px] font-bold text-orange-500 uppercase mb-1 flex justify-between">
                                     <span>Histórico de Multas</span>
-                                    <span class="text-orange-500">Total Aberto: R$ ${totalMultasAberto.toFixed(2)}</span>
+                                    <span>Aberto: R$ ${totalMultasAberto.toFixed(2)}</span>
                                 </p>
-                                ${multasHtml || '<p class="text-[9px] text-stone-600 italic">Sem multas registradas</p>'}
+                                <div class="max-h-24 overflow-y-auto space-y-0.5">
+                                    ${multasHtml || '<p class="text-[9px] text-stone-600 italic">Sem multas</p>'}
+                                </div>
+                            </div>
+
+                            <div class="bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/10">
+                                <p class="text-[9px] font-bold text-emerald-400 uppercase mb-1">Aportes Extras / Créditos</p>
+                                <div class="max-h-24 overflow-y-auto space-y-0.5">
+                                    ${extrasHtml || '<p class="text-[9px] text-stone-600 italic">Nenhum aporte registrado</p>'}
+                                </div>
                             </div>
                         </div>
                     </div>`;
