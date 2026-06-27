@@ -444,6 +444,24 @@
         </div>
 
         <!-- BUSCA -->
+        
+        <!-- ARTILHARIA -->
+        <div id="artilharia-ver" class="tab-content space-y-6 pt-4">
+            <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-stone-800">
+                    <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs">
+                        <i class="fa-solid fa-ranking-star mr-2"></i>Artilharia da Temporada
+                    </h4>
+                    <select id="artilharia-filtro" onchange="window.renderDashArtilharia()" class="text-[10px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
+                        <option value="geral">Geral</option>
+                        <option value="FLUMINENSE">Fluminense</option>
+                        <option value="BOTAFOGO">Botafogo</option>
+                    </select>
+                </div>
+                <ol id="dash-artilharia" class="divide-y divide-stone-800 text-sm font-medium text-stone-300"></ol>
+            </div>
+        </div>
+
         <div id="busca-ver" class="tab-content space-y-6 pt-4">
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
                 <p class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3">
@@ -1718,6 +1736,9 @@
                 </button>
                 <button onclick="switchTab('jogadores'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-shirt text-lg w-6"></i> Escalação / Times
+                </button>
+                <button onclick="switchTab('artilharia-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
+                    <i class="fa-solid fa-soccer-ball text-lg w-6"></i> Gols e Artilharia
                 </button>
                 
                 <button onclick="switchTab('busca-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
