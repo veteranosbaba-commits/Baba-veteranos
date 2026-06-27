@@ -1674,32 +1674,38 @@
                 if (atleta.pagamentos) {
                     Object.entries(atleta.pagamentos).forEach(([mes, dados]) => {
                         if (dados.multasArquivadasHistorico && dados.multasArquivadasHistorico.length > 0) {
-                            const total = dados.multasArquivadasHistorico.reduce((a, b) => a + b, 0);
-                            multas.push({ mes, valor: total });
+                            dados.multasArquivadasHistorico.forEach((valor, idx) => {
+                                multas.push({ mes, valor, idx });
+                            });
                         }
                     });
                 }
 
                 if (hA > 0 || hV > 0 || multas.length > 0) {
                     html += `<div class="bg-black/40 p-3 rounded-xl border border-stone-800 shadow-inner">
-                        <div class="flex justify-between items-center mb-2">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-stone-800/50">
                             <span class="font-black text-stone-200 text-[11px] uppercase">${atleta.nome}</span>
-                            <button onclick="window.excluirHistoricoAtleta('${atleta.id}')" class="text-red-500 hover:text-red-400 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
                         </div>`;
                     
                     if (hA > 0 || hV > 0) {
-                        html += `<div class="flex gap-3 text-[10px] mb-2 font-mono">
-                            <span class="text-amber-500">🟨 ${hA}</span>
-                            <span class="text-red-500">🟥 ${hV}</span>
+                        html += `<div class="flex items-center justify-between text-[10px] mb-2 font-mono bg-stone-800/30 p-1.5 rounded">
+                            <div class="flex gap-3">
+                                <span class="text-amber-500">🟨 ${hA}</span>
+                                <span class="text-red-500">🟥 ${hV}</span>
+                            </div>
+                            <button onclick="window.excluirCartoesHistorico('${atleta.id}')" class="text-stone-500 hover:text-red-400"><i class="fa-solid fa-eraser"></i></button>
                         </div>`;
                     }
                     
                     if (multas.length > 0) {
                         html += `<div class="space-y-1">`;
                         multas.forEach(m => {
-                            html += `<div class="flex justify-between text-[10px] bg-stone-800/50 p-1.5 rounded border border-stone-700/30">
-                                <span class="text-stone-500 font-bold">MÊS ${m.mes}</span>
-                                <span class="text-emerald-400 font-mono">R$ ${m.valor.toFixed(2)}</span>
+                            html += `<div class="flex justify-between items-center text-[10px] bg-stone-800/50 p-1.5 rounded border border-stone-700/30">
+                                <div class="flex gap-2">
+                                    <span class="text-stone-500 font-bold">MÊS ${m.mes}</span>
+                                    <span class="text-emerald-400 font-mono">R$ ${m.valor.toFixed(2)}</span>
+                                </div>
+                                <button onclick="window.excluirMultaHistorica('${atleta.id}', '${m.mes}', ${m.idx})" class="text-stone-500 hover:text-red-400"><i class="fa-solid fa-trash-can"></i></button>
                             </div>`;
                         });
                         html += `</div>`;
@@ -1711,20 +1717,30 @@
             container.innerHTML = html || '<div class="text-center py-10 text-stone-500 text-xs italic">Nenhum registro arquivado.</div>';
         };
 
-        window.excluirHistoricoAtleta = function(id) {
-            if(confirm("Deseja apagar TODO o histórico (cartões e multas) deste atleta?")) {
+        window.excluirCartoesHistorico = function(id) {
+            if(confirm("Limpar o histórico de cartões deste atleta?")) {
                 const a = window.atletasCache.find(j => j.id === id);
                 if(a) {
                     a.histAmarelos = 0;
                     a.histVermelhos = 0;
-                    if(a.pagamentos) {
-                        Object.keys(a.pagamentos).forEach(m => {
-                            delete a.pagamentos[m].multasArquivadasHistorico;
-                        });
+                    window.salvarNoStorage();
+                    window.renderArquivados();
+                    window.mostrarToast("Cartões removidos!");
+                }
+            }
+        };
+
+        window.excluirMultaHistorica = function(atletaId, mes, idx) {
+            if(confirm("Excluir esta multa do histórico permanentemente?")) {
+                const a = window.atletasCache.find(j => j.id === atletaId);
+                if(a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
+                    a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
+                    if(a.pagamentos[mes].multasArquivadasHistorico.length === 0) {
+                        delete a.pagamentos[mes].multasArquivadasHistorico;
                     }
                     window.salvarNoStorage();
                     window.renderArquivados();
-                    window.mostrarToast("Histórico limpo!");
+                    window.mostrarToast("Multa removida!");
                 }
             }
         };
