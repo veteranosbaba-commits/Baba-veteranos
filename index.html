@@ -1254,6 +1254,7 @@
             }
         };
 
+        window.excluirMultaReal = function(id,m,i){const a=window.atletasCache.find(j=>j.id===id);if(a&&a.pagamentos&&a.pagamentos[m]&&a.pagamentos[m].multas){if(confirm('Excluir multa?')){a.pagamentos[m].multas.splice(i,1);window.mostrarToast('Excluída');window.salvarNoStorage();}}};
         window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (a?.pagamentos?.[mes]?.multas?.[idx]) {
@@ -1286,7 +1287,7 @@
                                 <span class="${multa.paga ? 'line-through text-emerald-400' : 'text-red-300'}">${multa.motivo} (R$ ${multa.valor.toFixed(2)})</span>
                                 <div class="flex gap-1">
                                     <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500">
-                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'}"><i class="fa-solid fa-box-archive"></i></button>
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'}"><i class="fa-solid fa-box-archive"></i></button><button onclick="window.excluirMultaReal('${a.id}','${m}',${idx})" class="text-red-500 ml-1"><i class="fa-solid fa-trash-can"></i></button>
                                 </div>
                             </div>`;
                         });
