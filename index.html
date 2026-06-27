@@ -566,6 +566,16 @@
     </div>
 
     <script>
+        const firebaseConfig = {
+            apiKey: 'AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A',
+            authDomain: 'baba-veteranos.firebaseapp.com',
+            databaseURL: 'https://baba-veteranos-default-rtdb.firebaseio.com',
+            projectId: 'baba-veteranos',
+            storageBucket: 'baba-veteranos.firebasestorage.app',
+            messagingSenderId: '636505907297',
+            appId: '1:636505907297:web:4a9a2f7674329f9cffca20'
+        };
+
         // =====================================================
         // CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS
         // =====================================================
@@ -656,7 +666,7 @@
         (function() {
             const tema = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', tema);
-            window.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener('load', () => { console.log("LOAD EVENT");
                 const icon = document.getElementById('icon-tema');
                 if (icon) icon.className = tema === 'light' ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
                 const meta = document.getElementById('meta-theme-color');
@@ -1972,7 +1982,7 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('load', () => { console.log("LOAD EVENT");
             inicializarFirebase();
             forcarCargaDados();
             // Fallback se o Firebase SDK falhar em conectar o listener
