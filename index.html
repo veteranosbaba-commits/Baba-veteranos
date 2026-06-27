@@ -1771,9 +1771,16 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const dataAtual = new Date().toLocaleDateString('pt-BR');
+            
+            // Garantir que temos acesso aos meses (mesesNomes pode ser local)
+            const mNomes = {
+                "01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun",
+                "07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"
+            };
 
             // Título
             doc.setFontSize(18);
+            doc.setTextColor(0, 0, 0);
             doc.text("BABA VETERANOS - Relatório Financeiro", 14, 20);
             doc.setFontSize(10);
             doc.text(`Gerado em: ${dataAtual}`, 14, 28);
@@ -1782,103 +1789,123 @@
             let totalEntradas = 0;
             let totalSaidas = 0;
 
-            // --- 1. MENSALIDADES ---
-            const rowsMensalidades = [];
-            window.atletasCache.forEach(atleta => {
-                if (atleta.pagamentos) {
-                    Object.entries(atleta.pagamentos).forEach(([mesIdx, dados]) => {
-                        const mNome = window.mesesNomes[mesIdx] || "Mês " + mesIdx;
-                        if (dados.pago) {
-                            rowsMensalidades.push([atleta.nome, `Mensalidade (${mNome})`, `R$ 25,00`]);
-                            totalEntradas += 25;
-                        }
-                        if (dados.extra && Number(dados.extra) > 0) {
-                            rowsMensalidades.push([atleta.nome, `Aporte Extra (${mNome})`, `R$ ${Number(dados.extra).toFixed(2)}`]);
-                            totalEntradas += Number(dados.extra);
-                        }
-                        if (dados.multas) {
-                            dados.multas.forEach(ml => {
-                                if (ml.paga) {
-                                    rowsMensalidades.push([atleta.nome, `Multa (${ml.motivo || 'Indef.'})`, `R$ ${Number(ml.valor).toFixed(2)}`]);
-                                    totalEntradas += Number(ml.valor);
-                                }
-                            });
-                        }
-                        if (dados.multasArquivadasHistorico) {
-                            dados.multasArquivadasHistorico.forEach(v => {
-                                rowsMensalidades.push([atleta.nome, `Multa Arquivada (${mNome})`, `R$ ${Number(v).toFixed(2)}`]);
-                                totalEntradas += Number(v);
-                            });
-                        }
-                    });
-                }
-            });
+            // --- 1. MENSALIDADES E EXTRAS ---
+            const rowsEntradas = [];
+            
+            if (window.atletasCache && window.atletasCache.length > 0) {
+                window.atletasCache.forEach(atleta => {
+                    if (atleta.pagamentos) {
+                        Object.entries(atleta.pagamentos).forEach(([mesIdx, dados]) => {
+                            const mNome = mNomes[mesIdx] || "Mês " + mesIdx;
+                            // Mensalidade Fixa
+                            if (dados.pago) {
+                                rowsEntradas.push([atleta.nome, `Mensalidade (${mNome})`, `R$ 25,00`]);
+                                totalEntradas += 25;
+                            }
+                            // Aporte Extra
+                            if (dados.extra && Number(dados.extra) > 0) {
+                                rowsEntradas.push([atleta.nome, `Aporte Extra (${mNome})`, `R$ ${Number(dados.extra).toFixed(2)}`]);
+                                totalEntradas += Number(dados.extra);
+                            }
+                            // Multas
+                            if (dados.multas) {
+                                dados.multas.forEach(ml => {
+                                    if (ml.paga) {
+                                        rowsEntradas.push([atleta.nome, `Multa (${ml.motivo || 'Indef.'})`, `R$ ${Number(ml.valor).toFixed(2)}`]);
+                                        totalEntradas += Number(ml.valor);
+                                    }
+                                });
+                            }
+                            // Multas Arquivadas
+                            if (dados.multasArquivadasHistorico) {
+                                dados.multasArquivadasHistorico.forEach(v => {
+                                    rowsEntradas.push([atleta.nome, `Multa Histórica (${mNome})`, `R$ ${Number(v).toFixed(2)}`]);
+                                    totalEntradas += Number(v);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
 
             // --- 2. SÓCIOS ---
-            window.sociosCache.forEach(s => {
-                const mNome = window.mesesNomes[s.mes] || s.mes;
-                rowsMensalidades.push([s.nome, `Sócio Contribuinte (${mNome})`, `R$ ${Number(s.valor).toFixed(2)}`]);
-                totalEntradas += Number(s.valor);
-            });
+            if (window.sociosCache) {
+                window.sociosCache.forEach(s => {
+                    const mNome = mNomes[s.mes] || s.mes;
+                    rowsEntradas.push([s.nome, `Sócio Contribuinte (${mNome})`, `R$ ${Number(s.valor).toFixed(2)}`]);
+                    totalEntradas += Number(s.valor);
+                });
+            }
 
             // --- 3. PATROCÍNIOS ---
-            window.patrociniosCache.forEach(p => {
-                rowsMensalidades.push([p.nome, `Patrocínio (${p.destino})`, `R$ ${Number(p.valor).toFixed(2)}`]);
-                totalEntradas += Number(p.valor);
-            });
+            if (window.patrociniosCache) {
+                window.patrociniosCache.forEach(p => {
+                    rowsEntradas.push([p.nome, `Patrocínio (${p.destino})`, `R$ ${Number(p.valor).toFixed(2)}`]);
+                    totalEntradas += Number(p.valor);
+                });
+            }
 
-            if (rowsMensalidades.length > 0) {
+            // Renderizar Entradas se houver
+            if (rowsEntradas.length > 0) {
                 doc.setFontSize(14);
                 doc.setTextColor(0, 100, 0);
-                doc.text("ENTRADAS (Mensalidades, Sócios, Patrocínios)", 14, yPos);
+                doc.text("ENTRADAS (Tudo)", 14, yPos);
                 doc.autoTable({
                     startY: yPos + 5,
                     head: [['Origem', 'Descrição', 'Valor']],
-                    body: rowsMensalidades,
+                    body: rowsEntradas,
                     theme: 'striped',
-                    headStyles: { fillColor: [0, 121, 107] }
+                    headStyles: { fillColor: [0, 121, 107] },
+                    styles: { fontSize: 8 }
                 });
                 yPos = doc.lastAutoTable.finalY + 15;
+            } else {
+                doc.text("Nenhuma entrada registrada.", 14, yPos);
+                yPos += 10;
             }
 
-            // --- 4. GASTOS (SAÍDAS) ---
+            // --- 4. GASTOS ---
             const rowsSaidas = [];
-            window.gastosCache.forEach(g => {
-                rowsSaidas.push([g.descricao, g.dataStr || '-', `R$ ${Number(g.valor).toFixed(2)}`]);
-                totalSaidas += Number(g.valor);
-            });
+            if (window.gastosCache && window.gastosCache.length > 0) {
+                window.gastosCache.forEach(g => {
+                    rowsSaidas.push([g.descricao, g.dataStr || '-', `R$ ${Number(g.valor).toFixed(2)}`]);
+                    totalSaidas += Number(g.valor);
+                });
+            }
 
             if (rowsSaidas.length > 0) {
+                if (yPos > 240) { doc.addPage(); yPos = 20; }
                 doc.setFontSize(14);
                 doc.setTextColor(150, 0, 0);
-                doc.text("SAÍDAS (Despesas e Gastos)", 14, yPos);
+                doc.text("SAÍDAS (Despesas)", 14, yPos);
                 doc.autoTable({
                     startY: yPos + 5,
                     head: [['Descrição', 'Data', 'Valor']],
                     body: rowsSaidas,
                     theme: 'striped',
-                    headStyles: { fillColor: [198, 40, 40] }
+                    headStyles: { fillColor: [198, 40, 40] },
+                    styles: { fontSize: 8 }
                 });
                 yPos = doc.lastAutoTable.finalY + 15;
             }
 
-            // --- RESUMO FINAL ---
+            // --- RESUMO ---
             if (yPos > 240) { doc.addPage(); yPos = 20; }
             doc.setFontSize(16);
             doc.setTextColor(0, 0, 0);
-            doc.text("RESUMO FINANCEIRO", 14, yPos);
+            doc.text("RESUMO FINANCEIRO FINAL", 14, yPos);
             
             doc.setFontSize(12);
-            doc.text(`Total de Entradas: R$ ${totalEntradas.toFixed(2)}`, 14, yPos + 10);
-            doc.text(`Total de Saídas: R$ ${totalSaidas.toFixed(2)}`, 14, yPos + 18);
+            doc.text(`Total Arrecadado: R$ ${totalEntradas.toFixed(2)}`, 14, yPos + 10);
+            doc.text(`Total de Gastos: R$ ${totalSaidas.toFixed(2)}`, 14, yPos + 18);
             
             doc.setFontSize(14);
             const saldo = totalEntradas - totalSaidas;
             doc.setTextColor(saldo >= 0 ? [0, 100, 0] : [200, 0, 0]);
-            doc.text(`SALDO ATUAL: R$ ${saldo.toFixed(2)}`, 14, yPos + 30);
+            doc.text(`SALDO EM CAIXA: R$ ${saldo.toFixed(2)}`, 14, yPos + 30);
 
-            doc.save(`financeiro_baba_veteranos_${dataAtual.replace(/\//g, '-')}.pdf`);
-            window.mostrarToast("PDF gerado com todas as movimentações!");
+            doc.save(`financeiro_baba_${dataAtual.replace(/\//g, '-')}.pdf`);
+            window.mostrarToast("PDF gerado com sucesso!");
         };
 
         window.limparHistoricoGeral = function() {
