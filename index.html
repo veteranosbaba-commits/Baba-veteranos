@@ -150,6 +150,26 @@
             background: rgba(20, 0, 0, 0.88); z-index: -1;
         }
     </style>
+
+    <script>
+        window.toggleMenu = function() {
+            console.log('Toggle Menu Clicked');
+            const menu = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('menu-overlay');
+            if (!menu || !overlay) return;
+            
+            if (menu.classList.contains('-translate-x-full')) {
+                menu.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+            } else {
+                menu.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        };
+    </script>
+
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
     <!-- BOTÕES DE TEMA -->
@@ -171,7 +191,7 @@
     <!-- TOPBAR -->
     <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <button onclick="toggleMenu()" class="mr-3 text-emerald-400 hover:text-emerald-300 transition-all p-1">
+            <button onclick="window.toggleMenu()" class="mr-3 text-emerald-400 hover:text-emerald-300 transition-all p-1">
                 <i class="fa-solid fa-bars-staggered text-xl"></i>
             </button>
 
@@ -1565,7 +1585,7 @@
                     <i class="fa-solid fa-ranking-star text-emerald-400 text-lg"></i>
                     <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
                 </div>
-                <button onclick="toggleMenu()" class="text-stone-400 hover:text-white transition">
+                <button onclick="window.toggleMenu()" class="text-stone-400 hover:text-white transition">
                     <i class="fa-solid fa-xmark text-2xl"></i>
                 </button>
             </div>
@@ -1600,7 +1620,7 @@
     </div>
     
     <!-- OVERLAY PARA FECHAR O MENU -->
-    <div id="menu-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden transition-opacity duration-300 opacity-0"></div>
+    <div id="menu-overlay" onclick="window.toggleMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden transition-opacity duration-300 opacity-0"></div>
 
 </body>
 </html>
