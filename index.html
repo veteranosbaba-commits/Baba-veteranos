@@ -152,6 +152,27 @@
     </style>
 
     <script>
+
+        window.gerarOpcoesMeses = function(selectId, selectedMonth = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const mesAtual = selectedMonth || window.getMesAtual();
+            let html = "";
+            meses.forEach((nome, i) => {
+                const val = (i + 1).toString().padStart(2, '0');
+                html += `<option value="${val}" ${val === mesAtual ? 'selected' : ''}>${nome}</option>`;
+            });
+            select.innerHTML = html;
+        };
+
+
+        // Função para obter o mês atual dinâmico (MM)
+        window.getMesAtual = function() {
+            const agora = new Date();
+            return (agora.getMonth() + 1).toString().padStart(2, '0');
+        };
+
         window.toggleMenu = function() {
             console.log('Toggle Menu Clicked');
             const menu = document.getElementById('sidebar-menu');
@@ -509,9 +530,7 @@
                         <form id="form-socio" onsubmit="window.cadastrarSocio(event)" class="space-y-3">
                             <input type="text" id="socio-nome" placeholder="Nome" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
-                                <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
-                                    <option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option>
-                                </select>
+                                <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none"></select>
                                 <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
                             <button type="submit" class="w-full bg-teal-500 text-black font-black p-2 rounded-lg text-xs uppercase transition">Lançar</button>
@@ -600,10 +619,7 @@
                 <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
                     <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2 flex-wrap gap-2">
                         <h4 class="font-bold text-emerald-400 text-xs uppercase">Mensalidades</h4>
-                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
-                            <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                            <option value="04">Abril</option><option value="05">Maio</option><option value="06" selected>Junho</option>
-                        </select>
+                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse min-w-[400px]">
@@ -834,6 +850,8 @@
         // =====================================================
         
         window.renderizarTudo = function() {
+            window.gerarOpcoesMeses("adm-mes-filtro");
+            window.gerarOpcoesMeses("socio-mes");
             try {
                 recalcularClassificacaoGeral();
                 loadDashboard();
@@ -951,7 +969,7 @@
                 let mensalidadeDebito = 0;
                 
                 // Mês atual é 06
-                const pagoMes = a.pagamentos?.["06"]?.pago;
+                const pagoMes = a.pagamentos?.[window.getMesAtual()]?.pago;
                 if (!pagoMes) mensalidadeDebito = 25;
                 
                 if (a.pagamentos) {
@@ -1021,7 +1039,7 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.["06"]?.pago;
+                const pagoMes = a.pagamentos?.[window.getMesAtual()]?.pago;
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
@@ -1049,7 +1067,7 @@
             if (achados.length) {
                 let html = '';
                 achados.forEach(a => {
-                    const mesAtual = "06";
+                    const mesAtual = window.getMesAtual();
                     const pagoMes = a.pagamentos?.[mesAtual]?.pago;
                     
                     let multasHtml = "";
@@ -1362,9 +1380,9 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos["06"]) a.pagamentos["06"] = { pago: false, extra: 0, multas: [] };
+            if (!a.pagamentos[window.getMesAtual()]) a.pagamentos[window.getMesAtual()] = { pago: false, extra: 0, multas: [] };
             
-            a.pagamentos["06"].multas.push({ motivo, valor, paga: false });
+            a.pagamentos[window.getMesAtual()].multas.push({ motivo, valor, paga: false });
             document.getElementById(`motivo-${id}`).value = '';
             document.getElementById(`vmulta-${id}`).value = '';
             window.mostrarToast("Multa aplicada!");
