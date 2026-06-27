@@ -1793,7 +1793,7 @@
                 "07":"Julho","08":"Agosto","09":"Setembro","10":"Outubro","11":"Novembro","12":"Dezembro"
             };
 
-            const tituloFiltro = mesSelecionado === "TODOS" ? "GERAL (TODOS OS MESES)" : mNomes[mesSelecionado].toUpperCase();
+            const tituloFiltro = mesSelecionado === "TODOS" ? "GERAL (HISTÓRICO COMPLETO)" : mNomes[mesSelecionado].toUpperCase();
 
             // Título
             doc.setFontSize(18);
@@ -1809,17 +1809,15 @@
             let totalEntradas = 0;
             let totalSaidas = 0;
 
-            // --- 1. MENSALIDADES, EXTRAS E MULTAS ---
             const rowsEntradas = [];
-            
+
+            // 1. MENSALIDADES, EXTRAS E MULTAS
             if (window.atletasCache) {
                 window.atletasCache.forEach(atleta => {
                     if (atleta.pagamentos) {
                         Object.entries(atleta.pagamentos).forEach(([mesIdx, dados]) => {
                             if (mesSelecionado !== "TODOS" && mesIdx !== mesSelecionado) return;
-                            
                             const mNomeCurto = mNomes[mesIdx] || mesIdx;
-                            
                             if (dados.pago) {
                                 rowsEntradas.push([atleta.nome, `Mensalidade (${mNomeCurto})`, `R$ 25,00`]);
                                 totalEntradas += 25;
@@ -1831,14 +1829,14 @@
                             if (dados.multas) {
                                 dados.multas.forEach(ml => {
                                     if (ml.paga) {
-                                        rowsEntradas.push([atleta.nome, `Multa (${ml.motivo || 'Indef.'}) - ${mNomeCurto}`, `R$ ${Number(ml.valor).toFixed(2)}`]);
+                                        rowsEntradas.push([atleta.nome, `Multa: ${ml.motivo || 'Indef.'} (${mNomeCurto})`, `R$ ${Number(ml.valor).toFixed(2)}`]);
                                         totalEntradas += Number(ml.valor);
                                     }
                                 });
                             }
                             if (dados.multasArquivadasHistorico) {
                                 dados.multasArquivadasHistorico.forEach(v => {
-                                    rowsEntradas.push([atleta.nome, `Multa Quitada (Hist.) - ${mNomeCurto}`, `R$ ${Number(v).toFixed(2)}`]);
+                                    rowsEntradas.push([atleta.nome, `Multa Histórica (${mNomeCurto})`, `R$ ${Number(v).toFixed(2)}`]);
                                     totalEntradas += Number(v);
                                 });
                             }
@@ -1847,7 +1845,7 @@
                 });
             }
 
-            // --- 2. SÓCIOS ---
+            // 2. SÓCIOS
             if (window.sociosCache) {
                 window.sociosCache.forEach(s => {
                     if (mesSelecionado !== "TODOS" && s.mes !== mesSelecionado) return;
@@ -1857,87 +1855,72 @@
                 });
             }
 
-            // --- 3. PATROCÍNIOS ---
+            // 3. PATROCÍNIOS
             if (window.patrociniosCache) {
                 window.patrociniosCache.forEach(p => {
-                    // Patrocínios geralmente são globais ou não tem mês fixo no cache atual, mas vamos filtrar se houver campo de data/mês no futuro
-                    // Por enquanto aparecem no GERAL ou em qualquer mês se não tiverem data específica
-                    rowsEntradas.push([p.nome, `Patrocínio (${p.destino})`, `R$ ${Number(p.valor).toFixed(2)}`]);
+                    rowsEntradas.push([p.nome, `Patrocínio (${p.destino || 'Clube'})`, `R$ ${Number(p.valor).toFixed(2)}`]);
                     totalEntradas += Number(p.valor);
                 });
             }
 
-            if (rowsEntradas.length > 0) {
-                doc.setFontSize(13);
-                doc.setTextColor(0, 80, 0);
-                doc.text("ENTRADAS (Recebimentos)", 14, yPos);
-                doc.autoTable({
-                    startY: yPos + 4,
-                    head: [['Nome / Origem', 'Descrição / Ref.', 'Valor']],
-                    body: rowsEntradas,
-                    theme: 'striped',
-                    headStyles: { fillColor: [38, 166, 154] },
-                    styles: { fontSize: 8 }
-                });
-                yPos = doc.lastAutoTable.finalY + 12;
-            }
+            // Render Entradas
+            doc.setFontSize(14);
+            doc.setTextColor(0, 100, 0);
+            doc.text("ENTRADAS (Recebimentos)", 14, yPos);
+            doc.autoTable({
+                startY: yPos + 4,
+                head: [['Nome / Origem', 'Descrição / Ref.', 'Valor']],
+                body: rowsEntradas.length > 0 ? rowsEntradas : [['-', 'Nenhum registro encontrado', 'R$ 0,00']],
+                theme: 'striped',
+                headStyles: { fillColor: [0, 150, 136] },
+                styles: { fontSize: 8 }
+            });
+            yPos = doc.lastAutoTable.finalY + 12;
 
-            // --- 4. GASTOS ---
+            // 4. GASTOS
             const rowsSaidas = [];
             if (window.gastosCache) {
                 window.gastosCache.forEach(g => {
-                    // Extrair mês da dataStr (formato DD/MM/AAAA)
                     if (mesSelecionado !== "TODOS") {
                         const partes = (g.dataStr || "").split('/');
-                        const mesGasto = partes[1]; // MM
-                        if (mesGasto !== mesSelecionado) return;
+                        if (partes[1] !== mesSelecionado) return;
                     }
                     rowsSaidas.push([g.descricao, g.dataStr || '-', `R$ ${Number(g.valor).toFixed(2)}`]);
                     totalSaidas += Number(g.valor);
                 });
             }
 
-            if (rowsSaidas.length > 0) {
-                if (yPos > 240) { doc.addPage(); yPos = 20; }
-                doc.setFontSize(13);
-                doc.setTextColor(180, 0, 0);
-                doc.text("SAÍDAS (Despesas)", 14, yPos);
-                doc.autoTable({
-                    startY: yPos + 4,
-                    head: [['Descrição', 'Data', 'Valor']],
-                    body: rowsSaidas,
-                    theme: 'striped',
-                    headStyles: { fillColor: [211, 47, 47] },
-                    styles: { fontSize: 8 }
-                });
-                yPos = doc.lastAutoTable.finalY + 12;
-            }
+            if (yPos > 240) { doc.addPage(); yPos = 20; }
+            doc.setFontSize(14);
+            doc.setTextColor(180, 0, 0);
+            doc.text("SAÍDAS (Despesas)", 14, yPos);
+            doc.autoTable({
+                startY: yPos + 4,
+                head: [['Descrição', 'Data', 'Valor']],
+                body: rowsSaidas.length > 0 ? rowsSaidas : [['-', 'Nenhum registro encontrado', 'R$ 0,00']],
+                theme: 'striped',
+                headStyles: { fillColor: [211, 47, 47] },
+                styles: { fontSize: 8 }
+            });
+            yPos = doc.lastAutoTable.finalY + 12;
 
-            // --- RESUMO FINAL ---
+            // RESUMO
             if (yPos > 240) { doc.addPage(); yPos = 20; }
             doc.setFillColor(245, 245, 245);
             doc.rect(14, yPos, 182, 35, 'F');
-            
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0);
             doc.setFont(undefined, 'bold');
             doc.text("BALANÇO FINAL", 20, yPos + 10);
-            
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
             doc.text(`Total Arrecadado: R$ ${totalEntradas.toFixed(2)}`, 20, yPos + 18);
             doc.text(`Total Despendido: R$ ${totalSaidas.toFixed(2)}`, 20, yPos + 25);
-            
             const saldo = totalEntradas - totalSaidas;
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            if (saldo >= 0) {
-                doc.setTextColor(0, 120, 0);
-                doc.text(`SALDO POSITIVO: R$ ${saldo.toFixed(2)}`, 20, yPos + 32);
-            } else {
-                doc.setTextColor(200, 0, 0);
-                doc.text(`SALDO DEVEDOR: R$ ${saldo.toFixed(2)}`, 20, yPos + 32);
-            }
+            if (saldo >= 0) { doc.setTextColor(0, 120, 0); doc.text(`SALDO POSITIVO: R$ ${saldo.toFixed(2)}`, 20, yPos + 32); }
+            else { doc.setTextColor(200, 0, 0); doc.text(`SALDO DEVEDOR: R$ ${saldo.toFixed(2)}`, 20, yPos + 32); }
 
             doc.save(`Relatorio_${tituloFiltro.replace(/ /g, '_')}_${dataAtual.replace(/\//g, '-')}.pdf`);
             window.mostrarToast("PDF gerado!");
