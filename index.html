@@ -316,22 +316,7 @@
             </div>
         </div>
 
-        <!-- ARTILHARIA -->
-        <div id="artilharia-ver" class="tab-content space-y-6 pt-4">
-            <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
-                <div class="flex justify-between items-center mb-4 border-b border-stone-800 pb-3 flex-wrap gap-2">
-                    <h4 class="font-black text-gray-200 uppercase tracking-wider text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-fire text-amber-500"></i> Artilharia da Liga
-                    </h4>
-                    <select id="artilharia-filtro" onchange="window.renderizarTudo()" class="text-xs bg-stone-800 border border-stone-700 p-2 rounded-lg text-emerald-400 font-bold focus:outline-none">
-                        <option value="geral">Geral (Todos)</option>
-                        <option value="FLUMINENSE">Fluminense FC</option>
-                        <option value="BOTAFOGO">Botafogo FR</option>
-                    </select>
-                </div>
-                <ol id="dash-artilharia" class="divide-y divide-stone-800 text-sm font-medium text-stone-300"></ol>
-            </div>
-        </div>
+        
 
         <!-- JOGADORES -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
@@ -341,15 +326,11 @@
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
+                <table class="w-full text-left border-collapse  text-xs">
                     <thead>
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
-                            <th class="p-2 text-center w-12">Nº</th>
+                            <th class="p-2 text-center w-12">#</th>
                             <th class="p-2">Nome</th>
-                            <th class="p-2 text-center w-14">Gols</th>
-                            <th class="p-2 text-center w-16">🟨</th>
-                            <th class="p-2 text-center w-16">🟥</th>
-                            <th class="p-2 text-center w-28">Histórico</th>
                             <th class="p-2 text-center w-20">Condição</th>
                             <th class="p-2 text-center w-20">Mês</th>
                         </tr>
@@ -1738,9 +1719,7 @@
                 <button onclick="switchTab('jogadores'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-shirt text-lg w-6"></i> Escalação / Times
                 </button>
-                <button onclick="switchTab('artilharia-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
-                    <i class="fa-solid fa-soccer-ball text-lg w-6"></i> Gols e Artilharia
-                </button>
+                
                 <button onclick="switchTab('busca-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-search text-lg w-6"></i> Buscar Atleta
                 </button>
