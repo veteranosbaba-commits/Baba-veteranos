@@ -1048,17 +1048,61 @@
             
             if (achados.length) {
                 let html = '';
-                achados.forEach(a => {
-                    html += `<div class="p-4 bg-stone-800 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-2 shadow-md">
-                        <p class="font-black text-stone-200 text-sm flex justify-between">
-                            <span>${a.nome}</span><span class="text-amber-400 font-mono">#${a.camisa}</span>
-                        </p>
-                        <p class="text-[10px] text-stone-400 font-bold uppercase">Time: ${a.time}</p>
-                        <div class="grid grid-cols-2 gap-2 text-stone-300">
-                            <p>⚽ Gols: <strong>${a.gols || 0}</strong></p>
-                            <p>🟨 Cartões: <strong>${a.amarelos || 0}/3</strong></p>
-                            <p>🟥 Vermelhos: <strong>${a.vermelho || 0}/1</strong></p>
-                            <p class="text-amber-400">📜 Histórico: 🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</p>
+                                achados.forEach(a => {
+                    const mesAtual = "06";
+                    const pagoMes = a.pagamentos?.[mesAtual]?.pago;
+                    
+                    let multasHtml = "";
+                    let totalMultasAberto = 0;
+                    
+                    if (a.pagamentos) {
+                        Object.keys(a.pagamentos).forEach(m => {
+                            a.pagamentos[m].multas?.forEach(ml => {
+                                const cor = ml.paga ? 'text-emerald-400' : 'text-orange-500';
+                                const status = ml.paga ? 'PAGA' : 'ABERTO';
+                                if (!ml.paga) totalMultasAberto += Number(ml.valor);
+                                multasHtml += `<div class="flex justify-between ${cor} font-mono mt-0.5">
+                                    <span>• ${ml.motivo} (${m})</span>
+                                    <span>${status} R$ ${Number(ml.valor).toFixed(2)}</span>
+                                </div>`;
+                            });
+                        });
+                    }
+
+                    html += `<div class="p-4 bg-stone-900 border border-stone-700 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-3 shadow-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-black text-stone-100 text-sm">${a.nome}</p>
+                                <p class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">${a.time} | CAMISA #${a.camisa}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black ${pagoMes ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'}">
+                                    ${pagoMes ? 'ADIMPLENTE' : 'INADIMPLENTE'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-stone-800 pt-2 text-stone-300">
+                            <p class="flex justify-between"><span>⚽ Gols:</span> <strong class="text-emerald-400 font-mono">${a.gols || 0}</strong></p>
+                            <p class="flex justify-between"><span>🟨 Amarelos:</span> <strong class="text-amber-500 font-mono">${a.amarelos || 0}/3</strong></p>
+                            <p class="flex justify-between"><span>🟥 Vermelhos:</span> <strong class="text-red-500 font-mono">${a.vermelho || 0}/1</strong></p>
+                            <p class="flex justify-between"><span>📜 Histórico:</span> <strong class="text-stone-400 font-mono">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</strong></p>
+                        </div>
+
+                        <div class="border-t border-stone-800 pt-2">
+                            <p class="text-[10px] font-black text-stone-500 uppercase mb-1">Situação Financeira</p>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-stone-300">Mensalidade (Junho):</span>
+                                <span class="font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'} font-mono">${pagoMes ? 'PAGA' : 'PENDENTE R$ 25,00'}</span>
+                            </div>
+                            
+                            <div class="bg-black/20 p-2 rounded-lg border border-stone-800/50">
+                                <p class="text-[9px] font-bold text-stone-400 uppercase mb-1 flex justify-between">
+                                    <span>Histórico de Multas</span>
+                                    <span class="text-orange-500">Total Aberto: R$ ${totalMultasAberto.toFixed(2)}</span>
+                                </p>
+                                ${multasHtml || '<p class="text-[9px] text-stone-600 italic">Sem multas registradas</p>'}
+                            </div>
                         </div>
                     </div>`;
                 });
