@@ -11,8 +11,8 @@
             document.body.classList.remove('theme-botafogo', 'theme-fluminense');
             document.body.classList.add('theme-' + theme);
             
-            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
-            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            if(document.getElementById('btn-header-botafogo')) document.getElementById('btn-header-botafogo').classList.toggle('active', theme === 'botafogo');
+            if(document.getElementById('btn-header-fluminense')) document.getElementById('btn-header-fluminense').classList.toggle('active', theme === 'fluminense');
             
             localStorage.setItem('baba_app_theme', theme);
             window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
@@ -30,8 +30,8 @@
             document.body.classList.remove('theme-botafogo', 'theme-fluminense');
             document.body.classList.add('theme-' + theme);
             
-            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
-            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            if(document.getElementById('btn-header-botafogo')) document.getElementById('btn-header-botafogo').classList.toggle('active', theme === 'botafogo');
+            if(document.getElementById('btn-header-fluminense')) document.getElementById('btn-header-fluminense').classList.toggle('active', theme === 'fluminense');
             
             localStorage.setItem('baba_app_theme', theme);
             window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
@@ -51,8 +51,8 @@
             document.body.classList.remove('theme-botafogo', 'theme-fluminense');
             document.body.classList.add('theme-' + theme);
             
-            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
-            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            if(document.getElementById('btn-header-botafogo')) document.getElementById('btn-header-botafogo').classList.toggle('active', theme === 'botafogo');
+            if(document.getElementById('btn-header-fluminense')) document.getElementById('btn-header-fluminense').classList.toggle('active', theme === 'fluminense');
             
             localStorage.setItem('baba_app_theme', theme);
             window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
@@ -225,7 +225,17 @@
 
     <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
-        <div class="bg-stone-900 p-6 rounded-2xl border-2 border-emerald-500 text-center shadow-2xl">
+        
+        <!-- Seletor de Tema Superior -->
+        <div class="flex justify-center gap-4 mb-4">
+            <button onclick="window.setAppTheme('botafogo')" id="btn-header-botafogo" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-stone-700 bg-black text-[10px] font-bold transition-all hover:scale-105">
+                <div class="w-3 h-3 rounded-full bg-white border border-black"></div> BOTA
+            </button>
+            <button onclick="window.setAppTheme('fluminense')" id="btn-header-fluminense" class="flex items-center gap-1 px-3 py-1.5 rounded-full border border-stone-700 bg-gradient-to-r from-red-900 to-green-900 text-[10px] font-bold transition-all hover:scale-105">
+                <div class="w-3 h-3 rounded-full bg-white"></div> FLU
+            </button>
+        </div>
+<div class="bg-stone-900 p-6 rounded-2xl border-2 border-emerald-500 text-center shadow-2xl">
             <div class="loading-spinner mx-auto mb-3 w-8 h-8 border-4"></div>
             <p class="text-emerald-400 font-bold text-sm">Sincronizando dados...</p>
             <p class="text-stone-500 text-xs mt-2">Aguarde um momento</p>
@@ -1749,8 +1759,8 @@
             document.body.classList.remove('theme-botafogo', 'theme-fluminense');
             document.body.classList.add('theme-' + theme);
             
-            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
-            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            if(document.getElementById('btn-header-botafogo')) document.getElementById('btn-header-botafogo').classList.toggle('active', theme === 'botafogo');
+            if(document.getElementById('btn-header-fluminense')) document.getElementById('btn-header-fluminense').classList.toggle('active', theme === 'fluminense');
             
             localStorage.setItem('baba_app_theme', theme);
             window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
