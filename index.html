@@ -6,107 +6,11 @@
     <title>BABA VETERANOS - Flu vs Bota</title>
     
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js">
-        
-
-        
-        window.setAppTheme = function(theme) {
-            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
-            document.body.classList.add('theme-' + theme);
-            
-            const teamDisplay = document.getElementById('theme-team-name');
-            if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
-                // Ajustar cor do badge do nome do time de acordo com o tema
-                if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = 'white';
-                    teamDisplay.style.color = 'black';
-                    teamDisplay.style.borderColor = 'black';
-                } else {
-                    teamDisplay.style.backgroundColor = '#800000'; // Grená
-                    teamDisplay.style.color = 'white';
-                    teamDisplay.style.borderColor = '#006400'; // Verde
-                }
-            }
-            
-            localStorage.setItem('baba_app_theme', theme);
-        };
-
-        // Inicializar tema ao carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
-            window.setAppTheme(savedTheme);
-        });
-
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js">
-        
-
-        
-        window.setAppTheme = function(theme) {
-            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
-            document.body.classList.add('theme-' + theme);
-            
-            const teamDisplay = document.getElementById('theme-team-name');
-            if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
-                // Ajustar cor do badge do nome do time de acordo com o tema
-                if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = 'white';
-                    teamDisplay.style.color = 'black';
-                    teamDisplay.style.borderColor = 'black';
-                } else {
-                    teamDisplay.style.backgroundColor = '#800000'; // Grená
-                    teamDisplay.style.color = 'white';
-                    teamDisplay.style.borderColor = '#006400'; // Verde
-                }
-            }
-            
-            localStorage.setItem('baba_app_theme', theme);
-        };
-
-        // Inicializar tema ao carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
-            window.setAppTheme(savedTheme);
-        });
-
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com">
-        
-
-        
-        window.setAppTheme = function(theme) {
-            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
-            document.body.classList.add('theme-' + theme);
-            
-            const teamDisplay = document.getElementById('theme-team-name');
-            if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
-                // Ajustar cor do badge do nome do time de acordo com o tema
-                if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = 'white';
-                    teamDisplay.style.color = 'black';
-                    teamDisplay.style.borderColor = 'black';
-                } else {
-                    teamDisplay.style.backgroundColor = '#800000'; // Grená
-                    teamDisplay.style.color = 'white';
-                    teamDisplay.style.borderColor = '#006400'; // Verde
-                }
-            }
-            
-            localStorage.setItem('baba_app_theme', theme);
-        };
-
-        // Inicializar tema ao carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
-            window.setAppTheme(savedTheme);
-        });
-
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -222,64 +126,25 @@
                 transform: translate(-50%, 0);
             }
         }
-    
-        /* Temas Dinâmicos */
-        body.theme-botafogo {
-            background-color: #000;
-            background-image: linear-gradient(90deg, #000 50%, #fff 50%);
-            background-size: 100px 100%;
-            background-attachment: fixed;
-        }
-        body.theme-botafogo::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); /* Overlay para legibilidade */
-            z-index: -1;
-        }
-
-        body.theme-fluminense {
-            background-color: #800000; /* Grená */
-            background-image: linear-gradient(90deg, #800000 45%, #fff 45%, #fff 55%, #006400 55%);
-            background-size: 120px 100%;
-            background-attachment: fixed;
-        }
-        body.theme-fluminense::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(26, 0, 0, 0.88); /* Overlay escuro */
-            z-index: -1;
-        }
-        
-        .theme-selector-btn {
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        .theme-selector-btn.active {
-            border-color: #fbbf24;
-            transform: scale(1.05);
-        }
-
     </style>
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
-    <!-- Seletor de Tema Flutuante Superior Direito -->
-    <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
-        <button onclick="window.setAppTheme('botafogo')" class="w-8 h-8 rounded-full bg-black border border-white/40 flex items-center justify-center text-[8px] font-bold" title="Tema Botafogo">B</button>
-        <button onclick="window.setAppTheme('fluminense')" class="w-8 h-8 rounded-full bg-gradient-to-br from-red-800 to-green-800 border border-white/40 flex items-center justify-center text-[8px] font-bold" title="Tema Fluminense">F</button>
-    </div>
-
 
     <!-- LOADING OVERLAY -->
-    
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
+        <div class="bg-stone-900 p-6 rounded-2xl border-2 border-emerald-500 text-center shadow-2xl">
+            <div class="loading-spinner mx-auto mb-3 w-8 h-8 border-4"></div>
+            <p class="text-emerald-400 font-bold text-sm">Sincronizando dados...</p>
+            <p class="text-stone-500 text-xs mt-2">Aguarde um momento</p>
+        </div>
+    </div>
 
     <!-- TOPBAR -->
     <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
-                <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span> <span id="theme-team-name" class="ml-2 text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 transition-all"></span>
+                <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
                 <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
             <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
@@ -402,16 +267,14 @@
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
-                <table class="w-full text-left border-collapse  text-xs">
+                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
                     <thead>
-                        
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
                             <th class="p-2 text-center w-12">Nº</th>
                             <th class="p-2">Nome</th>
-                            <th class="p-2 text-center w-20">Condição</th>
-                            <th class="p-2 text-center w-20">Mês</th>
-                        </tr>
-
+                            <th class="p-2 text-center w-24">Condição</th>
+                            <th class="p-2 text-center w-24">Mês</th>
+</tr>
                     </thead>
                     <tbody id="lista-jogadores-corpo"></tbody>
                 </table>
@@ -540,7 +403,6 @@
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
-                <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent">Arquivos</button>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
@@ -619,7 +481,6 @@
                 </div>
             </div>
 
-            <div id="adm-arquivos" class="adm-sub-content hidden space-y-6"><div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl"><h4 class="font-bold text-amber-500 text-xs uppercase mb-3"><i class="fa-solid fa-folder-open mr-1"></i> Arquivos</h4><div class="space-y-6" id="lista-arquivados-container"><div class="text-center py-10 text-stone-500 text-xs">Carregando...</div></div></div></div>
             <div id="adm-financas" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
                     <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2">
@@ -724,7 +585,7 @@
                     <i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>Próximo Baba:
                 </span>
                 <span id="cronometro-jogo" class="text-amber-400 font-mono font-black bg-stone-950 px-1.5 py-0.5 rounded border border-emerald-800/40">0d 00h 00m</span>
-                <span class="text-stone-400 text-[10px]">| Arena Coqueiros (28/06 às 08:00)</span>
+                <span class="text-stone-400 text-[10px]">| Arena Coqueiros (24/05 às 06:15)</span>
             </div>
         </div>
 
@@ -787,17 +648,15 @@
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
         
-        
         const firebaseConfig = {
-            apiKey: 'AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A',
-            authDomain: 'baba-veteranos.firebaseapp.com',
-            databaseURL: 'https://baba-veteranos-default-rtdb.firebaseio.com',
-            projectId: 'baba-veteranos',
-            storageBucket: 'baba-veteranos.firebasestorage.app',
-            messagingSenderId: '636505907297',
-            appId: '1:636505907297:web:4a9a2f7674329f9cffca20'
+            apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
+            authDomain: "baba-veteranos.firebaseapp.com",
+            databaseURL: "https://baba-veteranos-default-rtdb.firebaseio.com",
+            projectId: "baba-veteranos",
+            storageBucket: "baba-veteranos.firebasestorage.app",
+            messagingSenderId: "636505907297",
+            appId: "1:636505907297:web:4a9a2f7674329f9cffca20"
         };
-
         
         // =====================================================
         // FUNÇÕES DE NOTIFICAÇÃO
@@ -858,7 +717,7 @@
             }
             
             syncEmAndamento = true;
-            // loading removido
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
             
             const dadosParaSalvar = {
                 atletas: window.atletasCache,
@@ -876,13 +735,13 @@
                     console.log('Dados salvos');
                     window.renderizarTudo();
                     syncEmAndamento = false;
-                    // loading removido
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
                 })
                 .catch((error) => {
                     console.error('Erro ao salvar:', error);
                     window.mostrarToast('Erro ao salvar! Tentando novamente...', true);
                     syncEmAndamento = false;
-                    // loading removido
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
                     setTimeout(() => window.salvarNoStorage(), 3000);
                 });
         };
@@ -892,7 +751,7 @@
                 if (!inicializarFirebase()) return;
             }
             
-            // loading removido
+            document.getElementById('loading-overlay')?.classList.remove('hidden');
             
             try {
                 const snapshot = await window.dbRef.once('value');
@@ -915,7 +774,7 @@
                 console.error('Erro ao carregar:', error);
                 window.mostrarToast('Erro ao carregar dados!', true);
             } finally {
-                // loading removido
+                document.getElementById('loading-overlay')?.classList.add('hidden');
                 window.renderizarTudo();
             }
         }
@@ -1087,38 +946,21 @@
             renderListaJogadoresPublica();
         };
         
-        
         function renderListaJogadoresPublica() {
             const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                // Usando o mês atual (06 - Junho) conforme o contexto do app
-                const pagoMes = a.pagamentos?.["06"]?.pago; 
+                const pagoMes = a.pagamentos && a.pagamentos["06"] ? a.pagamentos["06"].pago : false;
                 html += `<tr class="hover:bg-stone-800/30 transition text-center border-b border-stone-800/50">
                     <td class="p-3 font-mono font-bold text-stone-500">#${a.camisa || '--'}</td>
                     <td class="p-3 font-bold text-stone-200 text-left">${a.nome || 'Sem nome'}</td>
-                    <td class="p-3 text-[11px] font-bold">${suspenso ? '<span class="text-red-500">❌ SUSPENSO</span>' : '<span class="text-emerald-500">✅ DISPONÍVEL</span>'}</td>
-                    <td class="p-3 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">
-                        ${pagoMes ? '<i class="fa-solid fa-check-circle"></i> PAGO' : '<i class="fa-solid fa-clock"></i> PENDENTE'}
-                    </td>
+                    <td class="p-3 text-[11px] font-bold">${suspenso ? '<span class="text-red-500">❌ SUSPENSO</span>' : '<span class="text-emerald-500">✅ OK</span>'}</td>
+                    <td class="p-3 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
                 </tr>`;
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-stone-500 italic">Nenhum atleta neste time.</td></tr>';
-        }
-</td>
-                    <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
-                    <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
-                    <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
-                    <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
-                    <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
-                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
-                </tr>`;
-            });
-            const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
         
         window.searchPlayer = function() {
@@ -1353,8 +1195,8 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             const novo = (a[campo] || 0) + valor;
-            if (campo === 'amarelos' && novo < 0) return;
-            if (campo === 'vermelho' && novo < 0) return;
+            if (campo === 'amarelos' && (novo < 0 || novo > 3)) return;
+            if (campo === 'vermelho' && (novo < 0 || novo > 1)) return;
             if (campo === 'gols' && novo < 0) return;
             a[campo] = novo;
             window.salvarNoStorage();
@@ -1388,93 +1230,6 @@
             window.salvarNoStorage();
         };
         
-        
-        
-        window.excluirHistoricoAtleta = function(id) {
-            if (confirm("Deseja zerar os cartões e gols deste atleta para esta rodada?")) {
-                const a = window.atletasCache.find(j => j.id === id);
-                if (a) {
-                    a.gols = 0;
-                    a.amarelos = 0;
-                    a.vermelho = 0;
-                    window.mostrarToast("Dados zerados!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-
-        window.excluirHistoricoCartaoIndividual = function(atletaId, tipo) {
-            if (confirm("Remover um " + tipo + " deste atleta?")) {
-                const a = window.atletasCache.find(j => j.id === atletaId);
-                if (a) {
-                    if (tipo === 'Amarelo' && a.histAmarelos > 0) a.histAmarelos--;
-                    else if (tipo === 'Vermelho' && a.histVermelhos > 0) a.histVermelhos--;
-                    window.mostrarToast(tipo + " removido!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-
-        window.excluirMultaHistoricoItem = function(atletaId, mes, idx) {
-            if (confirm("Excluir esta multa do histórico permanentemente?")) {
-                const a = window.atletasCache.find(j => j.id === atletaId);
-                if (a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
-                    a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
-                    window.mostrarToast("Multa removida do arquivo!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-    
-        window.excluirMultaReal = function(id, mes, idx) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multas) {
-                if (confirm('Excluir esta multa permanentemente?')) {
-                    a.pagamentos[mes].multas.splice(idx, 1);
-                    window.mostrarToast('Multa excluída!');
-                    window.salvarNoStorage();
-                }
-            }
-        };
-
-        
-        window.excluirHistoricoAtleta = function(id) {
-            if (confirm("Deseja zerar os cartões e gols deste atleta para esta rodada?")) {
-                const a = window.atletasCache.find(j => j.id === id);
-                if (a) {
-                    a.gols = 0;
-                    a.amarelos = 0;
-                    a.vermelho = 0;
-                    window.mostrarToast("Dados zerados!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-
-        window.excluirHistoricoCartaoIndividual = function(atletaId, tipo) {
-            if (confirm("Remover um " + tipo + " deste atleta?")) {
-                const a = window.atletasCache.find(j => j.id === atletaId);
-                if (a) {
-                    if (tipo === 'Amarelo' && a.histAmarelos > 0) a.histAmarelos--;
-                    else if (tipo === 'Vermelho' && a.histVermelhos > 0) a.histVermelhos--;
-                    window.mostrarToast(tipo + " removido!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-
-        window.excluirMultaHistoricoItem = function(atletaId, mes, idx) {
-            if (confirm("Excluir esta multa do histórico permanentemente?")) {
-                const a = window.atletasCache.find(j => j.id === atletaId);
-                if (a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
-                    a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
-                    window.mostrarToast("Multa removida do arquivo!");
-                    window.salvarNoStorage();
-                }
-            }
-        };
-    
-        window.excluirMultaReal = function(id,m,i){const a=window.atletasCache.find(j=>j.id===id);if(a&&a.pagamentos&&a.pagamentos[m]&&a.pagamentos[m].multas){if(confirm('Excluir multa?')){a.pagamentos[m].multas.splice(i,1);window.mostrarToast('Excluída');window.salvarNoStorage();}}};
         window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (a?.pagamentos?.[mes]?.multas?.[idx]) {
@@ -1507,7 +1262,7 @@
                                 <span class="${multa.paga ? 'line-through text-emerald-400' : 'text-red-300'}">${multa.motivo} (R$ ${multa.valor.toFixed(2)})</span>
                                 <div class="flex gap-1">
                                     <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500">
-                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'}"><i class="fa-solid fa-box-archive"></i></button><button onclick="window.excluirMultaReal('${a.id}','${m}',${idx})" class="text-red-500 ml-1"><i class="fa-solid fa-trash-can"></i></button>
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'}"><i class="fa-solid fa-box-archive"></i></button>
                                 </div>
                             </div>`;
                         });
@@ -1695,60 +1450,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
-        
-        
-        window.renderArquivados = function() {
-            const container = document.getElementById('lista-arquivados-container');
-            if (!container || !window.atletasCache) return;
-            let html = '';
-            window.atletasCache.forEach(a => {
-                const hA = a.histAmarelos || 0;
-                const hV = a.histVermelhos || 0;
-                let hM = false;
-                if (a.pagamentos) hM = Object.values(a.pagamentos).some(p => p.multasArquivadasHistorico && p.multasArquivadasHistorico.length > 0);
-                
-                if (hA > 0 || hV > 0 || hM) {
-                    html += `<div class="bg-black/40 p-4 rounded-xl border border-stone-800 mb-3 shadow-lg">
-                        <div class="flex justify-between items-center border-b border-stone-800 pb-2 mb-2">
-                            <span class="font-bold text-stone-200 text-xs uppercase">${a.nome}</span>
-                        </div>`;
-                    
-                    if (hA > 0 || hV > 0) {
-                        html += `<div class="flex gap-4 text-[10px] text-stone-400 mb-2">
-                            <div class="flex items-center gap-1">
-                                <span>${hA} Amarelos</span>
-                                <button onclick="window.excluirHistoricoCartaoIndividual('${a.id}','Amarelo')" class="text-red-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash-can text-[9px]"></i></button>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <span>${hV} Vermelhos</span>
-                                <button onclick="window.excluirHistoricoCartaoIndividual('${a.id}','Vermelho')" class="text-red-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash-can text-[9px]"></i></button>
-                            </div>
-                        </div>`;
-                    }
-                    
-                    if (hM) {
-                        html += `<div class="text-[9px] text-stone-500 uppercase font-bold mb-1">Multas Pagas e Arquivadas:</div>`;
-                        Object.entries(a.pagamentos).forEach(([mes, dados]) => {
-                            if (dados.multasArquivadasHistorico && dados.multasArquivadasHistorico.length > 0) {
-                                dados.multasArquivadasHistorico.forEach((valor, idx) => {
-                                    html += `<div class="flex justify-between items-center text-[10px] bg-white/5 p-1.5 mb-1 rounded">
-                                        <span class="text-stone-400">Mês ${mes}: R$ ${valor.toFixed(2)}</span>
-                                        <button onclick="window.excluirMultaHistoricoItem('${a.id}','${mes}',${idx})" class="text-red-500 ml-2 hover:text-red-400"><i class="fa-solid fa-trash-can"></i></button>
-                                    </div>`;
-                                });
-                            }
-                        });
-                    }
-                    html += `</div>`;
-                }
-            });
-            container.innerHTML = html || '<div class="text-center py-10 text-stone-500 text-xs">Nenhum registro arquivado.</div>';
-        };
-
-
         function switchAdminSubTab(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById(subTabId)?.classList.remove('hidden'); if(subTabId==="adm-arquivos") window.renderArquivados();
+            document.getElementById(subTabId)?.classList.remove('hidden');
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
@@ -1772,7 +1476,7 @@
         });
         
         function iniciarContagemRegressiva() {
-            const dataJogo = new Date("June 28, 2026 08:00:00").getTime();
+            const dataJogo = new Date("May 24, 2026 06:15:00").getTime();
             const atualizar = () => {
                 const agora = new Date().getTime();
                 const diff = dataJogo - agora;
@@ -1792,55 +1496,11 @@
         // INICIALIZAÇÃO
         // =====================================================
         
-        inicializarFirebase(); carregarDadosIniciais();
+        if (inicializarFirebase()) carregarDadosIniciais();
         iniciarContagemRegressiva();
         
         console.log('BABA VETERANOS - Sistema inicializado');
         console.log('Regras de segurança integradas e validadas');
-    
-        
-
-        
-        window.setAppTheme = function(theme) {
-            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
-            document.body.classList.add('theme-' + theme);
-            
-            const teamDisplay = document.getElementById('theme-team-name');
-            if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
-                // Ajustar cor do badge do nome do time de acordo com o tema
-                if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = 'white';
-                    teamDisplay.style.color = 'black';
-                    teamDisplay.style.borderColor = 'black';
-                } else {
-                    teamDisplay.style.backgroundColor = '#800000'; // Grená
-                    teamDisplay.style.color = 'white';
-                    teamDisplay.style.borderColor = '#006400'; // Verde
-                }
-            }
-            
-            localStorage.setItem('baba_app_theme', theme);
-        };
-
-        // Inicializar tema ao carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
-            window.setAppTheme(savedTheme);
-        });
-
     </script>
-
-    <script>
-        // Script de emergência para remover o travamento de 'Sincronizando'
-        setTimeout(() => {
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay && !overlay.classList.contains('hidden')) {
-                console.warn('Removendo overlay de carregamento por timeout');
-                overlay.classList.add('hidden');
-            }
-        }, 8000); // 8 segundos de limite máximo
-    </script>
-
 </body>
 </html>
