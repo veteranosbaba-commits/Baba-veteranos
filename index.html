@@ -1651,5 +1651,43 @@
         });
     </script>
 
+
+    <script>
+        // Função para gerenciar o histórico de navegação
+        (function() {
+            const originalSwitchTab = window.switchTab;
+            window.switchTab = function(tabId) {
+                if (typeof originalSwitchTab === 'function') {
+                    originalSwitchTab(tabId);
+                }
+                
+                // Se não for uma navegação de 'voltar', adiciona no histórico
+                if (!window._isBacking) {
+                    history.pushState({ tabId: tabId }, '', '#' + tabId);
+                }
+                window._isBacking = false;
+                
+                // Garante que o menu feche ao trocar de aba
+                if (window.toggleMenu && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) {
+                    // toggleMenu() apenas se estiver aberto
+                    // Mas como switchTab já é chamado pelos botões do menu que têm toggleMenu(), 
+                    // isso é apenas um reforço.
+                }
+            };
+
+            window.addEventListener('popstate', function(event) {
+                window._isBacking = true;
+                if (event.state && event.state.tabId) {
+                    window.switchTab(event.state.tabId);
+                } else {
+                    window.switchTab('dashboard');
+                }
+            });
+
+            // Estado inicial
+            history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
+        })();
+    </script>
+
 </body>
 </html>
