@@ -152,6 +152,12 @@
     </style>
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
+    <!-- BOTÕES DE TEMA -->
+    <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
+        <button onclick="window.setAppTheme('botafogo')" class="w-8 h-8 rounded-full bg-black border border-white/40 flex items-center justify-center text-[10px] font-bold text-white shadow-lg active:scale-95 transition-transform" title="Tema Botafogo">B</button>
+        <button onclick="window.setAppTheme('fluminense')" class="w-8 h-8 rounded-full bg-gradient-to-br from-red-700 to-green-800 border border-white/40 flex items-center justify-center text-[10px] font-bold text-white shadow-lg active:scale-95 transition-transform" title="Tema Fluminense">F</button>
+    </div>
+
 
     <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
