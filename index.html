@@ -129,6 +129,11 @@
     </style>
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
+    <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
+        <button onclick="window.setAppTheme('botafogo')" class="w-8 h-8 rounded-full bg-black border border-white/40 flex items-center justify-center text-[8px] font-bold">B</button>
+        <button onclick="window.setAppTheme('fluminense')" class="w-8 h-8 rounded-full bg-gradient-to-br from-red-800 to-green-900 border border-white/40 flex items-center justify-center text-[8px] font-bold">F</button>
+    </div>
+
 
     <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center hidden">
@@ -144,7 +149,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
-                <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
+                <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span> <span id="theme-team-name" class="ml-2 text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 transition-all"></span>
                 <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
             <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
@@ -267,14 +272,15 @@
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
+                <table class="w-full text-left border-collapse  text-xs">
                     <thead>
+                        
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
                             <th class="p-2 text-center w-12">Nº</th>
                             <th class="p-2">Nome</th>
                             <th class="p-2 text-center w-24">Condição</th>
                             <th class="p-2 text-center w-24">Mês</th>
-</tr>
+                        </tr>
                     </thead>
                     <tbody id="lista-jogadores-corpo"></tbody>
                 </table>
@@ -946,12 +952,15 @@
             renderListaJogadoresPublica();
         };
         
+        
         function renderListaJogadoresPublica() {
             const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+                // Verificando pagamento de Junho (06) ou qualquer mês disponível
                 const pagoMes = a.pagamentos && a.pagamentos["06"] ? a.pagamentos["06"].pago : false;
+                
                 html += `<tr class="hover:bg-stone-800/30 transition text-center border-b border-stone-800/50">
                     <td class="p-3 font-mono font-bold text-stone-500">#${a.camisa || '--'}</td>
                     <td class="p-3 font-bold text-stone-200 text-left">${a.nome || 'Sem nome'}</td>
@@ -961,6 +970,18 @@
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
             if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+        }</td>
+                    <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
+                    <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
+                    <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
+                    <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
+                    <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
+                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
+                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
+                </tr>`;
+            });
+            const corpo = document.getElementById('lista-jogadores-corpo');
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
         }
         
         window.searchPlayer = function() {
@@ -1502,5 +1523,25 @@
         console.log('BABA VETERANOS - Sistema inicializado');
         console.log('Regras de segurança integradas e validadas');
     </script>
+<script>
+        window.setAppTheme = function(theme) {
+            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
+            document.body.classList.add('theme-' + theme);
+            const teamDisplay = document.getElementById('theme-team-name');
+            if (teamDisplay) {
+                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
+                if (theme === 'botafogo') {
+                    teamDisplay.style.backgroundColor = 'white'; teamDisplay.style.color = 'black'; teamDisplay.style.borderColor = 'black';
+                } else {
+                    teamDisplay.style.backgroundColor = '#800000'; teamDisplay.style.color = 'white'; teamDisplay.style.borderColor = '#006400';
+                }
+            }
+            localStorage.setItem('baba_app_theme', theme);
+        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
+            window.setAppTheme(savedTheme);
+        });
+</script>
 </body>
 </html>
