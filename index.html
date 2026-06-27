@@ -1049,10 +1049,12 @@
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
+                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
+                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
                 </tr>`;
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="2" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
         }
         
                 window.searchPlayer = function() {
@@ -1223,7 +1225,7 @@
                 </tr>`;
             });
             const tabela = document.getElementById('adm-historico-exclusao-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="2" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
         }
         
         function renderFinanceiroPublico() {
@@ -1258,7 +1260,7 @@
             });
             
             const financeiroEl = document.getElementById('financeiro-mensal-corpo');
-            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
+            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
             
             let patHtml = '';
             window.patrociniosCache.forEach(p => {
@@ -1267,7 +1269,7 @@
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
             });
             const patEl = document.getElementById('publico-patrocinio-tabela');
-            if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
+            if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
             
             let socioHtml = '';
             window.sociosCache.forEach(s => {
@@ -1276,7 +1278,7 @@
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td></tr>`;
             });
             const socioEl = document.getElementById('publico-socios-tabela');
-            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
+            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
             
             let gastosHtml = '';
             window.gastosCache.forEach(g => {
@@ -1374,7 +1376,7 @@
                 </tr>`; 
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
         
         window.alterarNumero = function(id, campo, valor) {
