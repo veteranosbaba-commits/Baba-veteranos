@@ -402,18 +402,16 @@
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[700px] text-xs">
+                <table class="w-full text-left border-collapse  text-xs">
                     <thead>
+                        
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
                             <th class="p-2 text-center w-12">Nº</th>
                             <th class="p-2">Nome</th>
-                            <th class="p-2 text-center w-14">Gols</th>
-                            <th class="p-2 text-center w-16">🟨</th>
-                            <th class="p-2 text-center w-16">🟥</th>
-                            <th class="p-2 text-center w-28">Histórico</th>
                             <th class="p-2 text-center w-20">Condição</th>
                             <th class="p-2 text-center w-20">Mês</th>
                         </tr>
+
                     </thead>
                     <tbody id="lista-jogadores-corpo"></tbody>
                 </table>
@@ -1089,14 +1087,27 @@
             renderListaJogadoresPublica();
         };
         
+        
         function renderListaJogadoresPublica() {
             const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.["05"]?.pago;
-                html += `<tr class="hover:bg-stone-800/30 transition text-center">
-                    <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
+                // Usando o mês atual (06 - Junho) conforme o contexto do app
+                const pagoMes = a.pagamentos?.["06"]?.pago; 
+                html += `<tr class="hover:bg-stone-800/30 transition text-center border-b border-stone-800/50">
+                    <td class="p-3 font-mono font-bold text-stone-500">#${a.camisa || '--'}</td>
+                    <td class="p-3 font-bold text-stone-200 text-left">${a.nome || 'Sem nome'}</td>
+                    <td class="p-3 text-[11px] font-bold">${suspenso ? '<span class="text-red-500">❌ SUSPENSO</span>' : '<span class="text-emerald-500">✅ DISPONÍVEL</span>'}</td>
+                    <td class="p-3 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">
+                        ${pagoMes ? '<i class="fa-solid fa-check-circle"></i> PAGO' : '<i class="fa-solid fa-clock"></i> PENDENTE'}
+                    </td>
+                </tr>`;
+            });
+            const corpo = document.getElementById('lista-jogadores-corpo');
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-stone-500 italic">Nenhum atleta neste time.</td></tr>';
+        }
+</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
                     <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
                     <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
