@@ -389,7 +389,7 @@
                             <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
                                 <th class="p-3">Mês</th>
                                 <th class="p-3 text-right">Mensalidades</th>
-                                <th class="p-3 text-right">Aportes</th>
+                                
                                 <th class="p-3 text-right">Multas</th>
                             </tr>
                         </thead>
@@ -1252,14 +1252,13 @@
                 if (mensalMap[mes].fixo > 0 || mensalMap[mes].extra > 0 || mensalMap[mes].multas > 0) {
                     mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td>
                         <td class="p-3 text-right text-emerald-400 font-mono">R$ ${mensalMap[mes].fixo.toFixed(2)}</td>
-                        <td class="p-3 text-right text-teal-400 font-mono">R$ ${mensalMap[mes].extra.toFixed(2)}</td>
                         <td class="p-3 text-right text-amber-500 font-mono">R$ ${mensalMap[mes].multas.toFixed(2)}</td>
                     </tr>`;
                 }
             });
             
             const financeiroEl = document.getElementById('financeiro-mensal-corpo');
-            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
+            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
             
             let patHtml = '';
             window.patrociniosCache.forEach(p => {
