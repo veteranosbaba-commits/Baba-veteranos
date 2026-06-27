@@ -390,7 +390,7 @@
                                 <th class="p-3">Mês</th>
                                 <th class="p-3 text-right">Mensalidades</th>
                                 
-                                <th class="p-3 text-right">Multas</th>
+                                
                             </tr>
                         </thead>
                         <tbody id="financeiro-mensal-corpo"></tbody>
@@ -416,14 +416,20 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-circle-plus mr-2"></i>Aportes Extras
                     </h4>
                     <ul id="financeiro-aportes-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
                 </div>
-                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                    <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                        <i class="fa-solid fa-gavel mr-2"></i>Multas Pagas
+                    </h4>
+                    <ul id="financeiro-multas-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
+                </div>
+<div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-circle-minus mr-2"></i>Gastos Realizados
                     </h4>
@@ -434,7 +440,7 @@
 
         <!-- PENDÊNCIAS -->
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <div class="mb-4 pb-2 border-b border-stone-800">
                         <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs">
@@ -1223,7 +1229,7 @@
                 </tr>`;
             });
             const tabela = document.getElementById('adm-historico-exclusao-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="3" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="2" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
         }
         
         function renderFinanceiroPublico() {
@@ -1252,13 +1258,13 @@
                 if (mensalMap[mes].fixo > 0 || mensalMap[mes].extra > 0 || mensalMap[mes].multas > 0) {
                     mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td>
                         <td class="p-3 text-right text-emerald-400 font-mono">R$ ${mensalMap[mes].fixo.toFixed(2)}</td>
-                        <td class="p-3 text-right text-amber-500 font-mono">R$ ${mensalMap[mes].multas.toFixed(2)}</td>
+                        
                     </tr>`;
                 }
             });
             
             const financeiroEl = document.getElementById('financeiro-mensal-corpo');
-            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
+            if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
             
             let patHtml = '';
             window.patrociniosCache.forEach(p => {
@@ -1267,7 +1273,7 @@
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
             });
             const patEl = document.getElementById('publico-patrocinio-tabela');
-            if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
+            if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
             
             let socioHtml = '';
             window.sociosCache.forEach(s => {
@@ -1276,7 +1282,7 @@
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td></tr>`;
             });
             const socioEl = document.getElementById('publico-socios-tabela');
-            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
+            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
             
             let gastosHtml = '';
             window.gastosCache.forEach(g => {
@@ -1303,6 +1309,34 @@
             });
             const aportesLista = document.getElementById('financeiro-aportes-lista');
             if (aportesLista) aportesLista.innerHTML = aportesHtml || '<li class="py-2 text-stone-500 italic">Nenhum aporte extra.</li>';
+            let multasPagasHtml = '';
+            window.atletasCache.forEach(a => {
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(mes => {
+                        if (a.pagamentos[mes].multas) {
+                            a.pagamentos[mes].multas.forEach(ml => {
+                                if (ml.paga) {
+                                    multasPagasHtml += `<li class="py-2 flex justify-between text-stone-300">
+                                        <span>${a.nome} <span class="text-[9px] text-stone-500">(${ml.motivo} - ${mesesNomes[mes]})</span></span>
+                                        <span class="text-orange-500 font-mono">R$ ${Number(ml.valor).toFixed(2)}</span>
+                                    </li>`;
+                                }
+                            });
+                        }
+                        if (a.pagamentos[mes].multasArquivadasHistorico) {
+                            a.pagamentos[mes].multasArquivadasHistorico.forEach(v => {
+                                multasPagasHtml += `<li class="py-2 flex justify-between text-stone-300">
+                                    <span>${a.nome} <span class="text-[9px] text-stone-500">(Histórico - ${mesesNomes[mes]})</span></span>
+                                    <span class="text-orange-500 font-mono">R$ ${Number(v).toFixed(2)}</span>
+                                </li>`;
+                            });
+                        }
+                    });
+                }
+            });
+            const multasLista = document.getElementById('financeiro-multas-lista');
+            if (multasLista) multasLista.innerHTML = multasPagasHtml || '<li class="py-2 text-stone-500 italic">Nenhuma multa paga.</li>';
+
         }
         
         // =====================================================
@@ -1346,7 +1380,7 @@
                 </tr>`; 
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="3" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="2" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
         
         window.alterarNumero = function(id, campo, valor) {
