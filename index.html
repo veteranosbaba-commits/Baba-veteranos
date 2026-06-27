@@ -6,11 +6,65 @@
     <title>BABA VETERANOS - Flu vs Bota</title>
     
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js">
+        window.setAppTheme = function(theme) {
+            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
+            document.body.classList.add('theme-' + theme);
+            
+            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
+            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            
+            localStorage.setItem('baba_app_theme', theme);
+            window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
+        };
+
+        // Inicializar tema ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
+            window.setAppTheme(savedTheme);
+        });
+
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js">
+        window.setAppTheme = function(theme) {
+            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
+            document.body.classList.add('theme-' + theme);
+            
+            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
+            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            
+            localStorage.setItem('baba_app_theme', theme);
+            window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
+        };
+
+        // Inicializar tema ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
+            window.setAppTheme(savedTheme);
+        });
+
+    </script>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+        window.setAppTheme = function(theme) {
+            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
+            document.body.classList.add('theme-' + theme);
+            
+            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
+            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            
+            localStorage.setItem('baba_app_theme', theme);
+            window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
+        };
+
+        // Inicializar tema ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
+            window.setAppTheme(savedTheme);
+        });
+
+    </script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -126,6 +180,45 @@
                 transform: translate(-50%, 0);
             }
         }
+    
+        /* Temas Dinâmicos */
+        body.theme-botafogo {
+            background-color: #000;
+            background-image: linear-gradient(90deg, #000 50%, #fff 50%);
+            background-size: 100px 100%;
+            background-attachment: fixed;
+        }
+        body.theme-botafogo::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); /* Overlay para legibilidade */
+            z-index: -1;
+        }
+
+        body.theme-fluminense {
+            background-color: #800000; /* Grená */
+            background-image: linear-gradient(90deg, #800000 45%, #fff 45%, #fff 55%, #006400 55%);
+            background-size: 120px 100%;
+            background-attachment: fixed;
+        }
+        body.theme-fluminense::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 0, 0, 0.88); /* Overlay escuro */
+            z-index: -1;
+        }
+        
+        .theme-selector-btn {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .theme-selector-btn.active {
+            border-color: #fbbf24;
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
@@ -1651,6 +1744,24 @@
         
         console.log('BABA VETERANOS - Sistema inicializado');
         console.log('Regras de segurança integradas e validadas');
+    
+        window.setAppTheme = function(theme) {
+            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
+            document.body.classList.add('theme-' + theme);
+            
+            document.getElementById('btn-theme-botafogo').classList.toggle('active', theme === 'botafogo');
+            document.getElementById('btn-theme-fluminense').classList.toggle('active', theme === 'fluminense');
+            
+            localStorage.setItem('baba_app_theme', theme);
+            window.mostrarToast("Tema " + theme.toUpperCase() + " aplicado!");
+        };
+
+        // Inicializar tema ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('baba_app_theme') || 'fluminense';
+            window.setAppTheme(savedTheme);
+        });
+
     </script>
 </body>
 </html>
