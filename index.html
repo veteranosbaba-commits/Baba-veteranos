@@ -602,7 +602,7 @@
                         <h4 class="font-bold text-emerald-400 text-xs uppercase">Mensalidades</h4>
                         <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
                             <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                            <option value="04">Abril</option><option value="05" selected>Maio</option><option value="06">Junho</option>
+                            <option value="04">Abril</option><option value="05">Maio</option><option value="06" selected>Junho</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -1275,9 +1275,9 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos["05"]) a.pagamentos["05"] = { pago: false, extra: 0, multas: [] };
+            if (!a.pagamentos["06"]) a.pagamentos["06"] = { pago: false, extra: 0, multas: [] };
             
-            a.pagamentos["05"].multas.push({ motivo, valor, paga: false });
+            a.pagamentos["06"].multas.push({ motivo, valor, paga: false });
             document.getElementById(`motivo-${id}`).value = '';
             document.getElementById(`vmulta-${id}`).value = '';
             window.mostrarToast("Multa aplicada!");
