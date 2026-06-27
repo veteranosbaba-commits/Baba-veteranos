@@ -1207,8 +1207,8 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             const novo = (a[campo] || 0) + valor;
-            if (campo === 'amarelos' && (novo < 0 || novo > 3)) return;
-            if (campo === 'vermelho' && (novo < 0 || novo > 1)) return;
+            if (campo === 'amarelos' && novo < 0) return;
+            if (campo === 'vermelho' && novo < 0) return;
             if (campo === 'gols' && novo < 0) return;
             a[campo] = novo;
             window.salvarNoStorage();
@@ -1242,6 +1242,18 @@
             window.salvarNoStorage();
         };
         
+        
+        window.excluirMultaReal = function(id, mes, idx) {
+            const a = window.atletasCache.find(j => j.id === id);
+            if (a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multas) {
+                if (confirm('Excluir esta multa permanentemente?')) {
+                    a.pagamentos[mes].multas.splice(idx, 1);
+                    window.mostrarToast('Multa excluída!');
+                    window.salvarNoStorage();
+                }
+            }
+        };
+
         window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (a?.pagamentos?.[mes]?.multas?.[idx]) {
