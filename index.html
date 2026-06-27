@@ -1794,7 +1794,7 @@
         // INICIALIZAÇÃO
         // =====================================================
         
-        if (inicializarFirebase()) carregarDadosIniciais();
+        inicializarFirebase(); carregarDadosIniciais();
         iniciarContagemRegressiva();
         
         console.log('BABA VETERANOS - Sistema inicializado');
@@ -1832,5 +1832,17 @@
         });
 
     </script>
+
+    <script>
+        // Script de emergência para remover o travamento de 'Sincronizando'
+        setTimeout(() => {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay && !overlay.classList.contains('hidden')) {
+                console.warn('Removendo overlay de carregamento por timeout');
+                overlay.classList.add('hidden');
+            }
+        }, 8000); // 8 segundos de limite máximo
+    </script>
+
 </body>
 </html>
