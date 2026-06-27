@@ -407,6 +407,7 @@
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
+                <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent">Arquivos</button>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
@@ -485,6 +486,7 @@
                 </div>
             </div>
 
+            <div id="adm-arquivos" class="adm-sub-content hidden space-y-6"><div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl"><h4 class="font-bold text-amber-500 text-xs uppercase mb-3"><i class="fa-solid fa-folder-open mr-1"></i> Arquivos</h4><div class="space-y-6" id="lista-arquivados-container"><div class="text-center py-10 text-stone-500 text-xs">Carregando...</div></div></div></div>
             <div id="adm-financas" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
                     <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2">
@@ -1460,9 +1462,28 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
+        
+        window.renderArquivados = function() {
+            const container = document.getElementById('lista-arquivados-container');
+            if (!container || !window.atletasCache) return;
+            let html = '';
+            window.atletasCache.forEach(a => {
+                const hA = a.histAmarelos || 0, hV = a.histVermelhos || 0;
+                let hM = false;
+                if (a.pagamentos) hM = Object.values(a.pagamentos).some(p => p.multasArquivadasHistorico && p.multasArquivadasHistorico.length > 0);
+                if (hA > 0 || hV > 0 || hM) {
+                    html += '<div class="bg-black/40 p-3 rounded-lg border border-stone-800 mb-2"><div class="font-bold text-stone-200 text-[11px] uppercase mb-1">' + a.nome + '</div>';
+                    if (hA > 0 || hV > 0) html += '<div class="text-[10px] text-stone-400">Cartões: ' + hA + ' Am / ' + hV + ' Ver</div>';
+                    if (hM) html += '<div class="text-[10px] text-amber-500 font-bold mt-1">Possui histórico de multas</div>';
+                    html += '</div>';
+                }
+            });
+            container.innerHTML = html || '<div class="text-center py-5 text-stone-500 text-xs">Nenhum registro.</div>';
+        };
+
         function switchAdminSubTab(subTabId) {
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById(subTabId)?.classList.remove('hidden');
+            document.getElementById(subTabId)?.classList.remove('hidden'); if(subTabId==="adm-arquivos") window.renderArquivados();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
