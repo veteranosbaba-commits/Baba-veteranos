@@ -1049,16 +1049,10 @@
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
-                    <td class="p-1.5 font-mono font-bold text-emerald-400">${a.gols || 0}</td>
-                    <td class="p-1.5 text-amber-500 font-mono font-bold">${a.amarelos || 0}/3</td>
-                    <td class="p-1.5 text-red-500 font-mono font-bold">${a.vermelho || 0}/1</td>
-                    <td class="p-1.5 text-stone-400 font-mono text-[11px]">🟨 ${a.histAmarelos || 0} | 🟥 ${a.histVermelhos || 0}</td>
-                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
                 </tr>`;
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="8" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="2" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
         }
         
                 window.searchPlayer = function() {
