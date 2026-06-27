@@ -2260,71 +2260,46 @@
         window.renderArquivados = renderArquivados;
         window.limparHistoricoCartoes = limparHistoricoCartoes;
         window.limparHistoricoMultas = limparHistoricoMultas;
-        // INICIALIZAÇÃO
+        // INICIALIZAÇÃO (RECONSTRUÍDA)
         // =====================================================
-        console.log('Script final alcançado');
         
-        function inicializarAgora() {
-            console.log('Tentando inicializar...');
-            if (typeof firebase !== 'undefined') {
-                if (inicializarFirebase()) {
-                    carregarDadosIniciais();
-                }
-            } else {
-                console.log('Firebase ainda não carregado, repetindo...');
-                setTimeout(inicializarAgora, 500);
-            }
-        }
-        
-        // Tenta inicializar imediatamente e também no load
-        inicializarAgora();
-        setTimeout(() => {
-            if (window.atletasCache && window.atletasCache.length > 0) {
-                console.log('Fallback: Renderizando por segurança');
-                window.renderizarTudo();
-            }
-        }, 3000);
-
-        window.addEventListener('load', () => {
-             if (!window.firebaseInicializado) inicializarAgora();
-        setTimeout(() => {
-            if (window.atletasCache && window.atletasCache.length > 0) {
-                console.log('Fallback: Renderizando por segurança');
-                window.renderizarTudo();
-            }
-        }, 3000);
-
-        });
-    
-        async function carregarEmergencia() {
-            console.log('Iniciando carregamento de EMERGÊNCIA...');
+        async function forcarCargaDados() {
+            console.log('Iniciando carga de dados...');
             try {
-                const response = await fetch('https://baba-veteranos-default-rtdb.firebaseio.com/baba.json');
-                const data = await response.json();
+                // Tentativa via Fetch (mais estável que o SDK em alguns PWAs)
+                const res = await fetch('https://baba-veteranos-default-rtdb.firebaseio.com/baba.json');
+                const data = await res.json();
                 if (data) {
-                    console.log('Dados via Fetch obtidos!');
-                    const toArray = v => v ? (Array.isArray(v) ? v : Object.values(v)).filter(Boolean) : [];
-                    window.atletasCache = toArray(data.atletas);
-                    window.gastosCache = toArray(data.gastos);
-                    window.sociosCache = toArray(data.socios);
-                    window.patrociniosCache = toArray(data.patrocinios);
-                    window.historicoPlacares = toArray(data.historicoPlacares);
+                    const toArr = v => v ? (Array.isArray(v) ? v : Object.values(v)).filter(Boolean) : [];
+                    window.atletasCache = toArr(data.atletas);
+                    window.gastosCache = toArr(data.gastos);
+                    window.sociosCache = toArr(data.socios);
+                    window.patrociniosCache = toArr(data.patrocinios);
+                    window.historicoPlacares = toArr(data.historicoPlacares);
                     window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0 };
+                    
                     window.renderizarTudo();
-                    window.mostrarToast('Dados carregados (Modo Emergência)');
+                    
+                    if (window.partidaEstatisticas.proximoBaba) {
+                        window.iniciarContagemRegressiva(window.partidaEstatisticas.proximoBaba);
+                    }
+                    console.log('Dados carregados com sucesso.');
                 }
-            } catch (e) {
-                console.error('Falha na emergência:', e);
+            } catch (err) {
+                console.error('Erro na carga forçada:', err);
             }
         }
 
-        // Se após 6 segundos o cache ainda estiver vazio, usa a emergência
-        setTimeout(() => {
-            if (!window.atletasCache || window.atletasCache.length === 0) {
-                carregarEmergencia();
-            }
-        }, 6000);
+        window.addEventListener('DOMContentLoaded', () => {
+            inicializarFirebase();
+            forcarCargaDados();
+            // Fallback se o Firebase SDK falhar em conectar o listener
+            setTimeout(() => {
+                if (!window.atletasCache || window.atletasCache.length === 0) forcarCargaDados();
+            }, 3000);
+        });
 
+        console.log('BABA VETERANOS - Ressurreição Completa');
     </script>
 </body>
 </html>
