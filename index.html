@@ -947,20 +947,40 @@
             
             let pendentesHtml = '', suspensosHtml = '';
             window.atletasCache.forEach(a => {
-                let debito = 0;
-                const pagoMes = a.pagamentos?.["05"]?.pago;
-                if (!pagoMes) debito += 25;
+                let multasDebito = 0;
+                let mensalidadeDebito = 0;
+                
+                // Mês atual é 06
+                const pagoMes = a.pagamentos?.["06"]?.pago;
+                if (!pagoMes) mensalidadeDebito = 25;
                 
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
-                        a.pagamentos[m].multas?.forEach(ml => { if(!ml.paga) debito += Number(ml.valor); });
+                        a.pagamentos[m].multas?.forEach(ml => { 
+                            if(!ml.paga) multasDebito += Number(ml.valor); 
+                        });
                     });
                 }
                 
-                if (debito > 0) {
-                    pendentesHtml += `<li class="flex justify-between py-2 items-center text-stone-300">
-                        <span>${a.nome} <span class="text-[10px] text-stone-400">(${a.time})</span></span>
-                        <span class="font-black text-[11px] text-red-400 font-mono">R$ ${debito.toFixed(2)}</span>
+                const totalDebito = mensalidadeDebito + multasDebito;
+                
+                if (totalDebito > 0) {
+                    let detalhes = [];
+                    if (mensalidadeDebito > 0) {
+                        detalhes.push(`<span class="text-red-500 font-black">MENSALIDADE R$ ${mensalidadeDebito.toFixed(2)}</span>`);
+                    }
+                    if (multasDebito > 0) {
+                        detalhes.push(`<span class="text-orange-500 font-black">MULTA R$ ${multasDebito.toFixed(2)}</span>`);
+                    }
+
+                    pendentesHtml += `<li class="py-2 border-b border-stone-800/50">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time})</span></span>
+                            <span class="font-black text-[11px] text-stone-400 font-mono">TOTAL R$ ${totalDebito.toFixed(2)}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-[9px] uppercase">
+                            ${detalhes.join(' <span class="text-stone-700">|</span> ')}
+                        </div>
                     </li>`;
                 }
                 
@@ -1001,7 +1021,7 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.["05"]?.pago;
+                const pagoMes = a.pagamentos?.["06"]?.pago;
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
