@@ -1661,6 +1661,31 @@
         }
         
         
+        window.excluirCartoesHistorico = function(id, cor) {
+            const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
+
+            if (cor === 'amarelo') {
+                if (a.histAmarelos > 0) {
+                    if (confirm("Remover 1 cartão AMARELO do histórico?")) {
+                        a.histAmarelos--;
+                        window.salvarNoStorage();
+                        window.renderArquivados();
+                        window.mostrarToast("1 Amarelo removido!");
+                    }
+                }
+            } else if (cor === 'vermelho') {
+                if (a.histVermelhos > 0) {
+                    if (confirm("Remover 1 cartão VERMELHO do histórico?")) {
+                        a.histVermelhos--;
+                        window.salvarNoStorage();
+                        window.renderArquivados();
+                        window.mostrarToast("1 Vermelho removido!");
+                    }
+                }
+            }
+        };
+
         window.renderArquivados = function() {
             const container = document.getElementById('lista-arquivados-container');
             if (!container || !window.atletasCache) return;
@@ -1688,13 +1713,20 @@
                         </div>`;
                     
                     if (hA > 0 || hV > 0) {
-                        html += `<div class="flex items-center justify-between text-[10px] mb-2 font-mono bg-stone-800/30 p-1.5 rounded">
-                            <div class="flex gap-3">
-                                <span class="text-amber-500">🟨 ${hA}</span>
-                                <span class="text-red-500">🟥 ${hV}</span>
-                            </div>
-                            <button onclick="window.excluirCartoesHistorico('${atleta.id}')" class="text-stone-500 hover:text-red-400"><i class="fa-solid fa-eraser"></i></button>
-                        </div>`;
+                        html += `<div class="space-y-1 mb-2">`;
+                        if (hA > 0) {
+                            html += `<div class="flex items-center justify-between text-[10px] font-mono bg-stone-800/30 p-1.5 rounded">
+                                <span class="text-amber-500 font-bold">🟨 HISTÓRICO: ${hA}</span>
+                                <button onclick="window.excluirCartoesHistorico('${atleta.id}', 'amarelo')" class="text-stone-500 hover:text-red-400 p-1"><i class="fa-solid fa-minus-circle"></i></button>
+                            </div>`;
+                        }
+                        if (hV > 0) {
+                            html += `<div class="flex items-center justify-between text-[10px] font-mono bg-stone-800/30 p-1.5 rounded">
+                                <span class="text-red-500 font-bold">🟥 HISTÓRICO: ${hV}</span>
+                                <button onclick="window.excluirCartoesHistorico('${atleta.id}', 'vermelho')" class="text-stone-500 hover:text-red-400 p-1"><i class="fa-solid fa-minus-circle"></i></button>
+                            </div>`;
+                        }
+                        html += `</div>`;
                     }
                     
                     if (multas.length > 0) {
@@ -1715,19 +1747,6 @@
             });
             
             container.innerHTML = html || '<div class="text-center py-10 text-stone-500 text-xs italic">Nenhum registro arquivado.</div>';
-        };
-
-        window.excluirCartoesHistorico = function(id) {
-            if(confirm("Limpar o histórico de cartões deste atleta?")) {
-                const a = window.atletasCache.find(j => j.id === id);
-                if(a) {
-                    a.histAmarelos = 0;
-                    a.histVermelhos = 0;
-                    window.salvarNoStorage();
-                    window.renderArquivados();
-                    window.mostrarToast("Cartões removidos!");
-                }
-            }
         };
 
         window.excluirMultaHistorica = function(atletaId, mes, idx) {
