@@ -127,6 +127,38 @@
             }
         }
     </style>
+
+    <style>
+        /* Temas Dinâmicos com Cores Vividas */
+        body.theme-botafogo {
+            background-color: #000000;
+            background-image: linear-gradient(90deg, #000000 50%, #ffffff 50%);
+            background-size: 80px 100%;
+            background-attachment: fixed;
+        }
+        body.theme-botafogo::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.82); z-index: -1;
+        }
+
+        body.theme-fluminense {
+            background-color: #990000; /* Grená mais vivo */
+            background-image: linear-gradient(90deg, #990000 45%, #ffffff 45%, #ffffff 55%, #008000 55%);
+            background-size: 100px 100%;
+            background-attachment: fixed;
+        }
+        body.theme-fluminense::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 0, 0, 0.85); z-index: -1;
+        }
+        
+        /* Ajuste de Contraste para os Badges do Topo */
+        #theme-team-name {
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+    </style>
+
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
     <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
