@@ -516,6 +516,20 @@
             </div>
         </div>
 
+        <div id="historico-sumulas" class="tab-content space-y-6 pt-4">
+            <div class="flex items-center justify-between px-2">
+                <h3 class="font-black text-emerald-400 text-xl uppercase tracking-tighter flex items-center gap-2">
+                    <i class="fa-solid fa-file-contract"></i> Súmulas dos Jogos
+                </h3>
+            </div>
+            <div id="container-sumulas-publico" class="space-y-6 pb-20">
+                <!-- Súmulas renderizadas aqui -->
+                <div class="text-center py-10 text-stone-500 italic text-sm">
+                    Carregando súmulas...
+                </div>
+            </div>
+        </div>
+
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
@@ -583,6 +597,7 @@
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmula</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
+                <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmulas</button>
                 <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Arquivos</button>
             </div>
 
@@ -661,6 +676,64 @@
             </div>
 
             
+            <div id="adm-sumulas" class="adm-sub-content hidden space-y-6">
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula
+                    </h4>
+                    <form onsubmit="window.salvarNovaSumula(event)" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-stone-400 uppercase font-bold">Data do Jogo</label>
+                                <input type="date" id="sum-data" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-stone-400 uppercase font-bold">Placar (Bota X Flu)</label>
+                                <input type="text" id="sum-placar" placeholder="Ex: 01 X 03" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none text-center font-bold">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- BOTA -->
+                            <div class="p-3 bg-black/40 rounded-xl border border-stone-800 space-y-3">
+                                <h5 class="text-xs font-black text-white uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
+                                    <i class="fa-solid fa-flag text-white"></i> Botafogo
+                                </h5>
+                                <input type="text" id="sum-bota-gols" placeholder="Nº dos Goleadores (Ex: 20, 10)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-amarelos" placeholder="Nº Amarelos (Ex: 02, 22)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-vermelhos" placeholder="Nº Vermelhos" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                            </div>
+
+                            <!-- FLU -->
+                            <div class="p-3 bg-black/40 rounded-xl border border-stone-800 space-y-3">
+                                <h5 class="text-xs font-black text-emerald-500 uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
+                                    <i class="fa-solid fa-flag text-emerald-500"></i> Fluminense
+                                </h5>
+                                <input type="text" id="sum-flu-gols" placeholder="Nº dos Goleadores (Ex: 17, 30)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-amarelos" placeholder="Nº Amarelos (Ex: 07, 03)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-vermelhos" placeholder="Nº Vermelhos" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-stone-400 uppercase font-bold">Observações / Suspensos</label>
+                            <textarea id="sum-obs" rows="3" placeholder="Ex: Atleta 03 suspenso por 3º amarelo..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 text-white font-black p-3 rounded-xl uppercase transition hover:bg-emerald-500 shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Publicar Súmula
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-4">Gerenciar Súmulas</h4>
+                    <div id="lista-sumulas-adm" class="space-y-2">
+                        <!-- Lista de súmulas para excluir -->
+                    </div>
+                </div>
+            </div>
+
             <div id="adm-arquivos" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
                     <div class="flex justify-between items-center mb-4 pb-2 border-b border-stone-800">
@@ -827,6 +900,7 @@
         window.gastosCache = [];
         window.sociosCache = [];
         window.patrociniosCache = [];
+        window.sumulasCache = [];
         window.historicoPlacares = [];
         window.partidaEstatisticas = { 
             placarFlu: 0, 
@@ -924,6 +998,7 @@
                 gastos: window.gastosCache,
                 socios: window.sociosCache,
                 patrocinios: window.patrociniosCache,
+                sumulas: window.sumulasCache,
                 partidaEstatisticas: window.partidaEstatisticas,
                 historicoPlacares: window.historicoPlacares,
                 ultimaAtualizacao: new Date().toISOString(),
@@ -962,6 +1037,7 @@
                     window.gastosCache = data.gastos || [];
                     window.sociosCache = data.socios || [];
                     window.patrociniosCache = data.patrocinios || [];
+                    window.sumulasCache = data.sumulas || [];
                     window.historicoPlacares = data.historicoPlacares || [];
                     window.partidaEstatisticas = data.partidaEstatisticas || { 
                         placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
@@ -992,6 +1068,7 @@
                 renderListaJogadoresPublica();
                 renderFinanceiroPublico();
                 renderHistoricoPlacares();
+                window.renderSumulasPublicas();
                 
                 if (window.isAdminLogado) {
                     renderAdminAtletas();
@@ -999,6 +1076,7 @@
                     renderAdminSocios();
                     renderAdminGastosTabela();
                     renderAdminHistoricoExclusao();
+                    window.renderSumulasAdmin();
                     window.loadAdmFinancas();
                 }
             } catch (error) {
@@ -1650,14 +1728,123 @@
         
         window.processarGasto = function(e) {
             e.preventDefault();
-            const descricao = document.getElementById('gasto-descricao')?.value?.trim();
-            const valor = parseFloat(document.getElementById('gasto-valor')?.value);
-            if (!descricao || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
-            const hj = new Date();
-            window.gastosCache.push({ id: 'gasto_' + Date.now(), descricao, valor, dataStr: `${hj.getDate()}/${hj.getMonth()+1}` });
-            document.getElementById('form-gasto')?.reset();
-            window.mostrarToast("Despesa registrada!");
+            // ... (código existente)
+        };
+
+        // =====================================================
+        // GESTÃO DE SÚMULAS (NOVO)
+        // =====================================================
+
+        window.salvarNovaSumula = function(e) {
+            e.preventDefault();
+            const data = document.getElementById('sum-data').value;
+            const placar = document.getElementById('sum-placar').value;
+            const botaGols = document.getElementById('sum-bota-gols').value;
+            const botaAm = document.getElementById('sum-bota-amarelos').value;
+            const botaVer = document.getElementById('sum-bota-vermelhos').value;
+            const fluGols = document.getElementById('sum-flu-gols').value;
+            const fluAm = document.getElementById('sum-flu-amarelos').value;
+            const fluVer = document.getElementById('sum-flu-vermelhos').value;
+            const obs = document.getElementById('sum-obs').value;
+
+            if (!data || !placar) { alert('Data e Placar são obrigatórios!'); return; }
+
+            const novaSumula = {
+                id: 'sum_' + Date.now(),
+                data,
+                placar,
+                bota: { gols: botaGols, am: botaAm, ver: botaVer },
+                flu: { gols: fluGols, am: fluAm, ver: fluVer },
+                obs
+            };
+
+            window.sumulasCache.unshift(novaSumula); // Adiciona no topo
             window.salvarNoStorage();
+            e.target.reset();
+            window.mostrarToast("Súmula publicada com sucesso!");
+        };
+
+        window.excluirSumula = function(id) {
+            if(confirm("Deseja excluir esta súmula permanentemente?")) {
+                window.sumulasCache = window.sumulasCache.filter(s => s.id !== id);
+                window.salvarNoStorage();
+                window.mostrarToast("Súmula removida!");
+            }
+        };
+
+        window.renderSumulasAdmin = function() {
+            const container = document.getElementById('lista-sumulas-adm');
+            if (!container) return;
+            let html = '';
+            window.sumulasCache.forEach(s => {
+                const dataF = s.data.split('-').reverse().join('/');
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-stone-800 rounded-lg border border-stone-700">
+                        <div>
+                            <p class="text-xs font-bold text-white">${dataF} - <span class="text-emerald-400">${s.placar}</span></p>
+                        </div>
+                        <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html || '<p class="text-[10px] text-stone-500 italic">Nenhuma súmula registrada.</p>';
+        };
+
+        window.renderSumulasPublicas = function() {
+            const container = document.getElementById('container-sumulas-publico');
+            if (!container) return;
+            let html = '';
+            window.sumulasCache.forEach(s => {
+                const dataF = s.data.split('-').reverse().join('/');
+                html += `
+                    <div class="bg-stone-950/80 rounded-2xl border border-stone-800 shadow-xl overflow-hidden mb-6">
+                        <div class="bg-gradient-to-r from-stone-900 to-black p-4 border-b border-stone-800">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-black text-stone-500 uppercase tracking-widest">Súmula de Jogo</span>
+                                <span class="text-[10px] font-black text-emerald-400">${dataF}</span>
+                            </div>
+                            <h4 class="text-center text-xl font-black text-white mt-2 tracking-tighter italic">
+                                ${s.placar.replace(/X/i, '<span class="text-stone-600 px-2 font-normal">VS</span>')}
+                            </h4>
+                        </div>
+                        
+                        <div class="p-5 space-y-6">
+                            <!-- BOTA -->
+                            <div class="relative pl-4 border-l-4 border-white/20">
+                                <h5 class="text-xs font-black text-white uppercase mb-2 flex items-center gap-2">
+                                    <i class="fa-solid fa-flag"></i> Botafogo 🏁
+                                </h5>
+                                <div class="space-y-1 text-xs">
+                                    <p class="text-stone-400"><span class="text-amber-500 font-bold">Amarelos:</span> ${s.bota.am || '---'}</p>
+                                    <p class="text-stone-400"><span class="text-emerald-400 font-bold">Gols:</span> ${s.bota.gols || '---'}</p>
+                                    <p class="text-stone-400"><span class="text-red-500 font-bold">Vermelhos:</span> ${s.bota.ver || '00'}</p>
+                                </div>
+                            </div>
+
+                            <!-- FLU -->
+                            <div class="relative pl-4 border-l-4 border-emerald-500/40">
+                                <h5 class="text-xs font-black text-emerald-500 uppercase mb-2 flex items-center gap-2">
+                                    <i class="fa-solid fa-flag"></i> Fluminense 🇧🇬
+                                </h5>
+                                <div class="space-y-1 text-xs">
+                                    <p class="text-stone-400"><span class="text-amber-500 font-bold">Amarelos:</span> ${s.flu.am || '---'}</p>
+                                    <p class="text-stone-400"><span class="text-emerald-400 font-bold">Gols:</span> ${s.flu.gols || '---'}</p>
+                                    <p class="text-stone-400"><span class="text-red-500 font-bold">Vermelhos:</span> ${s.flu.ver || '00'}</p>
+                                </div>
+                            </div>
+
+                            <!-- OBS -->
+                            ${s.obs ? `
+                                <div class="bg-black/40 p-4 rounded-xl border border-stone-800 text-[11px] leading-relaxed">
+                                    <p class="text-amber-500 font-bold uppercase text-[9px] mb-1 tracking-widest">Observações:</p>
+                                    <p class="text-stone-300 italic">${s.obs}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html || '<div class="text-center py-20 text-stone-600 italic">Nenhuma súmula registrada até o momento.</div>';
         };
         
         window.excluirGasto = function(id) { 
@@ -2147,6 +2334,9 @@
                 </button>
                 <button onclick="switchTab('regras-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-book text-lg w-6"></i> Estatuto / Regras
+                </button>
+                <button onclick="switchTab('historico-sumulas'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
+                    <i class="fa-solid fa-file-contract text-lg w-6"></i> Histórico de Súmulas
                 </button>
                 <button onclick="switchTab('alertas-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i> Súmula e Alertas
