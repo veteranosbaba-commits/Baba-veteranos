@@ -422,6 +422,100 @@
         </div>
 
         <!-- PENDÊNCIAS -->
+        <div id="regras-ver" class="tab-content space-y-6 pt-4">
+            <div class="bg-stone-900/95 rounded-2xl p-6 border border-emerald-500/30 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                    <i class="fa-solid fa-book-open text-9xl text-emerald-500"></i>
+                </div>
+                
+                <h3 class="font-black text-emerald-400 text-xl uppercase tracking-tighter mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-gavel"></i> Estatuto e Regras
+                </h3>
+
+                <div class="space-y-6 text-stone-300 leading-relaxed text-sm">
+                    <!-- REGRA 1 -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-person-running"></i> Presença e Fardamento
+                        </h4>
+                        <p class="italic text-stone-400">
+                            🚨 Só será considerado a presença do atleta em campo com o fardamento. Se for marcar presença e voltar para ir buscar, não poderá jogar.
+                        </p>
+                    </div>
+
+                    <!-- REGRA 2 -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-amber-500 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i> Mensalidades
+                        </h4>
+                        <p>Mensalidade são efetuadas todo dia 15 do mês.</p>
+                    </div>
+
+                    <!-- REGRA 3 -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> Horários e Atrasos
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex gap-2">
+                                <span class="text-emerald-500 font-black">•</span>
+                                <span>Início do baba: <strong>06:15 bola rolando.</strong></span>
+                            </li>
+                            <li class="flex gap-2">
+                                <span class="text-emerald-500 font-black">•</span>
+                                <span>Atleta que chegar atrasado até antes do início (bola rolando): Terá o direito de pagar uma <strong>taxa de R$ 10,00</strong> para estar apto a participar.</span>
+                            </li>
+                            <li class="flex gap-2 text-red-400 font-bold bg-red-950/20 p-2 rounded border border-red-900/30">
+                                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                                <span>A partir do momento que a bola rolou, o atleta NÃO terá mais o direito de participar em hipótese nenhuma.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- REGRA 4 -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-blue-400 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-message"></i> Justificativas
+                        </h4>
+                        <ul class="space-y-2">
+                            <li class="flex gap-2 italic text-stone-400">
+                                <span>🚨 Justificativa de atraso só é válida até a meia-noite do dia anterior. Depois das 00:00 não será válida.</span>
+                            </li>
+                            <li class="flex gap-2">
+                                <span class="text-blue-500 font-black">•</span>
+                                <span>Casos extras que venham a ser provados serão analisados.</span>
+                            </li>
+                            <li class="flex gap-2">
+                                <span class="text-blue-500 font-black">•</span>
+                                <span>Tolerância para chegar até o início do segundo tempo é válida apenas para atletas que trabalham como segurança.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- REGRA 5 -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-amber-500 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-square"></i> Disciplina (Cartões)
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center justify-between bg-stone-800/50 p-2 rounded">
+                                <span><i class="fa-solid fa-copy text-amber-500 mr-2"></i> 3º Cartão Amarelo</span>
+                                <span class="font-bold text-emerald-400">R$ 15,00 ou Suspensão</span>
+                            </li>
+                            <li class="flex items-center justify-between bg-stone-800/50 p-2 rounded border-l-4 border-red-600">
+                                <span><i class="fa-solid fa-square text-red-600 mr-2"></i> Cartão Vermelho</span>
+                                <span class="font-bold text-red-400">R$ 20,00 + Cumprir Suspensão</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="text-center pt-4 opacity-50 italic text-[10px] uppercase tracking-widest">
+                        Att: Direção e Gestores
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
@@ -2050,6 +2144,9 @@
                 </button>
                 <button onclick="switchTab('financeiro-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-receipt text-lg w-6"></i> Balanço Financeiro
+                </button>
+                <button onclick="switchTab('regras-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
+                    <i class="fa-solid fa-book text-lg w-6"></i> Estatuto / Regras
                 </button>
                 <button onclick="switchTab('alertas-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-triangle-exclamation text-lg w-6"></i> Súmula e Alertas
