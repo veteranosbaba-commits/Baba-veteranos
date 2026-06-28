@@ -1882,8 +1882,11 @@
             if (window.gastosCache) {
                 window.gastosCache.forEach(g => {
                     if (mesSelecionado !== "TODOS") {
+                        // Tratar formato D/M ou DD/MM
                         const partes = (g.dataStr || "").split('/');
-                        if (partes[1] !== mesSelecionado) return;
+                        let mesGasto = partes[1]; 
+                        if (mesGasto && mesGasto.length === 1) mesGasto = '0' + mesGasto;
+                        if (mesGasto !== mesSelecionado) return;
                     }
                     rowsSaidas.push([g.descricao, g.dataStr || '-', `R$ ${Number(g.valor).toFixed(2)}`]);
                     totalSaidas += Number(g.valor);
