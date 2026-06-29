@@ -677,6 +677,9 @@
 
             
             <div id="adm-sumulas" class="adm-sub-content hidden space-y-6">
+                <!-- DATALIST PARA SUGESTÃO DE ATLETAS -->
+                <datalist id="lista-atletas-sugestao"></datalist>
+
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-amber-500 text-xs uppercase mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula
@@ -688,8 +691,12 @@
                                 <input type="date" id="sum-data" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] text-stone-400 uppercase font-bold">Placar (Bota X Flu)</label>
-                                <input type="text" id="sum-placar" placeholder="Ex: 01 X 03" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none text-center font-bold">
+                                <label class="text-[10px] text-stone-400 uppercase font-bold">Placar</label>
+                                <div class="flex items-center gap-1 bg-stone-800 border border-stone-600 rounded-lg p-1">
+                                    <input type="number" id="sum-placar-bota" placeholder="0" required class="w-full bg-transparent p-1 text-center text-white font-black outline-none text-sm">
+                                    <span class="text-stone-500 font-bold">X</span>
+                                    <input type="number" id="sum-placar-flu" placeholder="0" required class="w-full bg-transparent p-1 text-center text-emerald-400 font-black outline-none text-sm">
+                                </div>
                             </div>
                         </div>
 
@@ -699,9 +706,9 @@
                                 <h5 class="text-xs font-black text-white uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-white"></i> Botafogo
                                 </h5>
-                                <input type="text" id="sum-bota-gols" placeholder="Nº dos Goleadores (Ex: 20, 10)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-amarelos" placeholder="Nº Amarelos (Ex: 02, 22)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-vermelhos" placeholder="Nº Vermelhos" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-gols" list="lista-atletas-sugestao" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-amarelos" list="lista-atletas-sugestao" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-vermelhos" list="lista-atletas-sugestao" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
 
                             <!-- FLU -->
@@ -709,9 +716,9 @@
                                 <h5 class="text-xs font-black text-emerald-500 uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-emerald-500"></i> Fluminense
                                 </h5>
-                                <input type="text" id="sum-flu-gols" placeholder="Nº dos Goleadores (Ex: 17, 30)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-amarelos" placeholder="Nº Amarelos (Ex: 07, 03)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-vermelhos" placeholder="Nº Vermelhos" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-gols" list="lista-atletas-sugestao" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-amarelos" list="lista-atletas-sugestao" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-vermelhos" list="lista-atletas-sugestao" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
                         </div>
 
@@ -1754,7 +1761,9 @@
         window.salvarNovaSumula = function(e) {
             e.preventDefault();
             const data = document.getElementById('sum-data').value;
-            const placar = document.getElementById('sum-placar').value;
+            const pb = document.getElementById('sum-placar-bota').value;
+            const pf = document.getElementById('sum-placar-flu').value;
+            
             const botaGols = document.getElementById('sum-bota-gols').value;
             const botaAm = document.getElementById('sum-bota-amarelos').value;
             const botaVer = document.getElementById('sum-bota-vermelhos').value;
@@ -1763,25 +1772,26 @@
             const fluVer = document.getElementById('sum-flu-vermelhos').value;
             const obs = document.getElementById('sum-obs').value;
 
-            if (!data || !placar) { alert('Data e Placar são obrigatórios!'); return; }
+            if (!data) { alert('Data é obrigatória!'); return; }
 
             const novaSumula = {
                 id: 'sum_' + Date.now(),
                 data,
-                placar,
+                placarBota: pb,
+                placarFlu: pf,
                 bota: { gols: botaGols, am: botaAm, ver: botaVer },
                 flu: { gols: fluGols, am: fluAm, ver: fluVer },
                 obs
             };
 
-            window.sumulasCache.unshift(novaSumula); // Adiciona no topo
+            window.sumulasCache.unshift(novaSumula);
             window.salvarNoStorage();
             e.target.reset();
-            window.mostrarToast("Súmula publicada com sucesso!");
+            window.mostrarToast("Súmula publicada!");
         };
 
         window.excluirSumula = function(id) {
-            if(confirm("Deseja excluir esta súmula permanentemente?")) {
+            if(confirm("Deseja excluir esta súmula?")) {
                 window.sumulasCache = window.sumulasCache.filter(s => s.id !== id);
                 window.salvarNoStorage();
                 window.mostrarToast("Súmula removida!");
@@ -1791,19 +1801,30 @@
         window.renderSumulasAdmin = function() {
             const container = document.getElementById('lista-sumulas-adm');
             if (!container) return;
+            
+            // ATUALIZAR DATALIST DE SUGESTÃO
+            const dl = document.getElementById('lista-atletas-sugestao');
+            if (dl) {
+                let dlHtml = '';
+                window.atletasCache.forEach(a => {
+                    dlHtml += `<option value="${a.numero} - ${a.nome}">`;
+                });
+                dl.innerHTML = dlHtml;
+            }
+
             let html = '';
             window.sumulasCache.forEach(s => {
                 const dataF = s.data.split('-').reverse().join('/');
                 html += `
                     <div class="flex items-center justify-between p-3 bg-stone-800 rounded-lg border border-stone-700">
                         <div>
-                            <p class="text-xs font-bold text-white">${dataF} - <span class="text-emerald-400">${s.placar}</span></p>
+                            <p class="text-xs font-bold text-white">${dataF} - <span class="text-emerald-400">BOTA ${s.placarBota || 0} X ${s.placarFlu || 0} FLU</span></p>
                         </div>
                         <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
             });
-            container.innerHTML = html || '<p class="text-[10px] text-stone-500 italic">Nenhuma súmula registrada.</p>';
+            container.innerHTML = html || '<p class="text-[10px] text-stone-500 italic">Nenhuma súmula.</p>';
         };
 
         window.renderSumulasPublicas = function() {
@@ -1812,16 +1833,34 @@
             let html = '';
             window.sumulasCache.forEach(s => {
                 const dataF = s.data.split('-').reverse().join('/');
+                const pb = parseInt(s.placarBota || 0);
+                const pf = parseInt(s.placarFlu || 0);
+                
+                let resultText = '';
+                if (pb > pf) resultText = '<span class="text-white text-[10px] block mt-1 uppercase font-black tracking-widest">Vitória do Botafogo 🏁</span>';
+                else if (pf > pb) resultText = '<span class="text-emerald-400 text-[10px] block mt-1 uppercase font-black tracking-widest">Vitória do Fluminense 🇧🇬</span>';
+                else resultText = '<span class="text-amber-500 text-[10px] block mt-1 uppercase font-black tracking-widest">Empate 🤝</span>';
+
                 html += `
                     <div class="bg-stone-950/80 rounded-2xl border border-stone-800 shadow-xl overflow-hidden mb-6">
-                        <div class="bg-gradient-to-r from-stone-900 to-black p-4 border-b border-stone-800">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] font-black text-stone-500 uppercase tracking-widest">Súmula de Jogo</span>
-                                <span class="text-[10px] font-black text-emerald-400">${dataF}</span>
+                        <div class="bg-gradient-to-r from-stone-900 to-black p-4 border-b border-stone-800 text-center">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest">Relatório de Jogo</span>
+                                <span class="text-[9px] font-black text-emerald-400">${dataF}</span>
                             </div>
-                            <h4 class="text-center text-xl font-black text-white mt-2 tracking-tighter italic">
-                                ${s.placar.replace(/X/i, '<span class="text-stone-600 px-2 font-normal">VS</span>')}
-                            </h4>
+                            
+                            <div class="flex items-center justify-center gap-4 py-2">
+                                <div class="text-right flex-1">
+                                    <p class="text-[10px] font-black text-white uppercase truncate">Botafogo</p>
+                                    <p class="text-3xl font-black text-white">${pb}</p>
+                                </div>
+                                <div class="text-stone-700 font-black text-xl italic">X</div>
+                                <div class="text-left flex-1">
+                                    <p class="text-[10px] font-black text-emerald-500 uppercase truncate">Fluminense</p>
+                                    <p class="text-3xl font-black text-emerald-500">${pf}</p>
+                                </div>
+                            </div>
+                            ${resultText}
                         </div>
                         
                         <div class="p-5 space-y-6">
@@ -1830,10 +1869,10 @@
                                 <h5 class="text-xs font-black text-white uppercase mb-2 flex items-center gap-2">
                                     <i class="fa-solid fa-flag"></i> Botafogo 🏁
                                 </h5>
-                                <div class="space-y-1 text-xs">
-                                    <p class="text-stone-400"><span class="text-amber-500 font-bold">Amarelos:</span> ${s.bota.am || '---'}</p>
-                                    <p class="text-stone-400"><span class="text-emerald-400 font-bold">Gols:</span> ${s.bota.gols || '---'}</p>
-                                    <p class="text-stone-400"><span class="text-red-500 font-bold">Vermelhos:</span> ${s.bota.ver || '00'}</p>
+                                <div class="space-y-1.5 text-[11px]">
+                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.bota.gols || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.bota.am || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.bota.ver || '00'}</p>
                                 </div>
                             </div>
 
@@ -1842,10 +1881,10 @@
                                 <h5 class="text-xs font-black text-emerald-500 uppercase mb-2 flex items-center gap-2">
                                     <i class="fa-solid fa-flag"></i> Fluminense 🇧🇬
                                 </h5>
-                                <div class="space-y-1 text-xs">
-                                    <p class="text-stone-400"><span class="text-amber-500 font-bold">Amarelos:</span> ${s.flu.am || '---'}</p>
-                                    <p class="text-stone-400"><span class="text-emerald-400 font-bold">Gols:</span> ${s.flu.gols || '---'}</p>
-                                    <p class="text-stone-400"><span class="text-red-500 font-bold">Vermelhos:</span> ${s.flu.ver || '00'}</p>
+                                <div class="space-y-1.5 text-[11px]">
+                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.flu.gols || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.flu.am || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.flu.ver || '00'}</p>
                                 </div>
                             </div>
 
@@ -1860,7 +1899,7 @@
                     </div>
                 `;
             });
-            container.innerHTML = html || '<div class="text-center py-20 text-stone-600 italic">Nenhuma súmula registrada até o momento.</div>';
+            container.innerHTML = html || '<div class="text-center py-20 text-stone-600 italic">Nenhuma súmula registrada.</div>';
         };
         
         window.excluirGasto = function(id) { 
