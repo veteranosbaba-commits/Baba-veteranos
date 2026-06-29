@@ -1014,12 +1014,14 @@
                 if (!inicializarFirebase()) return;
             }
             
-            document.getElementById('loading-overlay')?.classList.remove('hidden');
+            // Mostrar loading apenas no primeiro carregamento
+            if (window.atletasCache.length === 0) {
+                document.getElementById('loading-overlay')?.classList.remove('hidden');
+            }
             
-            try {
-                const snapshot = await window.dbRef.once('value');
+            // Usar .on em vez de .once para atualizações instantâneas (Real-time)
+            window.dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
-                
                 if (data) {
                     window.atletasCache = data.atletas || [];
                     window.gastosCache = data.gastos || [];
@@ -1030,17 +1032,14 @@
                     window.partidaEstatisticas = data.partidaEstatisticas || { 
                         placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
                     };
-                    console.log('Dados carregados:', window.atletasCache.length, 'atletas');
-                } else {
-                    console.log('Sem dados, iniciando vazio');
                 }
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-                window.mostrarToast('Erro ao carregar dados!', true);
-            } finally {
+                
                 document.getElementById('loading-overlay')?.classList.add('hidden');
                 window.renderizarTudo();
-            }
+            }, (error) => {
+                console.error('Erro no real-time:', error);
+                document.getElementById('loading-overlay')?.classList.add('hidden');
+            });
         }
         
         // =====================================================
