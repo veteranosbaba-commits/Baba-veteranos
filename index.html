@@ -706,9 +706,9 @@
                                 <h5 class="text-xs font-black text-white uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-white"></i> Botafogo
                                 </h5>
-                                <input type="text" id="sum-bota-gols" list="lista-atletas-sugestao" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-amarelos" list="lista-atletas-sugestao" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-vermelhos" list="lista-atletas-sugestao" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-gols" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-amarelos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-vermelhos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
 
                             <!-- FLU -->
@@ -716,9 +716,9 @@
                                 <h5 class="text-xs font-black text-emerald-500 uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-emerald-500"></i> Fluminense
                                 </h5>
-                                <input type="text" id="sum-flu-gols" list="lista-atletas-sugestao" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-amarelos" list="lista-atletas-sugestao" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-vermelhos" list="lista-atletas-sugestao" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-gols" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-amarelos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-vermelhos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
                         </div>
 
@@ -1757,6 +1757,18 @@
         // =====================================================
         // GESTÃO DE SÚMULAS (NOVO)
         // =====================================================
+
+        window.handleMultiInput = function(input) {
+            const val = input.value;
+            const lastPart = val.split(',').pop().trim();
+            const dl = document.getElementById('lista-atletas-sugestao');
+            const options = Array.from(dl.options).map(o => o.value);
+            
+            if (options.includes(lastPart)) {
+                const base = val.split(',').slice(0, -1).join(', ');
+                input.value = (base ? base + ', ' : '') + lastPart + ', ';
+            }
+        };
 
         window.salvarNovaSumula = function(e) {
             e.preventDefault();
