@@ -1807,7 +1807,8 @@
             if (dl) {
                 let dlHtml = '';
                 window.atletasCache.forEach(a => {
-                    dlHtml += `<option value="${a.numero} - ${a.nome}">`;
+                    const num = a.camisa || a.numero || '00';
+                    dlHtml += `<option value="${num} - ${a.nome}">`;
                 });
                 dl.innerHTML = dlHtml;
             }
