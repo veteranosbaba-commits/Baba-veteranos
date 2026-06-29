@@ -1818,13 +1818,20 @@
             const dl = document.getElementById('lista-atletas-sugestao');
             if (dl) {
                 let dlHtml = '';
-                window.atletasCache.forEach(a => {
+                // Ordena por número para facilitar a visualização na lista
+                const atletasOrdenados = [...window.atletasCache].sort((a, b) => {
+                    const numA = parseInt(a.camisa || a.numero || 0);
+                    const numB = parseInt(b.camisa || b.numero || 0);
+                    return numA - numB;
+                });
+                atletasOrdenados.forEach(a => {
                     const num = a.camisa || a.numero || '00';
+                    // Adicionamos um espaço após o número para ajudar o navegador a diferenciar "2" de "22"
                     dlHtml += `<option value="${num} - ${a.nome}">`;
                 });
                 dl.innerHTML = dlHtml;
             }
-
+            
             let html = '';
             window.sumulasCache.forEach(s => {
                 const dataF = s.data.split('-').reverse().join('/');
