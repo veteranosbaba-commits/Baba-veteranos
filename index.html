@@ -1149,18 +1149,35 @@
             artilheiros.sort((a, b) => (b.gols || 0) - (a.gols || 0));
             
             let artilhariaHtml = '';
-            artilheiros.slice(0, 10).forEach((a, idx) => {
-                if ((a.gols || 0) > 0) {
-                    artilhariaHtml += `<li class="flex justify-between py-2 border-b border-stone-800/60 items-center">
-                        <span><span class="font-mono text-stone-500 mr-2">${idx+1}º</span>
-                        <strong>${a.nome}</strong> <span class="text-[10px] text-gray-400">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
-                        <span class="font-bold text-emerald-400 font-mono"><i class="fa-solid fa-soccer-ball text-[11px] mr-1 text-stone-400"></i>${a.gols}</span>
+            artilheiros.forEach((a, idx) => {
+                const gols = a.gols || 0;
+                if (gols > 0) {
+                    let medalha = `<span class="font-mono text-stone-500 mr-2">${idx+1}º</span>`;
+                    if (idx === 0) medalha = `<i class="fa-solid fa-trophy text-amber-400 mr-2 drop-shadow-[0_0_5px_rgba(251,191,36,0.5)]"></i>`;
+                    else if (idx === 1) medalha = `<i class="fa-solid fa-trophy text-stone-300 mr-2 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]"></i>`;
+                    else if (idx === 2) medalha = `<i class="fa-solid fa-trophy text-amber-700 mr-2"></i>`;
+
+                    artilhariaHtml += `<li class="flex justify-between py-3 border-b border-stone-800/60 items-center animate-in fade-in duration-500">
+                        <div class="flex items-center">
+                            ${medalha}
+                            <div>
+                                <p class="font-black text-xs uppercase text-white">${a.nome}</p>
+                                <p class="text-[9px] font-bold ${a.time === 'FLUMINENSE' ? 'text-emerald-500' : 'text-stone-400'} uppercase tracking-widest">
+                                    ${a.time}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-white bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-700 shadow-inner flex items-center gap-1.5">
+                                <i class="fa-solid fa-soccer-ball text-[10px] text-emerald-400"></i> ${gols}
+                            </span>
+                        </div>
                     </li>`;
                 }
             });
             
             const artEl = document.getElementById('dash-artilharia');
-            if (artEl) artEl.innerHTML = artilhariaHtml || '<p class="text-xs text-stone-500 italic py-2">Nenhum gol computado.</p>';
+            if (artEl) artEl.innerHTML = artilhariaHtml || '<div class="text-center py-10 opacity-30"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-xs italic">Nenhum gol registrado.</p></div>';
             
             let pendentesHtml = '', suspensosHtml = '';
             window.atletasCache.forEach(a => {
