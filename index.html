@@ -1715,7 +1715,19 @@
         
         window.processarGasto = function(e) {
             e.preventDefault();
-            // ... (código existente)
+            const descricao = document.getElementById('gasto-descricao')?.value?.trim();
+            const valor = parseFloat(document.getElementById('gasto-valor')?.value);
+            if (!descricao || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            const hj = new Date();
+            window.gastosCache.push({ 
+                id: 'gasto_' + Date.now(), 
+                descricao, 
+                valor, 
+                dataStr: `${hj.getDate()}/${hj.getMonth()+1}` 
+            });
+            document.getElementById('form-gasto')?.reset();
+            window.mostrarToast("Despesa registrada!");
+            window.salvarNoStorage();
         };
 
         // =====================================================
