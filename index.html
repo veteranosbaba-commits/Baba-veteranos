@@ -2192,7 +2192,7 @@
                 "07":"Julho","08":"Agosto","09":"Setembro","10":"Outubro","11":"Novembro","12":"Dezembro"
             };
 
-            const tituloFiltro = mesSelecionado === "TODOS" ? "GERAL (HISTÓRICO COMPLETO)" : mNomes[mesSelecionado].toUpperCase();
+            const tituloFiltro = mesSelecionado === "TODOS" ? "GERAL (HISTÓRICO COMPLETO)" : (mNomes[mesSelecionado] || "MÊS").toUpperCase();
 
             // Título
             doc.setFontSize(18);
@@ -2217,6 +2217,7 @@
                         Object.entries(atleta.pagamentos).forEach(([mesIdx, dados]) => {
                             if (mesSelecionado !== "TODOS" && mesIdx !== mesSelecionado) return;
                             const mNomeCurto = mNomes[mesIdx] || mesIdx;
+                            
                             if (dados.pago) {
                                 rowsEntradas.push([atleta.nome, `Mensalidade (${mNomeCurto})`, `R$ 25,00`]);
                                 totalEntradas += 25;
@@ -2255,10 +2256,15 @@
             }
 
             // 3. PATROCÍNIOS
+            // Patrocínio geralmente é fixo ou geral, mostramos sempre no Geral ou se for o mês atual?
+            // Para não sumir do Geral, mostramos sempre se for "TODOS"
             if (window.patrociniosCache) {
                 window.patrociniosCache.forEach(p => {
-                    rowsEntradas.push([p.nome, `Patrocínio (${p.destino || 'Clube'})`, `R$ ${Number(p.valor).toFixed(2)}`]);
-                    totalEntradas += Number(p.valor);
+                    // Se for mensal, precisaria de campo mes. Como não tem, mostramos no Geral ou sempre.
+                    if (mesSelecionado === "TODOS") {
+                        rowsEntradas.push([p.nome, `Patrocínio (${p.destino || 'Clube'})`, `R$ ${Number(p.valor).toFixed(2)}`]);
+                        totalEntradas += Number(p.valor);
+                    }
                 });
             }
 
@@ -2266,14 +2272,21 @@
             doc.setFontSize(14);
             doc.setTextColor(0, 100, 0);
             doc.text("ENTRADAS (Recebimentos)", 14, yPos);
+            
+            if (rowsEntradas.length > 40) {
+                // Se tiver muitas linhas, o autoTable cuida da quebra de página
+            }
+
             doc.autoTable({
                 startY: yPos + 4,
                 head: [['Nome / Origem', 'Descrição / Ref.', 'Valor']],
                 body: rowsEntradas.length > 0 ? rowsEntradas : [['-', 'Nenhum registro encontrado', 'R$ 0,00']],
                 theme: 'striped',
                 headStyles: { fillColor: [0, 150, 136] },
-                styles: { fontSize: 8 }
+                styles: { fontSize: 8 },
+                margin: { bottom: 20 }
             });
+            
             yPos = doc.lastAutoTable.finalY + 12;
 
             // 4. GASTOS
@@ -2281,7 +2294,6 @@
             if (window.gastosCache) {
                 window.gastosCache.forEach(g => {
                     if (mesSelecionado !== "TODOS") {
-                        // Tratar formato D/M ou DD/MM
                         const partes = (g.dataStr || "").split('/');
                         let mesGasto = partes[1]; 
                         if (mesGasto && mesGasto.length === 1) mesGasto = '0' + mesGasto;
@@ -2302,8 +2314,10 @@
                 body: rowsSaidas.length > 0 ? rowsSaidas : [['-', 'Nenhum registro encontrado', 'R$ 0,00']],
                 theme: 'striped',
                 headStyles: { fillColor: [211, 47, 47] },
-                styles: { fontSize: 8 }
+                styles: { fontSize: 8 },
+                margin: { bottom: 20 }
             });
+            
             yPos = doc.lastAutoTable.finalY + 12;
 
             // RESUMO
@@ -2316,13 +2330,18 @@
             doc.text("BALANÇO FINAL", 20, yPos + 10);
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
-            doc.text(`Total Arrecadado: R$ ${totalEntradas.toFixed(2)}`, 20, yPos + 18);
-            doc.text(`Total Despendido: R$ ${totalSaidas.toFixed(2)}`, 20, yPos + 25);
+            doc.text(`Total Arrecadado: R$ ${totalEntradas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 20, yPos + 18);
+            doc.text(`Total Despendido: R$ ${totalSaidas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 20, yPos + 25);
             const saldo = totalEntradas - totalSaidas;
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            if (saldo >= 0) { doc.setTextColor(0, 120, 0); doc.text(`SALDO POSITIVO: R$ ${saldo.toFixed(2)}`, 20, yPos + 32); }
-            else { doc.setTextColor(200, 0, 0); doc.text(`SALDO DEVEDOR: R$ ${saldo.toFixed(2)}`, 20, yPos + 32); }
+            if (saldo >= 0) { 
+                doc.setTextColor(0, 120, 0); 
+                doc.text(`SALDO POSITIVO: R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 20, yPos + 32); 
+            } else { 
+                doc.setTextColor(200, 0, 0); 
+                doc.text(`SALDO DEVEDOR: R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 20, yPos + 32); 
+            }
 
             doc.save(`Relatorio_${tituloFiltro.replace(/ /g, '_')}_${dataAtual.replace(/\//g, '-')}.pdf`);
             window.mostrarToast("PDF gerado!");
