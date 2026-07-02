@@ -706,9 +706,9 @@
                                 <h5 class="text-xs font-black text-white uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-white"></i> Botafogo
                                 </h5>
-                                <input type="text" id="sum-bota-gols" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-amarelos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-vermelhos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-bota-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
 
                             <!-- FLU -->
@@ -716,9 +716,9 @@
                                 <h5 class="text-xs font-black text-emerald-500 uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
                                     <i class="fa-solid fa-flag text-emerald-500"></i> Fluminense
                                 </h5>
-                                <input type="text" id="sum-flu-gols" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-amarelos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-vermelhos" list="lista-atletas-sugestao" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-flu-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
                         </div>
 
@@ -1610,29 +1610,79 @@
         window.salvarHistoricoCartao = function(id) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
-            a.histAmarelos = (a.histAmarelos || 0) + (a.amarelos || 0);
-            a.histVermelhos = (a.histVermelhos || 0) + (a.vermelho || 0);
-            a.amarelos = 0;
-            a.vermelho = 0;
-            window.mostrarToast("Cartões arquivados!");
-            window.salvarNoStorage();
+            
+            let arquivouAlgo = false;
+            let novosAmarelos = parseInt(a.amarelos || 0);
+            let novosVermelhos = parseInt(a.vermelho || 0);
+            
+            // Regra: Arquivar somente se atingir o máximo
+            // Amarelos: Max 3. Se tiver 4 ou 5, tira 3 e deixa o resto.
+            if (novosAmarelos >= 3) {
+                a.histAmarelos = (parseInt(a.histAmarelos || 0)) + 3;
+                novosAmarelos = novosAmarelos - 3;
+                arquivouAlgo = true;
+            }
+            
+            // Vermelho: Max 1. Se tiver mais de 1 (raro), tira 1.
+            if (novosVermelhos >= 1) {
+                a.histVermelhos = (parseInt(a.histVermelhos || 0)) + 1;
+                novosVermelhos = novosVermelhos - 1;
+                arquivouAlgo = true;
+            }
+            
+            if (arquivouAlgo) {
+                a.amarelos = novosAmarelos;
+                a.vermelho = novosVermelhos;
+                window.mostrarToast("Cartões arquivados!");
+                window.salvarNoStorage();
+                window.renderizarTudo(); // Força atualização da tela
+            } else {
+                window.mostrarToast("Sem cartões no limite (3 am. ou 1 ver.) para arquivar.", true);
+            }
         };
-        
+
         window.aplicarMultaAtleta = function(id) {
-            const motivo = document.getElementById(`motivo-${id}`)?.value;
-            const valor = parseFloat(document.getElementById(`vmulta-${id}`)?.value);
-            if (!motivo || !valor) { alert('Preencha motivo e valor!'); return; }
+            const motivoInput = document.getElementById(`motivo-${id}`);
+            const valorInput = document.getElementById(`vmulta-${id}`);
+            const motivo = motivoInput?.value?.trim();
+            const valor = parseFloat(valorInput?.value);
+            
+            if (!motivo || isNaN(valor) || valor <= 0) { 
+                alert('Preencha motivo e valor corretamente!'); 
+                return; 
+            }
             
             const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-            if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[window.getMesAtual()]) a.pagamentos[window.getMesAtual()] = { pago: false, extra: 0, multas: [] };
+            if (!a) {
+                alert('Erro: Atleta não encontrado.');
+                return;
+            }
             
-            a.pagamentos[window.getMesAtual()].multas.push({ motivo, valor, paga: false });
-            document.getElementById(`motivo-${id}`).value = '';
-            document.getElementById(`vmulta-${id}`).value = '';
+            const mesAtual = window.getMesAtual();
+            if (!a.pagamentos) a.pagamentos = {};
+            if (!a.pagamentos[mesAtual]) {
+                a.pagamentos[mesAtual] = { pago: false, extra: 0, multas: [] };
+            }
+            
+            // Garantir que a lista de multas existe
+            if (!a.pagamentos[mesAtual].multas) {
+                a.pagamentos[mesAtual].multas = [];
+            }
+            
+            a.pagamentos[mesAtual].multas.push({ 
+                motivo: motivo, 
+                valor: valor, 
+                paga: false,
+                id: 'multa_' + Date.now()
+            });
+            
+            // Limpar campos
+            if (motivoInput) motivoInput.value = '';
+            if (valorInput) valorInput.value = '';
+            
             window.mostrarToast("Multa aplicada!");
             window.salvarNoStorage();
+            window.renderizarTudo(); // Força atualização da tela
         };
         
         window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
@@ -1759,15 +1809,8 @@
         // =====================================================
 
         window.handleMultiInput = function(input) {
-            const val = input.value;
-            const lastPart = val.split(',').pop().trim();
-            const dl = document.getElementById('lista-atletas-sugestao');
-            const options = Array.from(dl.options).map(o => o.value);
-            
-            if (options.includes(lastPart)) {
-                const base = val.split(',').slice(0, -1).join(', ');
-                input.value = (base ? base + ', ' : '') + lastPart + ', ';
-            }
+            // Removida lógica de auto-completar automática para deixar o campo livre
+            // conforme pedido pelo usuário. O campo agora aceita qualquer texto.
         };
 
         window.salvarNovaSumula = function(e) {
