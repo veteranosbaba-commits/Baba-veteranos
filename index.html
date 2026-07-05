@@ -2743,7 +2743,7 @@
             if (window.dbRef) {
                 const ref = window.dbRef.child('notificacoes_pendentes/' + disparoId);
                 ref.set(dadosDisparo);
-                window.mostrarToast("✅ Disparo registrado! Agora me chame: 'Zapia, disparar!'");
+                window.mostrarToast("✅ Disparo enviado com sucesso!");
             } else {
                 window.mostrarToast("Erro: Firebase não conectado.", true);
             }
