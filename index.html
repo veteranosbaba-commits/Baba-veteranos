@@ -174,6 +174,11 @@
             const agora = new Date();
             return (agora.getMonth() + 1).toString().padStart(2, '0');
         };
+        
+        window.mesesPtbr = {
+            "01":"Janeiro","02":"Fevereiro","03":"Março","04":"Abril","05":"Maio","06":"Junho",
+            "07":"Julho","08":"Agosto","09":"Setembro","10":"Outubro","11":"Novembro","12":"Dezembro"
+        };
 
         window.toggleMenu = function() {
             console.log('Toggle Menu Clicked');
@@ -599,14 +604,16 @@
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
                 <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Súmulas</button>
                 <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Arquivos</button>
+                <button onclick="switchAdminSubTab('adm-notificacoes')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">📢 Notificar</button>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
                 <div class="bg-stone-900/95 rounded-b-2xl p-5 border border-stone-700 shadow-xl">
                     <h4 class="font-bold text-gray-200 text-xs uppercase mb-3">Cadastrar Jogador</h4>
-                    <form id="form-cadastro-atleta" onsubmit="window.cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <form id="form-cadastro-atleta" onsubmit="window.cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <input type="text" id="cad-nome" placeholder="Nome" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <input type="number" id="cad-camisa" placeholder="Nº" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <input type="tel" id="cad-whatsapp" placeholder="WhatsApp (ex: 71999998888)" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
                             <option value="">Clube...</option>
                             <option value="FLUMINENSE">Fluminense</option>
@@ -617,7 +624,7 @@
                 </div>
                 <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[300px]">
-                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">Ação</th></tr></thead>
+                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">WhatsApp</th><th class="p-3 text-center">Ações</th></tr></thead>
                         <tbody id="adm-atletas-tabela"></tbody>
                     </table>
                 </div>
@@ -772,6 +779,44 @@
                     </div>
                 </div>
             </div>
+
+            <div id="adm-notificacoes" class="adm-sub-content hidden space-y-6">
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-4 border-b border-stone-800 pb-2">
+                        <i class="fa-solid fa-bullhorn mr-1"></i> Central de Notificações 📢
+                    </h4>
+                    <p class="text-[10px] text-stone-400 mb-4 italic">Clique no botão, veja a prévia e confirme. Depois me chame aqui: "Zapia, disparar notificações!"</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="notificacoes-pendencias">
+                        <button onclick="window.prepararDisparo('pendentes')" class="bg-red-900/30 hover:bg-red-900/50 border border-red-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-red-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-circle-exclamation mr-1"></i> Cobrar Pendentes</div>
+                            <div class="text-[10px] text-stone-400" id="notif-pendentes-resumo">Calculando...</div>
+                        </button>
+                        <button onclick="window.prepararDisparo('multas')" class="bg-orange-900/30 hover:bg-orange-900/50 border border-orange-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-orange-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-coins mr-1"></i> Cobrar Multas</div>
+                            <div class="text-[10px] text-stone-400" id="notif-multas-resumo">Calculando...</div>
+                        </button>
+                        <button onclick="window.prepararDisparo('suspensos')" class="bg-yellow-900/30 hover:bg-yellow-900/50 border border-yellow-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-yellow-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-ban mr-1"></i> Avisar Suspensos</div>
+                            <div class="text-[10px] text-stone-400" id="notif-suspensos-resumo">Calculando...</div>
+                        </button>
+                        <button onclick="window.prepararDisparo('geral')" class="bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-emerald-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-megaphone mr-1"></i> Comunicado Geral</div>
+                            <div class="text-[10px] text-stone-400" id="notif-geral-resumo">Calculando...</div>
+                        </button>
+                    </div>
+                    
+                    <div id="notificacao-preview" class="hidden mt-4 p-4 bg-stone-800/50 rounded-xl border border-stone-700">
+                        <div class="font-bold text-white text-xs mb-2" id="notif-preview-titulo"></div>
+                        <div class="text-[11px] text-stone-300 mb-3" id="notif-preview-corpo"></div>
+                        <div class="flex gap-2">
+                            <button id="notif-confirmar-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-black uppercase">✅ Confirmar Disparo</button>
+                            <button onclick="window.cancelarDisparo()" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-4 py-2 rounded-lg text-xs font-black uppercase">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="adm-financas" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl space-y-4">
                     <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2">
@@ -1560,13 +1605,14 @@
             e.preventDefault(); 
             const nome = document.getElementById('cad-nome')?.value?.trim();
             const camisa = parseInt(document.getElementById('cad-camisa')?.value);
+            const whatsapp = document.getElementById('cad-whatsapp')?.value?.trim().replace(/\D/g, '') || '';
             const time = document.getElementById('cad-time')?.value;
             
             if (!nome || isNaN(camisa) || !time) { alert('Preencha todos os campos!'); return; }
             if (camisa < 0 || camisa > 99) { alert('Número da camisa deve ser entre 0 e 99!'); return; }
             
             window.atletasCache.push({ 
-                id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
+                id: 'atleta_' + Date.now(), nome, camisa, whatsapp, time, gols: 0, amarelos: 0, vermelho: 0,
                 histAmarelos: 0, histVermelhos: 0, pagamentos: {} 
             }); 
             
@@ -1586,15 +1632,51 @@
         function renderAdminAtletas() { 
             let html = ''; 
             window.atletasCache.forEach(a => { 
+                const wpp = a.whatsapp || '';
+                const wppMostrar = wpp ? wpp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '—';
                 html += `<tr class="border-b border-stone-800 text-xs">
                     <td class="p-2.5 font-bold">${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</td>
                     <td class="p-2.5 text-center font-mono">#${a.camisa}</td>
+                    <td class="p-2.5 text-center">
+                        <span class="text-emerald-400 text-[10px] font-mono" id="wpp-show-${a.id}">${wppMostrar}</span>
+                        <input type="tel" id="wpp-input-${a.id}" value="${wpp}" 
+                            class="hidden bg-stone-800 border border-stone-600 p-1 rounded text-[10px] text-white w-28 text-center outline-none" 
+                            placeholder="71999998888">
+                        <button id="wpp-btn-${a.id}" onclick="window.editarWhatsApp('${a.id}')" class="text-stone-500 hover:text-amber-400 ml-1"><i class="fa-solid fa-pen"></i></button>
+                    </td>
                     <td class="p-2.5 text-center"><button onclick="window.excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`; 
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="5" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
+        
+        window.editarWhatsApp = function(id) {
+            const input = document.getElementById(`wpp-input-${id}`);
+            const show = document.getElementById(`wpp-show-${id}`);
+            const btn = document.getElementById(`wpp-btn-${id}`);
+            if (!input || !show || !btn) return;
+            
+            if (input.classList.contains('hidden')) {
+                input.classList.remove('hidden');
+                show.classList.add('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
+                input.focus();
+            } else {
+                const novoWpp = input.value.trim().replace(/\D/g, '');
+                const a = window.atletasCache.find(j => j.id === id);
+                if (a) {
+                    a.whatsapp = novoWpp;
+                    window.salvarNoStorage();
+                }
+                input.classList.add('hidden');
+                show.classList.remove('hidden');
+                const fmt = novoWpp ? novoWpp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '—';
+                show.textContent = fmt;
+                btn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                window.mostrarToast("WhatsApp atualizado!");
+            }
+        };
         
         window.alterarNumero = function(id, campo, valor) {
             const a = window.atletasCache.find(j => j.id === id);
@@ -2368,6 +2450,8 @@
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
             document.getElementById(subTabId)?.classList.remove('hidden');
             if (subTabId === 'adm-arquivos') window.renderArquivados();
+            if (subTabId === 'adm-notificacoes') window.calcularResumoNotif();
+            if (subTabId === 'adm-atletas') renderAdminAtletas();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
@@ -2546,6 +2630,133 @@
                     window.switchTab('dashboard');
                 }
             });
+
+            // =====================================================
+        // NOTIFICAÇÕES VIA ZAPIA
+        // =====================================================
+        
+        window._disparoPendente = null;
+        
+        window.calcularResumoNotif = function() {
+            const mesAtual = window.getMesAtual();
+            
+            const pendentes = window.atletasCache.filter(a => {
+                const pag = a.pagamentos && a.pagamentos[mesAtual];
+                return (!pag || !pag.pago) && a.whatsapp;
+            });
+            document.getElementById('notif-pendentes-resumo').textContent = 
+                `${pendentes.length} atleta(s) com WhatsApp - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
+            
+            const comMultas = window.atletasCache.filter(a => {
+                if (!a.pagamentos) return false;
+                let temMulta = false;
+                Object.entries(a.pagamentos).forEach(([m, d]) => {
+                    if (d.multas) d.multas.forEach(ml => { if (!ml.paga) temMulta = true; });
+                });
+                return temMulta;
+            }).filter(a => a.whatsapp);
+            document.getElementById('notif-multas-resumo').textContent = 
+                `${comMultas.length} atleta(s) com multas pendentes`;
+            
+            const suspensos = window.atletasCache.filter(a => {
+                return (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+            }).filter(a => a.whatsapp);
+            document.getElementById('notif-suspensos-resumo').textContent = 
+                `${suspensos.length} atleta(s) com cartão vermelho ou 3+ amarelos`;
+            
+            const comWpp = window.atletasCache.filter(a => a.whatsapp);
+            document.getElementById('notif-geral-resumo').textContent = 
+                `${comWpp.length} atleta(s) com WhatsApp cadastrado`;
+        };
+        
+        window.prepararDisparo = function(tipo) {
+            const mesAtual = window.getMesAtual();
+            const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
+            let alvos = [];
+            let titulo = '';
+            let corpo = '';
+            
+            if (tipo === 'pendentes') {
+                alvos = window.atletasCache.filter(a => {
+                    const pag = a.pagamentos && a.pagamentos[mesAtual];
+                    return (!pag || !pag.pago) && a.whatsapp;
+                });
+                titulo = `📬 Cobrança de Mensalidade - ${mesNome.toUpperCase()}`;
+                corpo = alvos.map(a => `• ${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})`).join('\n');
+                if (!corpo) corpo = 'Nenhum atleta pendente com WhatsApp cadastrado.';
+            } else if (tipo === 'multas') {
+                alvos = window.atletasCache.filter(a => {
+                    if (!a.pagamentos || !a.whatsapp) return false;
+                    let tem = false;
+                    Object.entries(a.pagamentos).forEach(([m, d]) => {
+                        if (d.multas) d.multas.forEach(ml => { if (!ml.paga) tem = true; });
+                    });
+                    return tem;
+                });
+                titulo = `💰 Cobrança de Multas`;
+                const detalhes = alvos.map(a => {
+                    let total = 0;
+                    Object.entries(a.pagamentos).forEach(([m, d]) => {
+                        if (d.multas) d.multas.forEach(ml => { if (!ml.paga) total += Number(ml.valor); });
+                    });
+                    return `• ${a.nome} - R$ ${total.toFixed(2)} em multas`;
+                });
+                corpo = detalhes.join('\n');
+                if (!corpo) corpo = 'Nenhum atleta com multas pendentes.';
+            } else if (tipo === 'suspensos') {
+                alvos = window.atletasCache.filter(a => {
+                    return ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) && a.whatsapp;
+                });
+                titulo = `🟨🚫 Aviso de Suspensão`;
+                corpo = alvos.map(a => {
+                    const am = a.amarelos || 0;
+                    const vm = a.vermelho || 0;
+                    return `• ${a.nome} ${am >=3 ? '3+ amarelos' : ''} ${vm >= 1 ? 'Vermelho' : ''}`;
+                }).join('\n');
+                if (!corpo) corpo = 'Nenhum atleta suspenso com WhatsApp.';
+            } else if (tipo === 'geral') {
+                alvos = window.atletasCache.filter(a => a.whatsapp);
+                titulo = `📣 Comunicado Geral - BABA VETERANOS`;
+                corpo = `Enviar para ${alvos.length} atleta(s).\n` + alvos.map(a => `• ${a.nome}`).join('\n');
+                if (!corpo) corpo = 'Nenhum atleta com WhatsApp cadastrado.';
+            }
+            
+            window._disparoPendente = { tipo, alvos };
+            
+            document.getElementById('notif-preview-titulo').textContent = titulo;
+            document.getElementById('notif-preview-corpo').textContent = corpo;
+            document.getElementById('notificacao-preview').classList.remove('hidden');
+            
+            const btn = document.getElementById('notif-confirmar-btn');
+            btn.onclick = function() { window.confirmarDisparo(tipo, alvos); };
+        };
+        
+        window.confirmarDisparo = function(tipo, alvos) {
+            const disparoId = 'disparo_' + Date.now();
+            const dadosDisparo = {
+                tipo: tipo,
+                data: new Date().toISOString(),
+                alvos: alvos.map(a => ({ id: a.id, nome: a.nome, whatsapp: a.whatsapp })),
+                status: 'pendente'
+            };
+            
+            if (window.dbRef) {
+                const ref = window.dbRef.child('notificacoes_pendentes/' + disparoId);
+                ref.set(dadosDisparo);
+                window.mostrarToast("✅ Disparo registrado! Agora me chame: 'Zapia, disparar!'");
+            } else {
+                window.mostrarToast("Erro: Firebase não conectado.", true);
+            }
+            
+            document.getElementById('notificacao-preview').classList.add('hidden');
+            window._disparoPendente = null;
+        };
+        
+        window.cancelarDisparo = function() {
+            document.getElementById('notificacao-preview').classList.add('hidden');
+            window._disparoPendente = null;
+            window.mostrarToast("Disparo cancelado.");
+        };
 
             // Estado inicial
             history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
