@@ -561,9 +561,9 @@
         <!-- BUSCA -->
         
         <!-- ARTILHARIA -->
-        <div id="artilharia-ver" class="tab-content space-y-6 pt-4">
-            <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-stone-800">
+        <div id="artilharia-ver" class="tab-content space-y-3 pt-2">
+            <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-4 shadow-xl">
+                <div class="flex justify-between items-center mb-3 pb-1 border-b border-stone-800">
                     <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs">
                         <i class="fa-solid fa-ranking-star mr-2"></i>Artilharia da Temporada
                     </h4>
@@ -573,7 +573,7 @@
                         <option value="BOTAFOGO">Botafogo</option>
                     </select>
                 </div>
-                <ol id="dash-artilharia" class="divide-y divide-stone-800 text-sm font-medium text-stone-300"></ol>
+                <ol id="dash-artilharia" class="divide-y divide-stone-800/40 text-sm font-medium text-stone-300"></ol>
             </div>
         </div>
 
@@ -1216,10 +1216,10 @@
                     else if (idx === 1) medalha = `<i class="fa-solid fa-trophy text-stone-300 mr-2 drop-shadow-[0_0_5px_rgba(209,213,219,0.5)]"></i>`;
                     else if (idx === 2) medalha = `<i class="fa-solid fa-trophy text-amber-700 mr-2"></i>`;
 
-                    artilhariaHtml += `<li class="flex justify-between py-3 border-b border-stone-800/60 items-center animate-in fade-in duration-500">
+                    artilhariaHtml += `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center animate-in fade-in duration-500 text-sm">
                         <div class="flex items-center">
                             ${medalha}
-                            <div>
+                            <div class="leading-tight">
                                 <p class="font-black text-xs uppercase text-white">${a.nome}</p>
                                 <p class="text-[9px] font-bold ${a.time === 'FLUMINENSE' ? 'text-emerald-500' : 'text-stone-400'} uppercase tracking-widest">
                                     ${a.time}
