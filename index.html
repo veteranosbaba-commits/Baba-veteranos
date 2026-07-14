@@ -391,18 +391,7 @@
                 <h4 class="font-black text-teal-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                     <i class="fa-solid fa-hand-holding-dollar mr-2"></i>Contribuições de Sócios
                 </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left">
-                        <thead>
-                            <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
-                                <th class="p-3">Sócio</th>
-                                <th class="p-3 text-center">Mês</th>
-                                <th class="p-3 text-right">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody id="publico-socios-tabela"></tbody>
-                    </table>
-                </div>
+                <div id="financeiro-socios-acordeao" class="space-y-1"></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -410,7 +399,7 @@
                     <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-circle-plus mr-2"></i>Aportes Extras
                     </h4>
-                    <ul id="financeiro-aportes-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
+                    <div id="financeiro-aportes-acordeao" class="space-y-1"></div>
                 </div>
                                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
@@ -422,7 +411,7 @@
                     <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-circle-minus mr-2"></i>Gastos Realizados
                     </h4>
-                    <ul id="financeiro-gastos-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
+                    <div id="financeiro-gastos-lista" class="space-y-1"></div>
                 </div>
             </div>
         </div>
@@ -1503,6 +1492,20 @@
         }
         
         function renderFinanceiroPublico() {
+            // Helper do acordeão
+            function acordeaoItem(titulo, total, id, conteudo) {
+                return `
+                    <div class="bg-black/30 rounded-lg border border-stone-800/60 overflow-hidden">
+                        <button onclick="document.getElementById('${id}').classList.toggle('hidden'); this.querySelector('.multa-chevron').classList.toggle('rotate-90')" class="w-full flex justify-between items-center px-3 py-2 text-xs font-bold text-stone-300 hover:text-amber-400 transition">
+                            <span><i class="fa-solid fa-chevron-right multa-chevron text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> ${titulo}</span>
+                            <span class="text-amber-400 font-mono">R$ ${total.toFixed(2)}</span>
+                        </button>
+                        <div id="${id}" class="hidden divide-y divide-stone-800/40">
+                            ${conteudo}
+                        </div>
+                    </div>`;
+            }
+            
             let mensalMap = {};
             Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, extra: 0, multas: 0 });
             
@@ -1545,40 +1548,101 @@
             const patEl = document.getElementById('publico-patrocinio-tabela');
             if (patEl) patEl.innerHTML = patHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum patrocínio.</td></tr>';
             
-            let socioHtml = '';
+            // Acordeão: Sócios por mês
+            let sociosPorMes = {};
             window.sociosCache.forEach(s => {
-                socioHtml += `<tr><td class="p-3 font-bold"><i class="fa-solid fa-star text-teal-400 mr-1.5"></i>${s.nome}</td>
-                    <td class="p-3 text-center text-stone-400">${mesesNomes[s.mes] || s.mes}</td>
-                    <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(s.valor).toFixed(2)}</td></tr>`;
+                const mes = s.mes?.padStart(2, '0');
+                if (!mes) return;
+                if (!sociosPorMes[mes]) sociosPorMes[mes] = [];
+                sociosPorMes[mes].push({ nome: s.nome, valor: Number(s.valor || 0) });
             });
-            const socioEl = document.getElementById('publico-socios-tabela');
-            if (socioEl) socioEl.innerHTML = socioHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhum sócio.</td></tr>';
+            const socioAcordeao = document.getElementById('financeiro-socios-acordeao');
+            if (socioAcordeao) {
+                const meses = Object.keys(sociosPorMes).sort();
+                if (meses.length === 0) {
+                    socioAcordeao.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhum sócio.</div>';
+                } else {
+                    let html = '';
+                    meses.forEach(mes => {
+                        const items = sociosPorMes[mes];
+                        const total = items.reduce((s, i) => s + i.valor, 0);
+                        const uid = 'socio-mes-' + mes;
+                        html += acordeaoItem(mesesNomes[mes], total, uid, items.map(i =>
+                            `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                <span><i class="fa-solid fa-star text-teal-500 mr-1.5"></i>${i.nome}</span>
+                                <span class="text-emerald-400 font-mono">R$ ${i.valor.toFixed(2)}</span>
+                            </div>`
+                        ).join(''));
+                    });
+                    socioAcordeao.innerHTML = html;
+                }
+            }
             
-            let gastosHtml = '';
+            // Acordeão: Gastos por mês
+            let gastosPorMes = {};
             window.gastosCache.forEach(g => {
-                gastosHtml += `<li class="py-2 flex justify-between text-stone-300">
-                    <span>${g.descricao} <span class="text-[10px] text-stone-500">(${g.dataStr || ''})</span></span>
-                    <span class="font-mono text-red-400 font-bold">- R$ ${Number(g.valor).toFixed(2)}</span>
-                </li>`;
+                const partes = (g.dataStr || '').split('/');
+                const mes = partes[1]?.padStart(2, '0');
+                if (!mes) return;
+                if (!gastosPorMes[mes]) gastosPorMes[mes] = [];
+                gastosPorMes[mes].push({ descricao: g.descricao, valor: Number(g.valor || 0), dataStr: g.dataStr });
             });
-            const gastosLista = document.getElementById('financeiro-gastos-lista');
-            if (gastosLista) gastosLista.innerHTML = gastosHtml || '<li class="py-2 text-stone-500 italic">Nenhuma despesa.</li>';
+            const gastosAcordeao = document.getElementById('financeiro-gastos-lista');
+            if (gastosAcordeao) {
+                const meses = Object.keys(gastosPorMes).sort();
+                if (meses.length === 0) {
+                    gastosAcordeao.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma despesa.</div>';
+                } else {
+                    let html = '';
+                    meses.forEach(mes => {
+                        const items = gastosPorMes[mes];
+                        const total = items.reduce((s, i) => s + i.valor, 0);
+                        const uid = 'gasto-mes-' + mes;
+                        html += acordeaoItem(mesesNomes[mes], total, uid, items.map(i =>
+                            `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                <span>${i.descricao} <span class="text-stone-600">(${i.dataStr})</span></span>
+                                <span class="text-red-400 font-mono">- R$ ${i.valor.toFixed(2)}</span>
+                            </div>`
+                        ).join(''));
+                    });
+                    gastosAcordeao.innerHTML = html;
+                }
+            }
             
-            let aportesHtml = '';
+            // Acordeão: Aportes Extras por mês
+            let aportesPorMes = {};
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
-                        if (a.pagamentos[mes].extra && a.pagamentos[mes].extra > 0) {
-                            aportesHtml += `<li class="py-2 flex justify-between text-stone-300">
-                                <span>${a.nome} (${mesesNomes[mes]})</span>
-                                <span class="text-emerald-400 font-mono">+ R$ ${Number(a.pagamentos[mes].extra).toFixed(2)}</span>
-                            </li>`;
+                        const extra = Number(a.pagamentos[mes].extra || 0);
+                        if (extra > 0) {
+                            if (!aportesPorMes[mes]) aportesPorMes[mes] = [];
+                            aportesPorMes[mes].push({ nome: a.nome, valor: extra });
                         }
                     });
                 }
             });
-            const aportesLista = document.getElementById('financeiro-aportes-lista');
-            if (aportesLista) aportesLista.innerHTML = aportesHtml || '<li class="py-2 text-stone-500 italic">Nenhum aporte extra.</li>';
+            const aportesAcordeao = document.getElementById('financeiro-aportes-acordeao');
+            if (aportesAcordeao) {
+                const meses = Object.keys(aportesPorMes).sort();
+                if (meses.length === 0) {
+                    aportesAcordeao.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhum aporte extra.</div>';
+                } else {
+                    let html = '';
+                    meses.forEach(mes => {
+                        const items = aportesPorMes[mes];
+                        const total = items.reduce((s, i) => s + i.valor, 0);
+                        const uid = 'aporte-mes-' + mes;
+                        html += acordeaoItem(mesesNomes[mes], total, uid, items.map(i =>
+                            `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                <span>${i.nome}</span>
+                                <span class="text-emerald-400 font-mono">+ R$ ${i.valor.toFixed(2)}</span>
+                            </div>`
+                        ).join(''));
+                    });
+                    aportesAcordeao.innerHTML = html;
+                }
+            }
             // Monta multas pagas agrupadas por mês (acordeão)
             let multasPorMes = {};
             window.atletasCache.forEach(a => {
@@ -1602,35 +1666,24 @@
                     });
                 }
             });
-            const acordeaoEl = document.getElementById('financeiro-multas-acordeao');
-            if (acordeaoEl) {
-                // Remove meses que ficaram vazios após filtrar zeros
+            const multasAcordeao = document.getElementById('financeiro-multas-acordeao');
+            if (multasAcordeao) {
                 const mesesKeys = Object.keys(multasPorMes).filter(mes => multasPorMes[mes].length > 0).sort();
                 if (mesesKeys.length === 0) {
-                    acordeaoEl.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma multa paga.</div>';
+                    multasAcordeao.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma multa paga.</div>';
                 } else {
                     let acordeaoHtml = '';
                     mesesKeys.forEach(mes => {
                         const items = multasPorMes[mes];
                         const totalMes = items.reduce((s, i) => s + i.valor, 0);
-                        const idUnico = 'multa-mes-' + mes;
-                        acordeaoHtml += `
-                            <div class="bg-black/30 rounded-lg border border-stone-800/60 overflow-hidden">
-                                <button onclick="document.getElementById('${idUnico}').classList.toggle('hidden'); this.querySelector('.multa-chevron').classList.toggle('rotate-90')" class="w-full flex justify-between items-center px-3 py-2 text-xs font-bold text-stone-300 hover:text-amber-400 transition">
-                                    <span><i class="fa-solid fa-chevron-right multa-chevron text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> ${mesesNomes[mes]}</span>
-                                    <span class="text-orange-400 font-mono">R$ ${totalMes.toFixed(2)}</span>
-                                </button>
-                                <div id="${idUnico}" class="hidden divide-y divide-stone-800/40">
-                                    ${items.map(i => `
-                                        <div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
-                                            <span>${i.nome} <span class="text-stone-600">(${i.motivo})</span></span>
-                                            <span class="text-orange-500 font-mono">R$ ${i.valor.toFixed(2)}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>`;
+                        acordeaoHtml += acordeaoItem(mesesNomes[mes], totalMes, 'multa-mes-' + mes, items.map(i =>
+                            `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                <span>${i.nome} <span class="text-stone-600">(${i.motivo})</span></span>
+                                <span class="text-orange-500 font-mono">R$ ${i.valor.toFixed(2)}</span>
+                            </div>`
+                        ).join(''));
                     });
-                    acordeaoEl.innerHTML = acordeaoHtml;
+                    multasAcordeao.innerHTML = acordeaoHtml;
                 }
             }
 
