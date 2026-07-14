@@ -822,14 +822,20 @@
                     <h4 class="font-bold text-amber-500 text-xs uppercase border-b border-stone-800 pb-2">
                         <i class="fa-solid fa-gamepad mr-1"></i> Placar do Jogo
                     </h4>
-                    <div class="grid grid-cols-2 gap-4 text-xs max-w-md mx-auto">
-                        <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                            <label class="block font-bold text-emerald-400 uppercase mb-1">Fluminense</label>
-                            <input type="number" id="adm-placar-flu" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
+                    <div class="space-y-3 text-xs max-w-md mx-auto">
+                        <div class="bg-black/40 p-3 rounded-xl border border-stone-800">
+                            <label class="block font-bold text-amber-400 uppercase mb-1 text-center text-[10px]">Data da Partida</label>
+                            <input type="date" id="adm-placar-data" class="w-full bg-stone-800 rounded-lg p-2 text-center text-white font-bold focus:ring-1 focus:ring-amber-500 outline-none">
                         </div>
-                        <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                            <label class="block font-bold text-stone-300 uppercase mb-1">Botafogo</label>
-                            <input type="number" id="adm-placar-bota" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
+                                <label class="block font-bold text-emerald-400 uppercase mb-1">Fluminense</label>
+                                <input type="number" id="adm-placar-flu" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
+                            </div>
+                            <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
+                                <label class="block font-bold text-stone-300 uppercase mb-1">Botafogo</label>
+                                <input type="number" id="adm-placar-bota" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
+                            </div>
                         </div>
                     </div>
                     <div class="text-center pt-2">
@@ -1423,17 +1429,21 @@
         window.atualizarPlacarGeral = function() {
             const fluVal = document.getElementById('adm-placar-flu')?.value;
             const botaVal = document.getElementById('adm-placar-bota')?.value;
+            const dataInput = document.getElementById('adm-placar-data')?.value;
+            
             if (!fluVal || !botaVal) { alert("Preencha os placares!"); return; }
+            if (!dataInput) { alert("Selecione a data da partida!"); return; }
             
             const placarFlu = parseInt(fluVal);
             const placarBota = parseInt(botaVal);
             if (isNaN(placarFlu) || isNaN(placarBota)) { alert("Valores inválidos!"); return; }
             
-            const hoje = new Date();
-            const dataStr = `${hoje.getDate().toString().padStart(2,'0')}/${(hoje.getMonth()+1).toString().padStart(2,'0')}/${hoje.getFullYear()}`;
+            // Converte YYYY-MM-DD para DD/MM/YYYY
+            const partes = dataInput.split('-');
+            const dataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
             
             if (window.historicoPlacares?.some(r => r.data === dataStr)) {
-                alert(`Já existe resultado para hoje (${dataStr}). Remova no histórico primeiro.`);
+                alert(`Já existe resultado para esta data (${dataStr}). Remova no histórico primeiro.`);
                 return;
             }
             
