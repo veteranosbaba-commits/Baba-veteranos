@@ -128,6 +128,7 @@
                 transform: translate(-50%, 0);
             }
         }
+        .rotate-90 { transform: rotate(90deg); }
     </style>
 
     <style>
@@ -415,7 +416,7 @@
                     <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-gavel mr-2"></i>Multas Pagas
                     </h4>
-                    <ul id="financeiro-multas-lista" class="divide-y divide-stone-800 text-sm max-h-64 overflow-y-auto"></ul>
+                    <div id="financeiro-multas-acordeao" class="space-y-1"></div>
                 </div>
 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
@@ -1578,33 +1579,57 @@
             });
             const aportesLista = document.getElementById('financeiro-aportes-lista');
             if (aportesLista) aportesLista.innerHTML = aportesHtml || '<li class="py-2 text-stone-500 italic">Nenhum aporte extra.</li>';
-            let multasPagasHtml = '';
+            // Monta multas pagas agrupadas por mês (acordeão)
+            let multasPorMes = {};
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
+                        if (!multasPorMes[mes]) multasPorMes[mes] = [];
                         if (a.pagamentos[mes].multas) {
                             a.pagamentos[mes].multas.forEach(ml => {
                                 if (ml.paga) {
-                                    multasPagasHtml += `<li class="py-2 flex justify-between text-stone-300">
-                                        <span>${a.nome} <span class="text-[9px] text-stone-500">(${ml.motivo} - ${mesesNomes[mes]})</span></span>
-                                        <span class="text-orange-500 font-mono">R$ ${Number(ml.valor).toFixed(2)}</span>
-                                    </li>`;
+                                    multasPorMes[mes].push({ nome: a.nome, motivo: ml.motivo, valor: Number(ml.valor) });
                                 }
                             });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
                             a.pagamentos[mes].multasArquivadasHistorico.forEach(v => {
-                                multasPagasHtml += `<li class="py-2 flex justify-between text-stone-300">
-                                    <span>${a.nome} <span class="text-[9px] text-stone-500">(Histórico - ${mesesNomes[mes]})</span></span>
-                                    <span class="text-orange-500 font-mono">R$ ${Number(v).toFixed(2)}</span>
-                                </li>`;
+                                multasPorMes[mes].push({ nome: a.nome, motivo: 'Arquivado', valor: Number(v) });
                             });
                         }
                     });
                 }
             });
-            const multasLista = document.getElementById('financeiro-multas-lista');
-            if (multasLista) multasLista.innerHTML = multasPagasHtml || '<li class="py-2 text-stone-500 italic">Nenhuma multa paga.</li>';
+            const acordeaoEl = document.getElementById('financeiro-multas-acordeao');
+            if (acordeaoEl) {
+                const mesesKeys = Object.keys(multasPorMes).sort();
+                if (mesesKeys.length === 0) {
+                    acordeaoEl.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma multa paga.</div>';
+                } else {
+                    let acordeaoHtml = '';
+                    mesesKeys.forEach(mes => {
+                        const items = multasPorMes[mes];
+                        const totalMes = items.reduce((s, i) => s + i.valor, 0);
+                        const idUnico = 'multa-mes-' + mes;
+                        acordeaoHtml += `
+                            <div class="bg-black/30 rounded-lg border border-stone-800/60 overflow-hidden">
+                                <button onclick="document.getElementById('${idUnico}').classList.toggle('hidden'); this.querySelector('.multa-chevron').classList.toggle('rotate-90')" class="w-full flex justify-between items-center px-3 py-2 text-xs font-bold text-stone-300 hover:text-amber-400 transition">
+                                    <span><i class="fa-solid fa-chevron-right multa-chevron text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> ${mesesNomes[mes]}</span>
+                                    <span class="text-orange-400 font-mono">R$ ${totalMes.toFixed(2)}</span>
+                                </button>
+                                <div id="${idUnico}" class="hidden divide-y divide-stone-800/40">
+                                    ${items.map(i => `
+                                        <div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                            <span>${i.nome} <span class="text-stone-600">(${i.motivo})</span></span>
+                                            <span class="text-orange-500 font-mono">R$ ${i.valor.toFixed(2)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    });
+                    acordeaoEl.innerHTML = acordeaoHtml;
+                }
+            }
 
         }
         
