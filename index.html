@@ -1081,6 +1081,21 @@
                     window.partidaEstatisticas = data.partidaEstatisticas || { 
                         placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
                     };
+                    // Migração: converte multas arquivadas antigas (só número) para {valor, motivo}
+                    window.atletasCache.forEach(a => {
+                        if (a.pagamentos) {
+                            Object.values(a.pagamentos).forEach(p => {
+                                if (p.multasArquivadasHistorico) {
+                                    p.multasArquivadasHistorico = p.multasArquivadasHistorico.map(arq => {
+                                        if (typeof arq === 'number') {
+                                            return { valor: arq, motivo: 'Arquivado' };
+                                        }
+                                        return arq;
+                                    });
+                                }
+                            });
+                        }
+                    });
                 }
                 
                 document.getElementById('loading-overlay')?.classList.add('hidden');
@@ -1884,7 +1899,11 @@
             if (!a.pagamentos[mes].multas[idx].paga) { alert("Marque como paga primeiro!"); return; }
             if(confirm(`Arquivar multa?`)) {
                 if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
-                a.pagamentos[mes].multasArquivadasHistorico.push({ valor: parseFloat(a.pagamentos[mes].multas[idx].valor), motivo: a.pagamentos[mes].multas[idx].motivo || 'Arquivado' });
+                const multa = a.pagamentos[mes].multas[idx];
+                a.pagamentos[mes].multasArquivadasHistorico.push({
+                    valor: parseFloat(multa.valor),
+                    motivo: multa.motivo || 'Arquivado'
+                });
                 a.pagamentos[mes].multas.splice(idx, 1);
                 window.mostrarToast("Multa arquivada!");
                 window.salvarNoStorage();
