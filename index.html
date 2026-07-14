@@ -1587,14 +1587,16 @@
                         if (!multasPorMes[mes]) multasPorMes[mes] = [];
                         if (a.pagamentos[mes].multas) {
                             a.pagamentos[mes].multas.forEach(ml => {
-                                if (ml.paga) {
+                                if (ml.paga && Number(ml.valor) > 0) {
                                     multasPorMes[mes].push({ nome: a.nome, motivo: ml.motivo, valor: Number(ml.valor) });
                                 }
                             });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
                             a.pagamentos[mes].multasArquivadasHistorico.forEach(v => {
-                                multasPorMes[mes].push({ nome: a.nome, motivo: 'Arquivado', valor: Number(v) });
+                                if (Number(v) > 0) {
+                                    multasPorMes[mes].push({ nome: a.nome, motivo: 'Arquivado', valor: Number(v) });
+                                }
                             });
                         }
                     });
@@ -1602,7 +1604,8 @@
             });
             const acordeaoEl = document.getElementById('financeiro-multas-acordeao');
             if (acordeaoEl) {
-                const mesesKeys = Object.keys(multasPorMes).sort();
+                // Remove meses que ficaram vazios após filtrar zeros
+                const mesesKeys = Object.keys(multasPorMes).filter(mes => multasPorMes[mes].length > 0).sort();
                 if (mesesKeys.length === 0) {
                     acordeaoEl.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma multa paga.</div>';
                 } else {
