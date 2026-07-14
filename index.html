@@ -1175,7 +1175,7 @@
                             });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(v => totalArrecadado += Number(v));
+                            a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
                         }
                     });
                 }
@@ -1336,13 +1336,22 @@
                     
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
-                            a.pagamentos[m].multas?.forEach(ml => {
+                            (a.pagamentos[m].multas || []).forEach(ml => {
                                 const cor = ml.paga ? 'text-emerald-400' : 'text-orange-500';
                                 const status = ml.paga ? 'PAGA' : 'ABERTO';
                                 if (!ml.paga) totalMultasAberto += Number(ml.valor);
                                 multasHtml += `<div class="flex justify-between ${cor} font-mono mt-0.5">
                                     <span>• ${ml.motivo} (${m})</span>
                                     <span>${status} R$ ${Number(ml.valor).toFixed(2)}</span>
+                                </div>`;
+                            });
+                            // Multas arquivadas
+                            (a.pagamentos[m].multasArquivadasHistorico || []).forEach(arq => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                                multasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
+                                    <span>• ${motivo} (${m})</span>
+                                    <span>ARQUIVADA R$ ${valor.toFixed(2)}</span>
                                 </div>`;
                             });
                         });
@@ -1519,7 +1528,7 @@
                                 a.pagamentos[mes].multas.forEach(ml => { if(ml.paga) mensalMap[mes].multas += Number(ml.valor); });
                             }
                             if (a.pagamentos[mes].multasArquivadasHistorico) {
-                                a.pagamentos[mes].multasArquivadasHistorico.forEach(v => mensalMap[mes].multas += Number(v));
+                                a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => mensalMap[mes].multas += Number(typeof arq === 'object' ? arq.valor : arq));
                             }
                         }
                     });
@@ -1657,9 +1666,11 @@
                             });
                         }
                         if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(v => {
-                                if (Number(v) > 0) {
-                                    multasPorMes[mes].push({ nome: a.nome, motivo: 'Arquivado', valor: Number(v) });
+                            a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                                if (valor > 0) {
+                                    multasPorMes[mes].push({ nome: a.nome, motivo: motivo, valor: valor });
                                 }
                             });
                         }
@@ -1873,7 +1884,7 @@
             if (!a.pagamentos[mes].multas[idx].paga) { alert("Marque como paga primeiro!"); return; }
             if(confirm(`Arquivar multa?`)) {
                 if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
-                a.pagamentos[mes].multasArquivadasHistorico.push(parseFloat(a.pagamentos[mes].multas[idx].valor));
+                a.pagamentos[mes].multasArquivadasHistorico.push({ valor: parseFloat(a.pagamentos[mes].multas[idx].valor), motivo: a.pagamentos[mes].multas[idx].motivo || 'Arquivado' });
                 a.pagamentos[mes].multas.splice(idx, 1);
                 window.mostrarToast("Multa arquivada!");
                 window.salvarNoStorage();
@@ -2290,8 +2301,10 @@
                 if (atleta.pagamentos) {
                     Object.entries(atleta.pagamentos).forEach(([mes, dados]) => {
                         if (dados.multasArquivadasHistorico && dados.multasArquivadasHistorico.length > 0) {
-                            dados.multasArquivadasHistorico.forEach((valor, idx) => {
-                                multas.push({ mes, valor, idx });
+                            dados.multasArquivadasHistorico.forEach((arq, idx) => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                                multas.push({ mes, valor, motivo, idx });
                             });
                         }
                     });
@@ -2326,6 +2339,7 @@
                             html += `<div class="flex justify-between items-center text-[10px] bg-stone-800/50 p-1.5 rounded border border-stone-700/30">
                                 <div class="flex gap-2">
                                     <span class="text-stone-500 font-bold">MÊS ${m.mes}</span>
+                                    <span class="text-stone-400">${m.motivo}</span>
                                     <span class="text-emerald-400 font-mono">R$ ${m.valor.toFixed(2)}</span>
                                 </div>
                                 <button onclick="window.excluirMultaHistorica('${atleta.id}', '${m.mes}', ${m.idx})" class="text-stone-500 hover:text-red-400"><i class="fa-solid fa-trash-can"></i></button>
@@ -2409,9 +2423,10 @@
                                 });
                             }
                             if (dados.multasArquivadasHistorico) {
-                                dados.multasArquivadasHistorico.forEach(v => {
-                                    rowsEntradas.push([atleta.nome, `Multa Histórica (${mNomeCurto})`, `R$ ${Number(v).toFixed(2)}`]);
-                                    totalEntradas += Number(v);
+                                dados.multasArquivadasHistorico.forEach(arq => {
+                                    const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                    rowsEntradas.push([atleta.nome, `Multa Hist. (${mNomeCurto})`, `R$ ${valor.toFixed(2)}`]);
+                                    totalEntradas += valor;
                                 });
                             }
                         });
