@@ -2113,7 +2113,6 @@
             const dl = document.getElementById('lista-atletas-sugestao');
             if (dl) {
                 let dlHtml = '';
-                // Ordena por número para facilitar a visualização na lista
                 const atletasOrdenados = [...window.atletasCache].sort((a, b) => {
                     const numA = parseInt(a.camisa || a.numero || 0);
                     const numB = parseInt(b.camisa || b.numero || 0);
@@ -2121,7 +2120,6 @@
                 });
                 atletasOrdenados.forEach(a => {
                     const num = a.camisa || a.numero || '00';
-                    // Adicionamos um espaço após o número para ajudar o navegador a diferenciar "2" de "22"
                     dlHtml += `<option value="${num} - ${a.nome}">`;
                 });
                 dl.innerHTML = dlHtml;
@@ -2131,15 +2129,64 @@
             window.sumulasCache.forEach(s => {
                 const dataF = s.data.split('-').reverse().join('/');
                 html += `
-                    <div class="flex items-center justify-between p-3 bg-stone-800 rounded-lg border border-stone-700">
-                        <div>
-                            <p class="text-xs font-bold text-white">${dataF} - <span class="text-emerald-400">BOTA ${s.placarBota || 0} X ${s.placarFlu || 0} FLU</span></p>
+                    <div class="bg-stone-800/80 rounded-xl border border-stone-700 overflow-hidden">
+                        <div class="flex items-center justify-between px-3 py-2.5 bg-stone-800 border-b border-stone-700">
+                            <p class="text-xs font-bold text-white">${dataF}</p>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-mono">
+                                    <span class="text-white">BOTA</span> <strong class="text-white">${s.placarBota || 0}</strong>
+                                    <span class="text-stone-600">x</span>
+                                    <strong class="text-emerald-400">${s.placarFlu || 0}</strong> <span class="text-emerald-400">FLU</span>
+                                </span>
+                                <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 hover:text-red-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
-                        <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
+                        <div class="divide-y divide-stone-800/60">
+                            <div>
+                                <button onclick="document.getElementById('s-bota-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-bota-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
+                                    <span><i class="fa-solid fa-chevron-right chevron-bota-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🏁 Botafogo</span>
+                                    <span class="text-[10px] text-stone-500">${(s.bota?.gols?.length || 0)}⚽ ${(s.bota?.am?.length || 0)}🟨 ${(s.bota?.ver?.length || 0)}🟥</span>
+                                </button>
+                                <div id="s-bota-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
+                                        ${s.bota?.gols?.length ? `<div class="flex flex-wrap gap-1">${s.bota.gols.map(g => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-white font-mono">⚽ ${g}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
+                                        ${s.bota?.am?.length ? `<div class="flex flex-wrap gap-1">${s.bota.am.map(a => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-amber-500 font-mono">🟨 ${a}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
+                                        ${s.bota?.ver?.length ? `<div class="flex flex-wrap gap-1">${s.bota.ver.map(v => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-red-500 font-mono">🟥 ${v}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button onclick="document.getElementById('s-flu-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-flu-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
+                                    <span><i class="fa-solid fa-chevron-right chevron-flu-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🔥 Fluminense</span>
+                                    <span class="text-[10px] text-stone-500">${(s.flu?.gols?.length || 0)}⚽ ${(s.flu?.am?.length || 0)}🟨 ${(s.flu?.ver?.length || 0)}🟥</span>
+                                </button>
+                                <div id="s-flu-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
+                                        ${s.flu?.gols?.length ? `<div class="flex flex-wrap gap-1">${s.flu.gols.map(g => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-white font-mono">⚽ ${g}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
+                                        ${s.flu?.am?.length ? `<div class="flex flex-wrap gap-1">${s.flu.am.map(a => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-amber-500 font-mono">🟨 ${a}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
+                                        ${s.flu?.ver?.length ? `<div class="flex flex-wrap gap-1">${s.flu.ver.map(v => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-red-500 font-mono">🟥 ${v}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
-            container.innerHTML = html || '<p class="text-[10px] text-stone-500 italic">Nenhuma súmula.</p>';
+            container.innerHTML = html || '<p class="text-[10px] text-stone-500 italic">Nenhuma s\u00famula.</p>';
         };
 
         window.renderSumulasPublicas = function() {
