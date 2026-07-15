@@ -1950,17 +1950,17 @@
             if (!container) return;
 
             const times = {
-                "BOTA": { nome: "Botafogo", cor: "text-white", icon: "🏁", atletas: [] },
-                "FLU": { nome: "Fluminense", cor: "text-emerald-500", icon: "🇮🇹", atletas: [] }
+                "BOTAFOGO": { nome: "Botafogo", key: "BOTA", cor: "text-white", icon: "🏁", atletas: [] },
+                "FLUMINENSE": { nome: "Fluminense", key: "FLU", cor: "text-emerald-500", icon: "🇮🇹", atletas: [] }
             };
 
             window.atletasCache.forEach(a => {
-                const timeKey = (a.time || "BOTA").toUpperCase();
+                const timeKey = (a.time || "BOTAFOGO").toUpperCase();
                 if (times[timeKey]) times[timeKey].atletas.push(a);
             });
 
             let html = '';
-            ["BOTA", "FLU"].forEach(tKey => {
+            ["BOTAFOGO", "FLUMINENSE"].forEach(tKey => {
                 const t = times[tKey];
                 let atletasHtml = '';
 
