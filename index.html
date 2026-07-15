@@ -839,18 +839,7 @@
                     <h4 class="font-bold text-amber-500 text-xs uppercase mb-3">
                         <i class="fa-solid fa-eraser mr-1"></i> Histórico de Rodadas
                     </h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs min-w-[400px]">
-                            <thead>
-                                <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
-                                    <th class="p-2">Data</th>
-                                    <th class="p-2 text-center">Resultado</th>
-                                    <th class="p-2 text-center">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adm-historico-exclusao-tabela"></tbody>
-                        </table>
-                    </div>
+                    <div id="adm-historico-exclusao-container" class="space-y-2"></div>
                 </div>
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
@@ -1510,16 +1499,68 @@
         }
         
         function renderAdminHistoricoExclusao() {
-            let html = '';
-            (window.historicoPlacares || []).forEach(item => {
-                html += `<tr class="border-b border-stone-800 text-center text-xs">
-                    <td class="p-2 text-stone-400 font-mono">${item.data}</td>
-                    <td class="p-2 font-mono">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
-                    <td class="p-2"><button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded transition"><i class="fa-solid fa-trash"></i></button></td>
-                </tr>`;
+            if (!window.historicoPlacares || !window.historicoPlacares.length) {
+                const container = document.getElementById('adm-historico-exclusao-container');
+                if (container) container.innerHTML = '<p class="text-xs text-stone-600 italic text-center py-4">Nenhuma rodada registrada.</p>';
+                return;
+            }
+            
+            const mesesOrd = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+            const grupos = {};
+            
+            window.historicoPlacares.forEach(item => {
+                const partes = item.data.split('/');
+                if (partes.length !== 3) return;
+                const mes = partes[1];
+                const ano = partes[2];
+                const chave = `${ano}-${mes}`;
+                if (!grupos[chave]) grupos[chave] = { mes, ano, rodadas: [] };
+                grupos[chave].rodadas.push(item);
             });
-            const tabela = document.getElementById('adm-historico-exclusao-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-4 text-stone-600 italic text-center">Nenhum placar.</td></tr>';
+            
+            const chaves = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
+            
+            let html = '';
+            chaves.forEach(chave => {
+                const grupo = grupos[chave];
+                const mesNome = mesesOrd[parseInt(grupo.mes) - 1] || grupo.mes;
+                const acordeaoId = 'hist-acordeao-' + chave.replace('-', '');
+                const totalRodadas = grupo.rodadas.length;
+                
+                let tabelaHtml = '';
+                grupo.rodadas.forEach(item => {
+                    tabelaHtml += `<tr class="border-b border-stone-800 text-center text-xs">
+                        <td class="p-2 text-stone-400 font-mono">${item.data}</td>
+                        <td class="p-2 font-mono">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
+                        <td class="p-2"><button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded transition"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+                
+                html += `
+                    <div class="bg-black/30 rounded-lg border border-stone-800/60 overflow-hidden">
+                        <button onclick="document.getElementById('${acordeaoId}').classList.toggle('hidden'); this.querySelector('.chevron-hist').classList.toggle('rotate-90')" class="w-full flex justify-between items-center px-3 py-2 text-xs font-bold text-stone-300 hover:text-amber-400 transition">
+                            <span><i class="fa-solid fa-chevron-right chevron-hist text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> ${mesNome} ${grupo.ano}</span>
+                            <span class="text-stone-500 font-mono">${totalRodadas} rodada${totalRodadas !== 1 ? 's' : ''}</span>
+                        </button>
+                        <div id="${acordeaoId}" class="hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs min-w-[400px]">
+                                    <thead>
+                                        <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
+                                            <th class="p-2">Data</th>
+                                            <th class="p-2 text-center">Resultado</th>
+                                            <th class="p-2 text-center">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${tabelaHtml}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            const container = document.getElementById('adm-historico-exclusao-container');
+            if (container) container.innerHTML = html;
         }
         
         function renderFinanceiroPublico() {
