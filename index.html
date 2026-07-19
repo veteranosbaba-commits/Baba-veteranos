@@ -3335,7 +3335,7 @@
             
             const pendentes = window.atletasCache.filter(a => {
                 const pag = a.pagamentos && a.pagamentos[mesAtual];
-                return (!pag || !pag.pago) && a.whatsapp;
+                return (!pag || !pag.pago);
             });
             document.getElementById('notif-pendentes-resumo').textContent = 
                 `${pendentes.length} atleta(s) - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
