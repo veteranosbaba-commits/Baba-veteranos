@@ -1,5 +1,5 @@
-// Service Worker - BABA VETERANOS
-const CACHE_NAME = 'baba-veteranos-v1';
+// Service Worker - BABA VETERANOS v2 - Cache atualizado
+const CACHE_NAME = 'baba-veteranos-v2';
 const urlsToCache = [
   '/Baba-veteranos/',
   '/Baba-veteranos/index.html',
@@ -15,10 +15,27 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
+      );
+    }).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate' || 
+      (event.request.url.includes('/Baba-veteranos/') && event.request.url.endsWith('.html'))) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request).catch(() => response);
@@ -26,14 +43,13 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Recebe notificações push do servidor (quando houver)
 self.addEventListener('push', event => {
   if (!event.data) return;
   try {
     const data = event.data.json();
     const options = {
       body: data.body || 'Nova notificação do Baba Veteranos',
-      icon: data.icon || '/Baba-veteranos/icon.png',
+      icon: '/Baba-veteranos/icon.png',
       badge: '/Baba-veteranos/icon.png',
       vibrate: [200, 100, 200],
       data: { url: data.url || '/Baba-veteranos/' }
@@ -44,12 +60,9 @@ self.addEventListener('push', event => {
         options
       )
     );
-  } catch (e) {
-    // Ignora JSON inválido
-  }
+  } catch (e) {}
 });
 
-// Notificações locais (disparadas pelo próprio app)
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const options = {
