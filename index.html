@@ -3338,7 +3338,7 @@
                 return (!pag || !pag.pago) && a.whatsapp;
             });
             document.getElementById('notif-pendentes-resumo').textContent = 
-                `${pendentes.length} atleta(s) com WhatsApp - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
+                `${pendentes.length} atleta(s) - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
             
             const comMultas = window.atletasCache.filter(a => {
                 if (!a.pagamentos) return false;
@@ -3347,19 +3347,19 @@
                     if (d.multas) d.multas.forEach(ml => { if (!ml.paga) temMulta = true; });
                 });
                 return temMulta;
-            }).filter(a => a.whatsapp);
+            });
             document.getElementById('notif-multas-resumo').textContent = 
                 `${comMultas.length} atleta(s) com multas pendentes`;
             
             const suspensos = window.atletasCache.filter(a => {
                 return (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-            }).filter(a => a.whatsapp);
+            });
             document.getElementById('notif-suspensos-resumo').textContent = 
-                `${suspensos.length} atleta(s) com cartão vermelho ou 3+ amarelos`;
+                `${suspensos.length} atleta(s) - ${suspensos.filter(a => (a.amarelos || 0) >= 3).length} pendurados, ${suspensos.filter(a => (a.vermelho || 0) >= 1).length} expulsos`;
             
-            const comWpp = window.atletasCache.filter(a => a.whatsapp);
+            const total = window.atletasCache.length;
             document.getElementById('notif-geral-resumo').textContent = 
-                `${comWpp.length} atleta(s) com WhatsApp cadastrado`;
+                `${total} atleta(s) cadastrado(s) no total`;
         };
         
         window.prepararDisparo = function(tipo) {
