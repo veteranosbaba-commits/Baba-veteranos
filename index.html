@@ -2370,24 +2370,25 @@
             const container = document.getElementById('container-sumulas-publico');
             if (!container) return;
             let html = '';
-            window.sumulasCache.forEach(s => {
+            window.sumulasCache.forEach((s, idx) => {
                 const dataF = s.data.split('-').reverse().join('/');
                 const pb = parseInt(s.placarBota || 0);
                 const pf = parseInt(s.placarFlu || 0);
                 
                 let resultText = '';
-                if (pb > pf) resultText = '<span class="text-white text-[10px] block mt-1 uppercase font-black tracking-widest">Vitória do Botafogo 🏁</span>';
-                else if (pf > pb) resultText = '<span class="text-emerald-400 text-[10px] block mt-1 uppercase font-black tracking-widest">Vitória do Fluminense 🇧🇬</span>';
-                else resultText = '<span class="text-amber-500 text-[10px] block mt-1 uppercase font-black tracking-widest">Empate 🤝</span>';
+                let resultClass = '';
+                if (pb > pf) { resultText = 'Vitória do Botafogo'; resultClass = 'text-white'; }
+                else if (pf > pb) { resultText = 'Vitória do Fluminense'; resultClass = 'text-emerald-400'; }
+                else { resultText = 'Empate'; resultClass = 'text-amber-500'; }
 
                 html += `
-                    <div class="bg-stone-950/80 rounded-2xl border border-stone-800 shadow-xl overflow-hidden mb-6">
-                        <div class="bg-gradient-to-r from-stone-900 to-black p-4 border-b border-stone-800 text-center">
+                    <div class="bg-stone-950/80 rounded-2xl border border-stone-800 shadow-xl overflow-hidden mb-3">
+                        <!-- CABEÇALHO (sempre visível) -->
+                        <div onclick="toggleSumulaDetalhes('sumula-detalhes-${idx}')" class="bg-gradient-to-r from-stone-900 to-black p-4 border-b border-stone-800 cursor-pointer active:scale-[0.99] transition">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest">Relatório de Jogo</span>
                                 <span class="text-[9px] font-black text-emerald-400">${dataF}</span>
                             </div>
-                            
                             <div class="flex items-center justify-center gap-4 py-2">
                                 <div class="text-right flex-1">
                                     <p class="text-[10px] font-black text-white uppercase truncate">Botafogo</p>
@@ -2399,11 +2400,14 @@
                                     <p class="text-3xl font-black text-emerald-500">${pf}</p>
                                 </div>
                             </div>
-                            ${resultText}
+                            <div class="flex justify-between items-center">
+                                <span class="${resultClass} text-[10px] uppercase font-black tracking-widest">${resultText}</span>
+                                <i class="fa-solid fa-chevron-down text-stone-600 text-xs transition-transform" id="sumula-icone-${idx}"></i>
+                            </div>
                         </div>
                         
-                        <div class="p-5 space-y-6">
-                            <!-- BOTA -->
+                        <!-- DETALHES (expansível) -->
+                        <div id="sumula-detalhes-${idx}" class="hidden p-5 space-y-6">
                             <div class="relative pl-4 border-l-4 border-white/20">
                                 <h5 class="text-xs font-black text-white uppercase mb-2 flex items-center gap-2">
                                     <i class="fa-solid fa-flag"></i> Botafogo 🏁
@@ -2414,8 +2418,6 @@
                                     <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.bota.ver || '00'}</p>
                                 </div>
                             </div>
-
-                            <!-- FLU -->
                             <div class="relative pl-4 border-l-4 border-emerald-500/40">
                                 <h5 class="text-xs font-black text-emerald-500 uppercase mb-2 flex items-center gap-2">
                                     <i class="fa-solid fa-flag"></i> Fluminense 🇧🇬
@@ -2426,8 +2428,6 @@
                                     <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.flu.ver || '00'}</p>
                                 </div>
                             </div>
-
-                            <!-- OBS -->
                             ${s.obs ? `
                                 <div class="bg-black/40 p-4 rounded-xl border border-stone-800 text-[11px] leading-relaxed">
                                     <p class="text-amber-500 font-bold uppercase text-[9px] mb-1 tracking-widest">Observações:</p>
@@ -2439,6 +2439,15 @@
                 `;
             });
             container.innerHTML = html || '<div class="text-center py-20 text-stone-600 italic">Nenhuma súmula registrada.</div>';
+        };
+        
+        window.toggleSumulaDetalhes = function(id) {
+            const detalhes = document.getElementById(id);
+            const icone = document.getElementById(id.replace('sumula-detalhes-', 'sumula-icone-'));
+            if (detalhes) {
+                detalhes.classList.toggle('hidden');
+                if (icone) icone.style.transform = detalhes.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            }
         };
         
         window.excluirGasto = function(id) { 
