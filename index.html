@@ -223,7 +223,7 @@
     </script>
 
 </head>
-<body class="bg-stone-900 text-gray-100 font-sans pb-48 soccer-bg">
+<body class="bg-stone-900 text-gray-100 font-sans pb-32 soccer-bg">
     <!-- BOTÕES DE TEMA -->
     <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
         <button onclick="window.setAppTheme('botafogo')" class="w-8 h-8 rounded-full bg-black border border-white/40 flex items-center justify-center text-[10px] font-bold text-white shadow-lg active:scale-95 transition-transform" title="Tema Botafogo">B</button>
@@ -241,30 +241,32 @@
     </div>
 
     <!-- TOPBAR -->
-    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white px-4 py-3 shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <button onclick="window.toggleMenu()" class="mr-3 text-emerald-400 hover:text-emerald-300 transition-all p-1">
-                <i class="fa-solid fa-bars-staggered text-xl"></i>
-            </button>
-
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
-                <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span> <span id="theme-team-name" class="ml-2 text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></span>
-                <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
-            </div>
-            <div class="flex items-center gap-2">
+    <nav id="main-topbar" class="bg-black/90 backdrop-blur-md text-white shadow-lg border-b border-emerald-600/50 sticky top-0 z-50">
+        <div class="px-4 py-2">
+            <div class="flex justify-between items-center">
                 <button onclick="switchTab('notificacoes-ver')" class="relative p-2 text-stone-400 hover:text-emerald-400 transition" id="notif-bell-btn">
                     <i class="fa-solid fa-bell text-lg"></i>
                     <span id="notif-badge" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-black hidden">0</span>
                 </button>
-                <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
-                <i class="fa-solid fa-user-gear"></i> ADMIN 
-                <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
+                <button onclick="window.toggleMenu()" class="text-emerald-400 hover:text-emerald-300 transition-all">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
+                        <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
+                        <span id="theme-team-name" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></span>
+                    </div>
+                </button>
+                <div class="flex items-center gap-2">
+                    <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
+                        <i class="fa-solid fa-user-gear"></i> ADMIN 
+                        <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
+                    </div>
+                    <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
+                        <span class="hidden sm:inline">Online</span>
+                    </div>
+                </div>
             </div>
-            <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
-                <span class="hidden sm:inline">Online</span>
-            </div>
+            <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-0.5">PAINEL GERAL</div>
         </div>
     </nav>
 
@@ -942,8 +944,33 @@
         </div>
     </div>
 
-    <!-- RODAPÉ FIXO - ANÚNCIOS -->
-    <div class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-md border-t border-stone-800 shadow-2xl z-50">
+    <!-- RODAPÉ FIXO - NAVEGAÇÃO + ANÚNCIOS -->
+    <div class="fixed bottom-0 left-0 right-0 z-50">
+        <!-- Nav minimalista: só ícones -->
+        <div class="flex items-center justify-around bg-black/95 backdrop-blur-md border-t border-stone-800 px-1 py-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-12 text-emerald-400 font-black transition">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+            </button>
+            <button onclick="switchTab('jogadores')" id="nav-jogadores" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-shirt text-lg"></i>
+            </button>
+            <button onclick="switchTab('financeiro-ver')" id="nav-financeiro" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-receipt text-lg"></i>
+            </button>
+            <button onclick="switchTab('regras-ver')" id="nav-regras" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-book text-lg"></i>
+            </button>
+            <button onclick="switchTab('historico-sumulas')" id="nav-historico" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-file-contract text-lg"></i>
+            </button>
+            <button onclick="switchTab('alertas-ver')" id="nav-alertas" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </button>
+            <button onclick="openAdminModal()" id="nav-admin" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+                <i class="fa-solid fa-user-gear text-lg"></i>
+            </button>
+        </div>
+        <!-- Anúncios -->
         <div class="bg-stone-950 px-2 py-1.5 flex items-center gap-1.5 text-[10px]">
             <a href="https://15A.com/?pid=1744505426" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-600 hover:scale-105 active:scale-95 text-stone-950 px-1.5 py-1.5 rounded-lg font-black uppercase tracking-wider transition-all duration-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] hover:shadow-[0_0_20px_rgba(251,191,36,0.6)] truncate border border-yellow-400/20">
                 <i class="fa-solid fa-bolt text-yellow-900 text-[10px] animate-pulse"></i>
@@ -2507,17 +2534,29 @@
                 window.renderizarNotificacoes();
             }
 
-            const topbar = document.getElementById('main-topbar');
-            // Topbar agora é sempre visível
-            
+            // Atualiza nome da página no topo
+            const nomes = {
+                'dashboard': 'Painel Geral',
+                'jogadores': 'Escalação / Times',
+                'financeiro-ver': 'Balanço Financeiro',
+                'regras-ver': 'Estatuto / Regras',
+                'historico-sumulas': 'Histórico de Súmulas',
+                'alertas-ver': 'Súmula e Alertas',
+                'notificacoes-ver': 'Notificações',
+                'admin-panel': 'Administração'
+            };
+            const pageTitle = document.getElementById('page-title-bar');
+            if (pageTitle) pageTitle.textContent = (nomes[tabId] || tabId).toUpperCase();
+
+            // Atualiza nav ativa no rodapé
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
-                b.className = "flex flex-col items-center justify-center w-14 hover:text-stone-200 transition text-stone-500";
+                b.className = "flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500";
             });
             const activeNav = document.getElementById('nav-' + tabId);
-            if(activeNav) activeNav.className = "flex flex-col items-center justify-center w-14 text-emerald-400 font-black transition";
+            if(activeNav) activeNav.className = "flex flex-col items-center justify-center w-12 text-emerald-400 font-black transition";
             else if (tabId === 'admin-panel') {
                 const adminNav = document.getElementById('nav-admin');
-                if(adminNav) adminNav.className = "flex flex-col items-center justify-center w-14 text-amber-500 font-black transition";
+                if(adminNav) adminNav.className = "flex flex-col items-center justify-center w-12 text-amber-500 font-black transition";
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
