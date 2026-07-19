@@ -229,7 +229,12 @@
                 <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span> <span id="theme-team-name" class="ml-2 text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></span>
                 <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider hidden sm:inline">| Temporada 2026</span>
             </div>
-            <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
+            <div class="flex items-center gap-2">
+                <button onclick="switchTab('notificacoes-ver')" class="relative p-2 text-stone-400 hover:text-emerald-400 transition" id="notif-bell-btn">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span id="notif-badge" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-black hidden">0</span>
+                </button>
+                <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
                 <i class="fa-solid fa-user-gear"></i> ADMIN 
                 <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
             </div>
@@ -564,6 +569,23 @@
                     </select>
                 </div>
                 <ol id="dash-artilharia" class="divide-y divide-stone-800/40 text-sm font-medium text-stone-300"></ol>
+            </div>
+        </div>
+
+        <!-- 🔔 CENTRAL DE NOTIFICAÇÕES (público) -->
+        <div id="notificacoes-ver" class="tab-content hidden space-y-6 pt-4">
+            <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-stone-800 pb-2">
+                    <h4 class="font-black text-emerald-400 text-xs uppercase tracking-wider">
+                        <i class="fa-solid fa-bell mr-1"></i> Central de Notificações
+                    </h4>
+                    <button onclick="window.marcarTodasLidas()" class="text-[9px] text-stone-500 hover:text-emerald-400 uppercase font-bold transition" id="btn-marcar-lidas">
+                        <i class="fa-solid fa-check-double mr-1"></i>Marcar todas como lidas
+                    </button>
+                </div>
+                <div id="notificacoes-lista" class="space-y-2 max-h-[70vh] overflow-y-auto">
+                    <div class="text-center text-stone-600 text-xs italic py-8">Nenhuma notificação.</div>
+                </div>
             </div>
         </div>
 
@@ -2434,7 +2456,11 @@
             }
             window.isBackNavigation = false;
 
-            
+            // Renderiza notificações ao abrir a aba
+            if (tabId === 'notificacoes-ver') {
+                window.renderizarNotificacoes();
+            }
+
             const topbar = document.getElementById('main-topbar');
             // Topbar agora é sempre visível
             
@@ -2842,6 +2868,9 @@
                     <i class="fa-solid fa-soccer-ball text-lg w-6"></i> Gols e Artilharia
                 </button>
                 
+                <button onclick="switchTab('notificacoes-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
+                    <i class="fa-solid fa-bell text-lg w-6"></i> Notificações <span id="notif-sidebar-count" class="hidden bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full ml-1">0</span>
+                </button>
                 <button onclick="switchTab('busca-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-search text-lg w-6"></i> Buscar Atleta
                 </button>
@@ -2927,6 +2956,232 @@
             });
 
             // =====================================================
+        // 🔔 SISTEMA DE NOTIFICAÇÕES DO APP
+        // =====================================================
+        
+        window.notificacoesCache = [];
+        
+        // Carrega notificações do localStorage
+        window.carregarNotificacoes = function() {
+            try {
+                const data = localStorage.getItem('baba_notificacoes');
+                window.notificacoesCache = data ? JSON.parse(data) : [];
+            } catch(e) {
+                window.notificacoesCache = [];
+            }
+        };
+        
+        // Salva notificações no localStorage
+        window.salvarNotificacoes = function() {
+            localStorage.setItem('baba_notificacoes', JSON.stringify(window.notificacoesCache));
+        };
+        
+        // Adiciona uma notificação
+        window.adicionarNotificacao = function(titulo, mensagem, tipo, link) {
+            window.carregarNotificacoes();
+            window.notificacoesCache.unshift({
+                id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                titulo: titulo,
+                mensagem: mensagem,
+                tipo: tipo || 'info', // 'info', 'cobranca', 'multa', 'alerta', 'jogo'
+                lida: false,
+                data: new Date().toISOString(),
+                link: link || ''
+            });
+            // Mantém no máximo 50 notificações
+            if (window.notificacoesCache.length > 50) {
+                window.notificacoesCache = window.notificacoesCache.slice(0, 50);
+            }
+            window.salvarNotificacoes();
+            window.atualizarBadgeNotificacoes();
+            window.renderizarNotificacoes();
+            // Tenta notificação push nativa
+            window.tentarNotificacaoPush(titulo, mensagem);
+        };
+        
+        // Notificação push nativa via Service Worker
+        window.tentarNotificacaoPush = function(titulo, mensagem) {
+            if (Notification.permission === 'granted' && navigator.serviceWorker?.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SHOW_NOTIFICATION',
+                    title: titulo,
+                    body: mensagem,
+                    tag: 'baba-notif-' + Date.now(),
+                    url: '/Baba-veteranos/'
+                });
+            }
+        };
+        
+        // Atualiza o badge do sino
+        window.atualizarBadgeNotificacoes = function() {
+            window.carregarNotificacoes();
+            const naoLidas = window.notificacoesCache.filter(n => !n.lida).length;
+            const badge = document.getElementById('notif-badge');
+            const sidebarCount = document.getElementById('notif-sidebar-count');
+            
+            if (naoLidas > 0) {
+                if (badge) { badge.textContent = naoLidas > 99 ? '99+' : naoLidas; badge.classList.remove('hidden'); }
+                if (sidebarCount) { sidebarCount.textContent = naoLidas > 99 ? '99+' : naoLidas; sidebarCount.classList.remove('hidden'); }
+            } else {
+                if (badge) badge.classList.add('hidden');
+                if (sidebarCount) sidebarCount.classList.add('hidden');
+            }
+        };
+        
+        // Renderiza a lista de notificações na tela
+        window.renderizarNotificacoes = function() {
+            window.carregarNotificacoes();
+            const lista = document.getElementById('notificacoes-lista');
+            if (!lista) return;
+            
+            if (window.notificacoesCache.length === 0) {
+                lista.innerHTML = '<div class="text-center text-stone-600 text-xs italic py-8">Nenhuma notificação. 🎉</div>';
+                return;
+            }
+            
+            const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            
+            lista.innerHTML = window.notificacoesCache.map(n => {
+                const data = new Date(n.data);
+                const dataStr = `${data.getDate()} ${meses[data.getMonth()]} ${data.getHours().toString().padStart(2,'0')}:${data.getMinutes().toString().padStart(2,'0')}`;
+                
+                let corBorda = 'border-stone-700';
+                let icone = 'fa-circle-info';
+                let corIcone = 'text-emerald-400';
+                
+                if (n.tipo === 'cobranca') { corBorda = 'border-red-800'; icone = 'fa-circle-exclamation'; corIcone = 'text-red-400'; }
+                else if (n.tipo === 'multa') { corBorda = 'border-orange-800'; icone = 'fa-gavel'; corIcone = 'text-orange-400'; }
+                else if (n.tipo === 'alerta') { corBorda = 'border-yellow-800'; icone = 'fa-triangle-exclamation'; corIcone = 'text-yellow-400'; }
+                else if (n.tipo === 'jogo') { corBorda = 'border-emerald-800'; icone = 'fa-futbol'; corIcone = 'text-emerald-400'; }
+                
+                return `<div class="bg-stone-800/50 border-l-4 ${corBorda} rounded-lg p-3 ${n.lida ? 'opacity-60' : ''} transition">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid ${icone} ${corIcone} text-xs mt-0.5"></i>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-black text-stone-200 uppercase truncate">${n.titulo}</span>
+                                <span class="text-[8px] text-stone-600 whitespace-nowrap">${dataStr}</span>
+                            </div>
+                            <p class="text-[10px] text-stone-400 mt-1">${n.mensagem}</p>
+                        </div>
+                        ${!n.lida ? `<button onclick="window.marcarNotificacaoLida('${n.id}')" class="text-stone-600 hover:text-emerald-400 text-[9px] p-1" title="Marcar como lida"><i class="fa-solid fa-check"></i></button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        };
+        
+        // Marca uma notificação como lida
+        window.marcarNotificacaoLida = function(id) {
+            window.carregarNotificacoes();
+            const n = window.notificacoesCache.find(x => x.id === id);
+            if (n) { n.lida = true; window.salvarNotificacoes(); window.atualizarBadgeNotificacoes(); window.renderizarNotificacoes(); }
+        };
+        
+        // Marca todas como lidas
+        window.marcarTodasLidas = function() {
+            window.carregarNotificacoes();
+            window.notificacoesCache.forEach(n => n.lida = true);
+            window.salvarNotificacoes();
+            window.atualizarBadgeNotificacoes();
+            window.renderizarNotificacoes();
+            window.mostrarToast('Todas notificações marcadas como lidas!');
+        };
+        
+        // Gera notificações automáticas baseadas nos dados atuais
+        window.gerarNotificacoesAutomaticas = function() {
+            window.carregarNotificacoes();
+            const mesAtual = window.getMesAtual();
+            const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
+            
+            // Verifica inadimplentes
+            const inadimplentes = window.atletasCache.filter(a => {
+                const pag = a.pagamentos && a.pagamentos[mesAtual];
+                return !pag || !pag.pago;
+            });
+            
+            if (inadimplentes.length > 0) {
+                const jaTemNotif = window.notificacoesCache.some(n => 
+                    n.tipo === 'cobranca' && n.data.includes(new Date().toISOString().split('T')[0])
+                );
+                if (!jaTemNotif) {
+                    const nomes = inadimplentes.slice(0, 3).map(a => a.nome).join(', ');
+                    const resto = inadimplentes.length > 3 ? ` e mais ${inadimplentes.length - 3}` : '';
+                    window.adicionarNotificacao(
+                        `${inadimplentes.length} atleta(s) inadimplente(s)`,
+                        `${nomes}${resto} — Mensalidade de ${mesNome} pendente.`,
+                        'cobranca'
+                    );
+                }
+            }
+            
+            // Verifica multas ativas
+            const comMultas = window.atletasCache.filter(a => {
+                if (!a.pagamentos) return false;
+                let temMulta = false;
+                Object.values(a.pagamentos).forEach(d => {
+                    if (d.multas) d.multas.forEach(ml => { if (!ml.paga) temMulta = true; });
+                });
+                return temMulta;
+            });
+            
+            if (comMultas.length > 0) {
+                const jaTemNotif = window.notificacoesCache.some(n => 
+                    n.tipo === 'multa' && n.data.includes(new Date().toISOString().split('T')[0])
+                );
+                if (!jaTemNotif) {
+                    window.adicionarNotificacao(
+                        `${comMultas.length} atleta(s) com multa(s) ativa(s)`,
+                        `${comMultas.map(a => a.nome).join(', ')} — Regularize as multas pendentes.`,
+                        'multa'
+                    );
+                }
+            }
+            
+            // Verifica atletas pendurados (3 amarelos ou 1 vermelho)
+            const pendurados = window.atletasCache.filter(a => 
+                (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1
+            );
+            
+            pendurados.forEach(a => {
+                const msg = a.vermelho >= 1 
+                    ? `${a.nome} está com cartão VERMELHO e não pode jogar a próxima partida!`
+                    : `${a.nome} está com ${a.amarelos} cartões amarelos — cuidado com suspensão!`;
+                window.adicionarNotificacao('⚠️ Alerta de Cartões', msg, 'alerta');
+            });
+            
+            // Notifica se o placar da última rodada não foi registrado
+            if (!window.historicoPlacares || window.historicoPlacares.length === 0) {
+                window.adicionarNotificacao(
+                    '📋 Nenhum placar registrado',
+                    'Ainda não há histórico de partidas. Registre o primeiro placar!',
+                    'info'
+                );
+            }
+        };
+        
+        // Registra o Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/Baba-veteranos/sw.js')
+                .then(() => {
+                    // Pede permissão pra notificação push
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+                })
+                .catch(() => {});
+        }
+        
+        // Inicializa notificações ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.carregarNotificacoes();
+                window.atualizarBadgeNotificacoes();
+                window.renderizarNotificacoes();
+                window.gerarNotificacoesAutomaticas();
+            }, 2000); // Espera dados carregarem
+        });
+
+        // =====================================================
         // NOTIFICAÇÕES VIA ZAPIA
         // =====================================================
         
@@ -3038,10 +3293,22 @@
             if (window.dbRef) {
                 const ref = window.dbRef.child('notificacoes_pendentes/' + disparoId);
                 ref.set(dadosDisparo);
-                window.mostrarToast("✅ Disparo enviado com sucesso!");
-            } else {
-                window.mostrarToast("Erro: Firebase não conectado.", true);
             }
+            
+            // Gera notificações no app para cada alvo
+            let tituloNotif = '';
+            if (tipo === 'pendentes') tituloNotif = '📢 Cobrança de Mensalidade';
+            else if (tipo === 'multas') tituloNotif = '💰 Cobrança de Multas';
+            else if (tipo === 'suspensos') tituloNotif = '⚠️ Aviso de Suspensão';
+            else tituloNotif = '📣 Comunicado Geral';
+            
+            window.adicionarNotificacao(
+                tituloNotif,
+                `${alvos.length} atleta(s) notificado(s) — ${tipo === 'pendentes' ? 'inadimplentes' : tipo === 'multas' ? 'multados' : tipo === 'suspensos' ? 'suspensos' : 'comunicado geral'}.`,
+                'info'
+            );
+            
+            window.mostrarToast("✅ Disparo registrado! Me chame aqui: 'Zapia, disparar notificações!'");
             
             document.getElementById('notificacao-preview').classList.add('hidden');
             window._disparoPendente = null;
