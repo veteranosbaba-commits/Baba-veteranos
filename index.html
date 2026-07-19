@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>BABA VETERANOS - Flu vs Bota</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
+        <title>BABA VETERANOS - Flu vs Bota</title>
     
     <!-- Firebase SDKs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1123,6 +1126,7 @@
                 
                 document.getElementById('loading-overlay')?.classList.add('hidden');
                 window.renderizarTudo();
+                window.calcularResumoNotif();
             }, (error) => {
                 console.error('Erro no real-time:', error);
                 document.getElementById('loading-overlay')?.classList.add('hidden');
