@@ -2871,6 +2871,7 @@
             if (subTabId === 'adm-arquivos') window.renderArquivados();
             if (subTabId === 'adm-notificacoes') window.calcularResumoNotif();
             if (subTabId === 'adm-atletas') renderAdminAtletas();
+            if (subTabId === 'adm-sumulas') window.renderSumulasAdmin();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
