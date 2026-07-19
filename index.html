@@ -1983,14 +1983,7 @@
 
                 t.atletas.forEach(a => {
                     let multasAtivas = '';
-                    let extraInfo = '';
                     
-                    const mesAtual = window.getMesAtual();
-                    const extraValor = a.pagamentos?.[mesAtual]?.extra || 0;
-                    if (extraValor > 0) {
-                        extraInfo = `<span class="bg-emerald-900/40 text-emerald-400 px-1 rounded">Extra: R$${extraValor}</span>`;
-                    }
-
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
                             a.pagamentos[m].multas?.forEach((multa, idx) => {
@@ -2006,7 +1999,7 @@
                     linhasHtml += `
                         <div class="py-1.5 px-2 border-b border-stone-800/30">
                             <div class="flex items-center gap-1 text-[10px]">
-                                <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}">${a.nome}</span>
+                                <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</span>
                                 <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
                                     <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-4 h-4 bg-stone-700 text-red-400 rounded flex items-center justify-center text-[8px]">-</button>
                                     <span class="w-3 text-center font-black text-white">${a.gols || 0}</span>
@@ -2029,9 +2022,8 @@
                                     <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
                                 </div>
                             </div>
-                            ${(multasAtivas || extraInfo) ? `
+                            ${multasAtivas ? `
                             <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
-                                ${extraInfo}
                                 ${multasAtivas}
                             </div>` : ''}
                         </div>`;
@@ -2372,7 +2364,7 @@
             window.atletasCache.forEach(a => {
                 const dados = a.pagamentos?.[mes] || { pago: false, extra: 0 };
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
-                    <td class="p-1.5 font-bold text-left">${a.nome}</td>
+                    <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
                     <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
                     <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${dados.extra || 0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
                     <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-floppy-disk"></i></button></td>
