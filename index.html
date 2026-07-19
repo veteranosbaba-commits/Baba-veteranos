@@ -716,7 +716,7 @@
                 <datalist id="lista-atletas-sugestao"></datalist>
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-4 flex items-center gap-2">
+                    <h4 id="titulo-form-sumula" class="font-bold text-amber-500 text-xs uppercase mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula
                     </h4>
                     <form onsubmit="window.salvarNovaSumula(event)" class="space-y-4">
@@ -2222,7 +2222,7 @@
             if (!data) { alert('Data é obrigatória!'); return; }
 
             const novaSumula = {
-                id: 'sum_' + Date.now(),
+                id: window.editandoSumulaId || 'sum_' + Date.now(),
                 data,
                 placarBota: pb,
                 placarFlu: pf,
@@ -2231,11 +2231,43 @@
                 obs
             };
 
-            window.sumulasCache.unshift(novaSumula);
+            if (window.editandoSumulaId) {
+                const indice = window.sumulasCache.findIndex(s => s.id === window.editandoSumulaId);
+                if (indice !== -1) window.sumulasCache[indice] = novaSumula;
+                window.editandoSumulaId = null;
+                document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula';
+                e.target.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Publicar Súmula';
+                window.mostrarToast("Súmula atualizada!");
+            } else {
+                window.sumulasCache.unshift(novaSumula);
+                window.mostrarToast("Súmula publicada!");
+            }
             window.salvarNoStorage();
             e.target.reset();
             window.renderSumulasAdmin();
-            window.mostrarToast("Súmula publicada!");
+        };
+
+        window.editarSumula = function(id) {
+            const s = window.sumulasCache.find(s => s.id === id);
+            if (!s) return;
+
+            document.getElementById('sum-data').value = s.data;
+            document.getElementById('sum-placar-bota').value = s.placarBota || '';
+            document.getElementById('sum-placar-flu').value = s.placarFlu || '';
+            document.getElementById('sum-bota-gols').value = s.bota?.gols || '';
+            document.getElementById('sum-bota-amarelos').value = s.bota?.am || '';
+            document.getElementById('sum-bota-vermelhos').value = s.bota?.ver || '';
+            document.getElementById('sum-flu-gols').value = s.flu?.gols || '';
+            document.getElementById('sum-flu-amarelos').value = s.flu?.am || '';
+            document.getElementById('sum-flu-vermelhos').value = s.flu?.ver || '';
+            document.getElementById('sum-obs').value = s.obs || '';
+
+            window.editandoSumulaId = id;
+            document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen"></i> Editando Súmula';
+            document.querySelector('#adm-sumulas form button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar Súmula';
+
+            window.scrollTo(0, 0);
+            window.mostrarToast("Súmula carregada pra edição!");
         };
 
         window.excluirSumula = function(id) {
@@ -2280,7 +2312,8 @@
                                     <span class="text-stone-600">x</span>
                                     <strong class="text-emerald-400">${s.placarFlu || 0}</strong> <span class="text-emerald-400">FLU</span>
                                 </span>
-                                <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 hover:text-red-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded"><i class="fa-solid fa-trash"></i></button>
+                                <button onclick="window.editarSumula('${s.id}')" class="text-amber-400 hover:text-amber-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded" title="Editar súmula"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 hover:text-red-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded" title="Excluir súmula"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                         <div class="divide-y divide-stone-800/60">
