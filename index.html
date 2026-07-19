@@ -1006,6 +1006,10 @@
             syncEmAndamento = true;
             document.getElementById('loading-overlay')?.classList.remove('hidden');
             
+            // Salvar estado dos acordeões antes de renderizar
+            const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
+            const abertoFlu = !document.getElementById('scouts-list-FLUMINENSE')?.classList.contains('hidden');
+
             const dadosParaSalvar = {
                 atletas: window.atletasCache,
                 gastos: window.gastosCache,
@@ -1022,6 +1026,17 @@
                 .then(() => {
                     console.log('Dados salvos');
                     window.renderizarTudo();
+                    
+                    // Restaurar estado dos acordeões
+                    if (abertoBota) {
+                        document.getElementById('scouts-list-BOTAFOGO')?.classList.remove('hidden');
+                        document.querySelector('[onclick*="BOTAFOGO"] .chevron')?.classList.add('rotate-90');
+                    }
+                    if (abertoFlu) {
+                        document.getElementById('scouts-list-FLUMINENSE')?.classList.remove('hidden');
+                        document.querySelector('[onclick*="FLUMINENSE"] .chevron')?.classList.add('rotate-90');
+                    }
+
                     syncEmAndamento = false;
                     document.getElementById('loading-overlay')?.classList.add('hidden');
                 })
@@ -1835,9 +1850,9 @@
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             const novo = (a[campo] || 0) + valor;
-            if (campo === 'amarelos' && (novo < 0 || novo > 3)) return;
-            if (campo === 'vermelho' && (novo < 0 || novo > 1)) return;
-            if (campo === 'gols' && novo < 0) return;
+            if (novo < 0) return; // Não permite negativo para nada
+            if (campo === 'amarelos' && novo > 3) return;
+            if (campo === 'vermelho' && novo > 1) return;
             a[campo] = novo;
             window.salvarNoStorage();
         };
@@ -1968,6 +1983,14 @@
 
                 t.atletas.forEach(a => {
                     let multasAtivas = '';
+                    let extraInfo = '';
+                    
+                    const mesAtual = window.getMesAtual();
+                    const extraValor = a.pagamentos?.[mesAtual]?.extra || 0;
+                    if (extraValor > 0) {
+                        extraInfo = `<span class="bg-emerald-900/40 text-emerald-400 px-1 rounded">Extra: R$${extraValor}</span>`;
+                    }
+
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
                             a.pagamentos[m].multas?.forEach((multa, idx) => {
@@ -1981,42 +2004,48 @@
                     }
 
                     linhasHtml += `
-                        <div class="flex items-center gap-1 py-1.5 px-1 border-b border-stone-800/30 text-[10px]">
-                            <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}">${a.nome}</span>
-                            <span class="flex items-center gap-0.5 shrink-0">
-                                <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-4 h-4 bg-stone-800 text-red-400 rounded flex items-center justify-center text-[8px]">-</button>
-                                <span class="w-4 text-center font-black text-white">${a.gols || 0}</span>
-                                <button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-4 h-4 bg-stone-800 text-emerald-400 rounded flex items-center justify-center text-[8px]">+</button>
-                            </span>
-                            <span class="flex items-center gap-0.5 shrink-0">
-                                <button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-4 h-4 bg-stone-800 rounded flex items-center justify-center text-[8px]">-</button>
-                                <span class="w-4 text-center font-black text-amber-500">${a.amarelos || 0}</span>
-                                <button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-4 h-4 bg-stone-800 text-amber-500 rounded flex items-center justify-center text-[8px]">+</button>
-                            </span>
-                            <span class="flex items-center gap-0.5 shrink-0">
-                                <button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-4 h-4 bg-stone-800 rounded flex items-center justify-center text-[8px]">-</button>
-                                <span class="w-4 text-center font-black text-red-500">${a.vermelho || 0}</span>
-                                <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-4 h-4 bg-stone-800 text-red-500 rounded flex items-center justify-center text-[8px]">+</button>
-                            </span>
-                            <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-1.5 py-0.5 rounded text-[8px] uppercase font-black shrink-0" title="Arquivar cartões">📦</button>
-                            <div class="flex items-center gap-0.5 shrink-0 ml-auto">
-                                <input type="text" id="motivo-${a.id}" placeholder="motivo" class="w-12 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
-                                <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
-                                <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1.5 py-0.5 rounded text-[8px] font-black">OK</button>
+                        <div class="py-1.5 px-2 border-b border-stone-800/30">
+                            <div class="flex items-center gap-1 text-[10px]">
+                                <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}">${a.nome}</span>
+                                <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
+                                    <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-4 h-4 bg-stone-700 text-red-400 rounded flex items-center justify-center text-[8px]">-</button>
+                                    <span class="w-3 text-center font-black text-white">${a.gols || 0}</span>
+                                    <button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-4 h-4 bg-stone-700 text-emerald-400 rounded flex items-center justify-center text-[8px]">+</button>
+                                </span>
+                                <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
+                                    <button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-4 h-4 bg-stone-700 rounded flex items-center justify-center text-[8px]">-</button>
+                                    <span class="w-3 text-center font-black text-amber-500">${a.amarelos || 0}</span>
+                                    <button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-4 h-4 bg-stone-700 text-amber-500 rounded flex items-center justify-center text-[8px]">+</button>
+                                </span>
+                                <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
+                                    <button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-4 h-4 bg-stone-700 rounded flex items-center justify-center text-[8px]">-</button>
+                                    <span class="w-3 text-center font-black text-red-500">${a.vermelho || 0}</span>
+                                    <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-4 h-4 bg-stone-700 text-red-500 rounded flex items-center justify-center text-[8px]">+</button>
+                                </span>
+                                <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-1.5 py-0.5 rounded text-[8px] uppercase font-black shrink-0" title="Arquivar cartões">📦</button>
+                                <div class="flex items-center gap-0.5 shrink-0 ml-auto">
+                                    <input type="text" id="motivo-${a.id}" placeholder="motivo" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
+                                </div>
                             </div>
-                        </div>
-                        ${multasAtivas ? `<div class="flex flex-wrap gap-0.5 px-2 pb-1">${multasAtivas}</div>` : ''}`;
+                            ${(multasAtivas || extraInfo) ? `
+                            <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
+                                ${extraInfo}
+                                ${multasAtivas}
+                            </div>` : ''}
+                        </div>`;
                 });
 
                 html += `
-                    <div class="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden shadow-lg">
+                    <div class="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden shadow-lg mb-2">
                         <button onclick="document.getElementById('scouts-list-${tKey}').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')" 
                                 class="w-full flex justify-between items-center px-3 py-2 hover:bg-stone-800/50 transition">
                             <h5 class="text-xs font-black ${t.cor} uppercase flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right chevron text-[8px] text-stone-600 transition-transform duration-200"></i>
                                 ${t.icon} ${t.nome}
                             </h5>
-                            <span class="bg-stone-800 text-stone-400 text-[9px] px-2 py-0.5 rounded-full border border-stone-700 font-bold">${t.atletas.length}</span>
+                            <span class="bg-stone-800 text-stone-400 text-[9px] px-2 py-0.5 rounded-full border border-stone-700 font-bold">${t.atletas.length} ATLETAS</span>
                         </button>
                         <div id="scouts-list-${tKey}" class="hidden border-t border-stone-800/50">
                             ${linhasHtml || '<div class="text-center text-[10px] text-stone-600 italic py-4">Nenhum atleta.</div>'}
