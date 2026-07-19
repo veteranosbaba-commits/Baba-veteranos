@@ -1960,91 +1960,66 @@
             });
 
             let html = '';
-            ["BOTAFOGO", "FLUMINENSE"].forEach(tKey => {
+            const mois = ["BOTAFOGO", "FLUMINENSE"];
+
+            mois.forEach(tKey => {
                 const t = times[tKey];
-                let atletasHtml = '';
+                let linhasHtml = '';
 
                 t.atletas.forEach(a => {
-                    let multasHtml = '';
+                    let multasAtivas = '';
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
                             a.pagamentos[m].multas?.forEach((multa, idx) => {
-                                multasHtml += `
-                                    <div class="bg-black/40 p-1.5 rounded flex justify-between items-center text-[10px] border border-stone-800/40">
-                                        <span class="${multa.paga ? 'line-through text-emerald-500' : 'text-red-300'} font-medium">${multa.motivo} (R$ ${multa.valor.toFixed(2)})</span>
-                                        <div class="flex gap-2">
-                                            <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500 scale-90">
-                                            <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-600'} hover:text-amber-300 transition"><i class="fa-solid fa-box-archive"></i></button>
-                                        </div>
-                                    </div>`;
+                                multasAtivas += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] ${multa.paga ? 'line-through text-emerald-500 bg-emerald-900/20' : 'text-red-300 bg-red-900/20'}">
+                                    ${multa.motivo} R$${multa.valor.toFixed(0)}
+                                    <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500 scale-75">
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-500'}"><i class="fa-solid fa-box-archive"></i></button>
+                                </span>`;
                             });
                         });
                     }
 
-                    atletasHtml += `
-                        <div class="p-3 bg-stone-900/40 rounded-lg border border-stone-800/50 space-y-3">
-                            <div class="flex justify-between items-center border-b border-stone-800 pb-2">
-                                <span class="font-bold text-stone-200 text-xs">${a.nome}</span>
-                                <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-800 hover:bg-stone-700 text-stone-400 px-2 py-1 rounded text-[9px] uppercase font-black transition border border-stone-700">Arquivar Tudo</button>
+                    linhasHtml += `
+                        <div class="flex items-center gap-1 py-1.5 px-1 border-b border-stone-800/30 text-[10px]">
+                            <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}">${a.nome}</span>
+                            <span class="flex items-center gap-0.5 shrink-0">
+                                <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-4 h-4 bg-stone-800 text-red-400 rounded flex items-center justify-center text-[8px]">-</button>
+                                <span class="w-4 text-center font-black text-white">${a.gols || 0}</span>
+                                <button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-4 h-4 bg-stone-800 text-emerald-400 rounded flex items-center justify-center text-[8px]">+</button>
+                            </span>
+                            <span class="flex items-center gap-0.5 shrink-0">
+                                <button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-4 h-4 bg-stone-800 rounded flex items-center justify-center text-[8px]">-</button>
+                                <span class="w-4 text-center font-black text-amber-500">${a.amarelos || 0}</span>
+                                <button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-4 h-4 bg-stone-800 text-amber-500 rounded flex items-center justify-center text-[8px]">+</button>
+                            </span>
+                            <span class="flex items-center gap-0.5 shrink-0">
+                                <button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-4 h-4 bg-stone-800 rounded flex items-center justify-center text-[8px]">-</button>
+                                <span class="w-4 text-center font-black text-red-500">${a.vermelho || 0}</span>
+                                <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-4 h-4 bg-stone-800 text-red-500 rounded flex items-center justify-center text-[8px]">+</button>
+                            </span>
+                            <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-1.5 py-0.5 rounded text-[8px] uppercase font-black shrink-0" title="Arquivar cartões">📦</button>
+                            <div class="flex items-center gap-0.5 shrink-0 ml-auto">
+                                <input type="text" id="motivo-${a.id}" placeholder="motivo" class="w-12 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1.5 py-0.5 rounded text-[8px] font-black">OK</button>
                             </div>
-                            
-                            <div class="grid grid-cols-3 gap-2">
-                                <div class="flex flex-col items-center bg-black/20 p-1.5 rounded border border-stone-800/30">
-                                    <span class="text-[9px] text-stone-500 uppercase font-black mb-1">Gols</span>
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-6 h-6 bg-stone-800 text-red-400 rounded-full flex items-center justify-center border border-stone-700">-</button>
-                                        <span class="text-xs font-black text-white">${a.gols || 0}</span>
-                                        <button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-6 h-6 bg-stone-800 text-emerald-400 rounded-full flex items-center justify-center border border-stone-700">+</button>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col items-center bg-black/20 p-1.5 rounded border border-stone-800/30">
-                                    <span class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨</span>
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-6 h-6 bg-stone-800 text-stone-400 rounded-full flex items-center justify-center border border-stone-700">-</button>
-                                        <span class="text-xs font-black text-amber-500">${a.amarelos || 0}</span>
-                                        <button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-6 h-6 bg-stone-800 text-amber-500 rounded-full flex items-center justify-center border border-stone-700">+</button>
-                                    </div>
-                                </div>
-                                <div class="flex flex-col items-center bg-black/20 p-1.5 rounded border border-stone-800/30">
-                                    <span class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥</span>
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-6 h-6 bg-stone-800 text-stone-400 rounded-full flex items-center justify-center border border-stone-700">-</button>
-                                        <span class="text-xs font-black text-red-500">${a.vermelho || 0}</span>
-                                        <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-6 h-6 bg-stone-800 text-red-500 rounded-full flex items-center justify-center border border-stone-700">+</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-black/20 p-2 rounded border border-stone-800/30">
-                                <p class="text-[9px] text-stone-500 uppercase font-black mb-2">Lançar Multa</p>
-                                <div class="flex gap-2">
-                                    <input type="text" id="motivo-${a.id}" placeholder="Motivo" class="flex-1 bg-stone-800 border border-stone-700 p-1.5 rounded text-[10px] text-white outline-none">
-                                    <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-16 bg-stone-800 border border-stone-700 p-1.5 rounded text-[10px] text-white outline-none">
-                                    <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-3 rounded text-[10px] font-black transition">OK</button>
-                                </div>
-                            </div>
-
-                            <div class="space-y-1">
-                                <p class="text-[9px] text-stone-500 uppercase font-black">Multas Ativas</p>
-                                <div class="space-y-1">
-                                    ${multasHtml || '<p class="text-[10px] text-stone-600 italic">Nenhuma multa ativa.</p>'}
-                                </div>
-                            </div>
-                        </div>`;
+                        </div>
+                        ${multasAtivas ? `<div class="flex flex-wrap gap-0.5 px-2 pb-1">${multasAtivas}</div>` : ''}`;
                 });
 
                 html += `
                     <div class="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden shadow-lg">
                         <button onclick="document.getElementById('scouts-list-${tKey}').classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-90')" 
-                                class="w-full flex justify-between items-center p-4 hover:bg-stone-800/50 transition">
-                            <h5 class="text-sm font-black ${t.cor} uppercase flex items-center gap-2">
-                                <i class="fa-solid fa-chevron-right chevron text-[10px] text-stone-600 transition-transform duration-200"></i>
+                                class="w-full flex justify-between items-center px-3 py-2 hover:bg-stone-800/50 transition">
+                            <h5 class="text-xs font-black ${t.cor} uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-chevron-right chevron text-[8px] text-stone-600 transition-transform duration-200"></i>
                                 ${t.icon} ${t.nome}
                             </h5>
-                            <span class="bg-stone-800 text-stone-400 text-[10px] px-2 py-0.5 rounded-full border border-stone-700 font-bold">${t.atletas.length} Atletas</span>
+                            <span class="bg-stone-800 text-stone-400 text-[9px] px-2 py-0.5 rounded-full border border-stone-700 font-bold">${t.atletas.length}</span>
                         </button>
-                        <div id="scouts-list-${tKey}" class="hidden p-3 space-y-4 border-t border-stone-800/50 bg-black/10">
-                            ${atletasHtml || '<p class="text-xs text-stone-600 italic text-center py-4">Nenhum atleta vinculado.</p>'}
+                        <div id="scouts-list-${tKey}" class="hidden border-t border-stone-800/50">
+                            ${linhasHtml || '<div class="text-center text-[10px] text-stone-600 italic py-4">Nenhum atleta.</div>'}
                         </div>
                     </div>`;
             });
@@ -2087,15 +2062,31 @@
         
         function renderAdminSocios() {
             let html = '';
+            // Sócios
             window.sociosCache.forEach(s => {
                 html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(s.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
+            // Patrocínios
             window.patrociniosCache.forEach(p => {
                 html += `<tr><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(p.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+            // Aportes Extras dos atletas
+            window.atletasCache.forEach(a => {
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(m => {
+                        const extra = Number(a.pagamentos[m].extra || 0);
+                        if (extra > 0) {
+                            const mesNome = window.mesesNomes?.[m] || m;
+                            html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-teal-400">Aporte (${mesNome})</td>
+                                <td class="p-2 text-right text-emerald-400">R$ ${extra.toFixed(2)}</td>
+                                <td class="p-2 text-center text-stone-600">—</td></tr>`;
+                        }
+                    });
+                }
             });
             const tabela = document.getElementById('adm-receitas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita.</td></tr>';
