@@ -654,7 +654,7 @@
                     <form id="form-cadastro-atleta" onsubmit="window.cadastrarAtleta(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <input type="text" id="cad-nome" placeholder="Nome" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                         <input type="number" id="cad-camisa" placeholder="Nº" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                        <input type="tel" id="cad-whatsapp" placeholder="WhatsApp (ex: 71999998888)" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
                             <option value="">Clube...</option>
                             <option value="FLUMINENSE">Fluminense</option>
@@ -665,7 +665,7 @@
                 </div>
                 <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[300px]">
-                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">WhatsApp</th><th class="p-3 text-center">Ações</th></tr></thead>
+                        <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">Ações</th></tr></thead>
                         <tbody id="adm-atletas-tabela"></tbody>
                     </table>
                 </div>
@@ -1876,14 +1876,13 @@
             e.preventDefault(); 
             const nome = document.getElementById('cad-nome')?.value?.trim();
             const camisa = parseInt(document.getElementById('cad-camisa')?.value);
-            const whatsapp = document.getElementById('cad-whatsapp')?.value?.trim().replace(/\D/g, '') || '';
             const time = document.getElementById('cad-time')?.value;
             
             if (!nome || isNaN(camisa) || !time) { alert('Preencha todos os campos!'); return; }
             if (camisa < 0 || camisa > 99) { alert('Número da camisa deve ser entre 0 e 99!'); return; }
             
             window.atletasCache.push({ 
-                id: 'atleta_' + Date.now(), nome, camisa, whatsapp, time, gols: 0, amarelos: 0, vermelho: 0,
+                id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
                 histAmarelos: 0, histVermelhos: 0, pagamentos: {} 
             }); 
             
@@ -1903,51 +1902,15 @@
         function renderAdminAtletas() { 
             let html = ''; 
             window.atletasCache.forEach(a => { 
-                const wpp = a.whatsapp || '';
-                const wppMostrar = wpp ? wpp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '—';
                 html += `<tr class="border-b border-stone-800 text-xs">
                     <td class="p-2.5 font-bold">${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</td>
                     <td class="p-2.5 text-center font-mono">#${a.camisa}</td>
-                    <td class="p-2.5 text-center">
-                        <span class="text-emerald-400 text-[10px] font-mono" id="wpp-show-${a.id}">${wppMostrar}</span>
-                        <input type="tel" id="wpp-input-${a.id}" value="${wpp}" 
-                            class="hidden bg-stone-800 border border-stone-600 p-1 rounded text-[10px] text-white w-28 text-center outline-none" 
-                            placeholder="71999998888">
-                        <button id="wpp-btn-${a.id}" onclick="window.editarWhatsApp('${a.id}')" class="text-stone-500 hover:text-amber-400 ml-1"><i class="fa-solid fa-pen"></i></button>
-                    </td>
                     <td class="p-2.5 text-center"><button onclick="window.excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`; 
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="5" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
-        
-        window.editarWhatsApp = function(id) {
-            const input = document.getElementById(`wpp-input-${id}`);
-            const show = document.getElementById(`wpp-show-${id}`);
-            const btn = document.getElementById(`wpp-btn-${id}`);
-            if (!input || !show || !btn) return;
-            
-            if (input.classList.contains('hidden')) {
-                input.classList.remove('hidden');
-                show.classList.add('hidden');
-                btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i>';
-                input.focus();
-            } else {
-                const novoWpp = input.value.trim().replace(/\D/g, '');
-                const a = window.atletasCache.find(j => j.id === id);
-                if (a) {
-                    a.whatsapp = novoWpp;
-                    window.salvarNoStorage();
-                }
-                input.classList.add('hidden');
-                show.classList.remove('hidden');
-                const fmt = novoWpp ? novoWpp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '—';
-                show.textContent = fmt;
-                btn.innerHTML = '<i class="fa-solid fa-pen"></i>';
-                window.mostrarToast("WhatsApp atualizado!");
-            }
-        };
         
         window.alterarNumero = function(id, campo, valor) {
             const a = window.atletasCache.find(j => j.id === id);
@@ -2271,6 +2234,7 @@
             window.sumulasCache.unshift(novaSumula);
             window.salvarNoStorage();
             e.target.reset();
+            window.renderSumulasAdmin();
             window.mostrarToast("Súmula publicada!");
         };
 
@@ -2278,6 +2242,7 @@
             if(confirm("Deseja excluir esta súmula?")) {
                 window.sumulasCache = window.sumulasCache.filter(s => s.id !== id);
                 window.salvarNoStorage();
+                window.renderSumulasAdmin();
                 window.mostrarToast("Súmula removida!");
             }
         };
