@@ -816,6 +816,7 @@
                     
                     <div id="notificacao-preview" class="hidden mt-4 p-4 bg-stone-800/50 rounded-xl border border-stone-700">
                         <div class="font-bold text-white text-xs mb-2" id="notif-preview-titulo"></div>
+                        <textarea id="notif-custom-text" class="hidden w-full bg-stone-900 border border-stone-700 rounded-lg p-3 text-[11px] text-stone-200 mb-3 focus:ring-1 focus:ring-emerald-500 outline-none" rows="3" placeholder="Digite sua mensagem aqui..."></textarea>
                         <div class="text-[11px] text-stone-300 mb-3" id="notif-preview-corpo"></div>
                         <div class="flex gap-2">
                             <button id="notif-confirmar-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-black uppercase">✅ Confirmar Disparo</button>
@@ -3367,18 +3368,20 @@
             let alvos = [];
             let titulo = '';
             let corpo = '';
+            const customText = document.getElementById('notif-custom-text');
             
             if (tipo === 'pendentes') {
                 alvos = window.atletasCache.filter(a => {
                     const pag = a.pagamentos && a.pagamentos[mesAtual];
-                    return (!pag || !pag.pago) && a.whatsapp;
+                    return (!pag || !pag.pago);
                 });
                 titulo = `📬 Cobrança de Mensalidade - ${mesNome.toUpperCase()}`;
                 corpo = alvos.map(a => `• ${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})`).join('\n');
-                if (!corpo) corpo = 'Nenhum atleta pendente com WhatsApp cadastrado.';
+                if (!corpo) corpo = 'Nenhum atleta pendente.';
+                if (customText) customText.classList.add('hidden');
             } else if (tipo === 'multas') {
                 alvos = window.atletasCache.filter(a => {
-                    if (!a.pagamentos || !a.whatsapp) return false;
+                    if (!a.pagamentos) return false;
                     let tem = false;
                     Object.entries(a.pagamentos).forEach(([m, d]) => {
                         if (d.multas) d.multas.forEach(ml => { if (!ml.paga) tem = true; });
@@ -3386,31 +3389,35 @@
                     return tem;
                 });
                 titulo = `💰 Cobrança de Multas`;
-                const detalhes = alvos.map(a => {
+                const linhasMultas = alvos.map(a => {
                     let total = 0;
-                    Object.entries(a.pagamentos).forEach(([m, d]) => {
+                    Object.values(a.pagamentos).forEach(d => {
                         if (d.multas) d.multas.forEach(ml => { if (!ml.paga) total += Number(ml.valor); });
                     });
-                    return `• ${a.nome} - R$ ${total.toFixed(2)} em multas`;
+                    return `• ${a.nome} - R$ ${total.toFixed(2)}`;
                 });
-                corpo = detalhes.join('\n');
+                corpo = linhasMultas.join('\n');
                 if (!corpo) corpo = 'Nenhum atleta com multas pendentes.';
+                if (customText) customText.classList.add('hidden');
             } else if (tipo === 'suspensos') {
-                alvos = window.atletasCache.filter(a => {
-                    return ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) && a.whatsapp;
-                });
-                titulo = `🟨🚫 Aviso de Suspensão`;
+                alvos = window.atletasCache.filter(a => (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1);
+                titulo = `⚠️ Aviso de Suspensão`;
                 corpo = alvos.map(a => {
                     const am = a.amarelos || 0;
                     const vm = a.vermelho || 0;
                     return `• ${a.nome} ${am >=3 ? '3+ amarelos' : ''} ${vm >= 1 ? 'Vermelho' : ''}`;
                 }).join('\n');
-                if (!corpo) corpo = 'Nenhum atleta suspenso com WhatsApp.';
+                if (!corpo) corpo = 'Nenhum atleta suspenso.';
+                if (customText) customText.classList.add('hidden');
             } else if (tipo === 'geral') {
-                alvos = window.atletasCache.filter(a => a.whatsapp);
-                titulo = `📣 Comunicado Geral - BABA VETERANOS`;
-                corpo = `Enviar para ${alvos.length} atleta(s).\n` + alvos.map(a => `• ${a.nome}`).join('\n');
-                if (!corpo) corpo = 'Nenhum atleta com WhatsApp cadastrado.';
+                alvos = window.atletasCache;
+                titulo = `📣 Comunicado Geral`;
+                corpo = `Isso enviará um aviso para todos os ${alvos.length} atletas do app.`;
+                if (customText) {
+                    customText.classList.remove('hidden');
+                    customText.value = '';
+                    customText.placeholder = 'Escreva aqui o comunicado para os atletas...';
+                }
             }
             
             window._disparoPendente = { tipo, alvos };
@@ -3424,34 +3431,62 @@
         };
         
         window.confirmarDisparo = function(tipo, alvos) {
-            const disparoId = 'disparo_' + Date.now();
-            const dadosDisparo = {
-                tipo: tipo,
-                data: new Date().toISOString(),
-                alvos: alvos.map(a => ({ id: a.id, nome: a.nome, whatsapp: a.whatsapp })),
-                status: 'pendente'
-            };
-            
-            if (window.dbRef) {
-                const ref = window.dbRef.child('notificacoes_pendentes/' + disparoId);
-                ref.set(dadosDisparo);
-            }
+            const customTextEl = document.getElementById('notif-custom-text');
+            const mensagemGeral = customTextEl ? customTextEl.value : '';
             
             // Gera notificações no app para cada alvo
             let tituloNotif = '';
-            if (tipo === 'pendentes') tituloNotif = '📢 Cobrança de Mensalidade';
-            else if (tipo === 'multas') tituloNotif = '💰 Cobrança de Multas';
-            else if (tipo === 'suspensos') tituloNotif = '⚠️ Aviso de Suspensão';
-            else tituloNotif = '📣 Comunicado Geral';
+            let msgNotif = '';
+            let detalhes = null;
             
-            window.adicionarNotificacao(
-                tituloNotif,
-                `Disparo registrado: ${alvos.length} atleta(s) com WhatsApp — ${tipo === 'pendentes' ? 'inadimplentes' : tipo === 'multas' ? 'multados' : tipo === 'suspensos' ? 'suspensos' : 'comunicado geral'}.`,
-                'info'
-            );
+            if (tipo === 'pendentes') {
+                tituloNotif = '📢 Cobrança de Mensalidade';
+                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
+                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
+                msgNotif = `Mensalidade pendente para: ${nomes}${resto}.`;
+                detalhes = alvos.map(a => ({ nome: a.nome, camisa: a.camisa, time: a.time, motivo: 'Mensalidade', status: '🔴 Pendente' }));
+            } else if (tipo === 'multas') {
+                tituloNotif = '💰 Cobrança de Multas';
+                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
+                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
+                msgNotif = `Multas registradas para: ${nomes}${resto}. Verifique os detalhes.`;
+                detalhes = alvos.map(a => {
+                    let total = 0;
+                    Object.values(a.pagamentos || {}).forEach(p => {
+                        if (p.multas) p.multas.forEach(m => { if (!m.paga) total += Number(m.valor); });
+                    });
+                    return { nome: a.nome, camisa: a.camisa, time: a.time, valor: total, status: `💰 R$ ${total.toFixed(2)}` };
+                });
+            } else if (tipo === 'suspensos') {
+                tituloNotif = '⚠️ Aviso de Suspensão';
+                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
+                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
+                msgNotif = `Atenção aos atletas suspensos: ${nomes}${resto}.`;
+            } else if (tipo === 'geral') {
+                tituloNotif = '📣 Comunicado Geral';
+                msgNotif = mensagemGeral || 'Novo comunicado importante da diretoria do Baba.';
+            }
             
-            window.mostrarToast("✅ Disparo registrado! Me chame aqui: 'Zapia, disparar notificações!'");
+            // Registra no Firebase para o Zapia disparar os links de WhatsApp (só quem tem número)
+            const alvosWpp = alvos.filter(a => a.whatsapp);
+            if (alvosWpp.length > 0) {
+                const disparoId = 'disparo_' + Date.now();
+                const dadosDisparo = {
+                    tipo: tipo,
+                    data: new Date().toISOString(),
+                    alvos: alvosWpp.map(a => ({ id: a.id, nome: a.nome, whatsapp: a.whatsapp })),
+                    mensagem: msgNotif,
+                    status: 'pendente'
+                };
+                if (window.dbRef) {
+                    window.dbRef.child('notificacoes_pendentes/' + disparoId).set(dadosDisparo);
+                }
+            }
             
+            // Adiciona a notificação real na central interna (global - Opção B)
+            window.adicionarNotificacao(tituloNotif, msgNotif, tipo === 'geral' ? 'info' : tipo, '', detalhes);
+            
+            window.mostrarToast("✅ Notificação enviada com sucesso!");
             document.getElementById('notificacao-preview').classList.add('hidden');
             window._disparoPendente = null;
         };
