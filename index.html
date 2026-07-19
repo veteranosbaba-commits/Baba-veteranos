@@ -184,6 +184,21 @@
             return (agora.getMonth() + 1).toString().padStart(2, '0');
         };
         
+        // Função robusta: verifica pagamento em qualquer formato (07, 7, 2026-07, etc)
+        window.verificarPago = function(pagamentos, mesAtual) {
+            if (!pagamentos || typeof pagamentos !== 'object') return false;
+            // Tenta o formato padrão MM (ex: "07")
+            if (pagamentos[mesAtual]?.pago === true) return true;
+            // Tenta sem zero à esquerda (ex: "7")
+            const semZero = String(parseInt(mesAtual));
+            if (semZero !== mesAtual && pagamentos[semZero]?.pago === true) return true;
+            // Tenta com ano (ex: "2026-07")
+            const ano = new Date().getFullYear();
+            if (pagamentos[`${ano}-${mesAtual}`]?.pago === true) return true;
+            if (pagamentos[`${ano}-${semZero}`]?.pago === true) return true;
+            return false;
+        };
+        
         window.mesesPtbr = {
             "01":"Janeiro","02":"Fevereiro","03":"Março","04":"Abril","05":"Maio","06":"Junho",
             "07":"Julho","08":"Agosto","09":"Setembro","10":"Outubro","11":"Novembro","12":"Dezembro"
@@ -1276,7 +1291,7 @@
                 let mensalidadeDebito = 0;
                 
                 // Mês atual é 06
-                const pagoMes = a.pagamentos?.[window.getMesAtual()]?.pago;
+                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual());
                 if (!pagoMes) mensalidadeDebito = 25;
                 
                 if (a.pagamentos) {
@@ -1346,7 +1361,7 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = a.pagamentos?.[window.getMesAtual()]?.pago;
+                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual());
                 html += `<tr class="hover:bg-stone-800/30 transition text-center">
                     <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
@@ -1371,7 +1386,7 @@
                 let html = '';
                 achados.forEach(a => {
                     const mesAtual = window.getMesAtual();
-                    const pagoMes = a.pagamentos?.[mesAtual]?.pago;
+                    const pagoMes = window.verificarPago(a.pagamentos, mesAtual);
                     
                     let multasHtml = "";
                     let totalMultasAberto = 0;
@@ -3196,8 +3211,7 @@
             
             // Verifica inadimplentes
             const inadimplentes = window.atletasCache.filter(a => {
-                const pag = a.pagamentos && a.pagamentos[mesAtual];
-                return !pag || !pag.pago;
+                return !window.verificarPago(a.pagamentos, mesAtual);
             });
             
             if (inadimplentes.length > 0) {
@@ -3338,8 +3352,7 @@
             const mesAtual = window.getMesAtual();
             
             const pendentes = window.atletasCache.filter(a => {
-                const pag = a.pagamentos && a.pagamentos[mesAtual];
-                return (!pag || !pag.pago);
+                return !window.verificarPago(a.pagamentos, mesAtual);
             });
             document.getElementById('notif-pendentes-resumo').textContent = 
                 `${pendentes.length} atleta(s) - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
@@ -3376,8 +3389,7 @@
             
             if (tipo === 'pendentes') {
                 alvos = window.atletasCache.filter(a => {
-                    const pag = a.pagamentos && a.pagamentos[mesAtual];
-                    return (!pag || !pag.pago);
+                    return !window.verificarPago(a.pagamentos, mesAtual);
                 });
                 titulo = `📬 Cobrança de Mensalidade - ${mesNome.toUpperCase()}`;
                 corpo = alvos.map(a => `• ${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})`).join('\n');
