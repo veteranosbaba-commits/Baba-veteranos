@@ -2995,37 +2995,32 @@
         // =====================================================
         (function() {
             const originalSwitchTab = window.switchTab;
-            const tabStack = ['dashboard'];
             
             window.switchTab = function(tabId, fromPop) {
                 if (typeof originalSwitchTab === 'function') {
                     originalSwitchTab(tabId);
                 }
                 if (!fromPop) {
-                    const last = tabStack[tabStack.length - 1];
-                    if (last !== tabId) {
-                        tabStack.push(tabId);
-                    }
                     history.pushState({ tabId: tabId }, '', '#' + tabId);
                 }
             };
             
             window.addEventListener('popstate', function(event) {
-                // Se tem sub-tab admin aberta, volta pro menu admin primeiro
+                // Se tem sub-tab admin aberta → fecha ela e fica no admin
                 const subTabAberta = document.querySelector('.adm-sub-content:not(.hidden)');
                 if (subTabAberta && subTabAberta.id) {
-                    // Esconde sub-tab, mostra só o menu admin
                     document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
                     document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                         btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
                     });
+                    history.pushState({ tabId: 'admin-panel' }, '', '#admin-panel');
                     return;
                 }
                 
-                if (tabStack.length > 1) {
-                    tabStack.pop();
-                    const anterior = tabStack[tabStack.length - 1];
-                    window.switchTab(anterior, true);
+                // Se não está no dashboard → vai pro dashboard
+                const tabAtiva = document.querySelector('.tab-content.active');
+                if (tabAtiva && tabAtiva.id !== 'dashboard') {
+                    window.switchTab('dashboard', true);
                     return;
                 }
                 
