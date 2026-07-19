@@ -832,6 +832,28 @@
                         </button>
                     </div>
                     
+                    <!-- LISTAS DETALHADAS INTEGRADAS -->
+                    <div id="notif-listas-detalhadas" class="mt-4 space-y-3 hidden">
+                        <div class="border-t border-stone-800 pt-3">
+                            <button onclick="document.getElementById('notif-lista-inadimplentes').classList.toggle('hidden'); this.querySelector('.icone-seta').classList.toggle('rotate-180')" class="flex items-center gap-2 text-[10px] text-stone-400 hover:text-stone-200 font-bold uppercase transition w-full text-left">
+                                <i class="fa-solid fa-chevron-down icone-seta text-[8px] transition-transform"></i> Ver lista de inadimplentes
+                            </button>
+                            <div id="notif-lista-inadimplentes" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
+                        </div>
+                        <div class="border-t border-stone-800 pt-3">
+                            <button onclick="document.getElementById('notif-lista-multados').classList.toggle('hidden'); this.querySelector('.icone-seta').classList.toggle('rotate-180')" class="flex items-center gap-2 text-[10px] text-stone-400 hover:text-stone-200 font-bold uppercase transition w-full text-left">
+                                <i class="fa-solid fa-chevron-down icone-seta text-[8px] transition-transform"></i> Ver lista de multados
+                            </button>
+                            <div id="notif-lista-multados" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
+                        </div>
+                        <div class="border-t border-stone-800 pt-3">
+                            <button onclick="document.getElementById('notif-lista-suspensos').classList.toggle('hidden'); this.querySelector('.icone-seta').classList.toggle('rotate-180')" class="flex items-center gap-2 text-[10px] text-stone-400 hover:text-stone-200 font-bold uppercase transition w-full text-left">
+                                <i class="fa-solid fa-chevron-down icone-seta text-[8px] transition-transform"></i> Ver lista de suspensos
+                            </button>
+                            <div id="notif-lista-suspensos" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
+                        </div>
+                    </div>
+                    
                     <div id="notificacao-preview" class="hidden mt-4 p-4 bg-stone-800/50 rounded-xl border border-stone-700">
                         <div class="font-bold text-white text-xs mb-2" id="notif-preview-titulo"></div>
                         <textarea id="notif-custom-text" class="hidden w-full bg-stone-900 border border-stone-700 rounded-lg p-3 text-[11px] text-stone-200 mb-3 focus:ring-1 focus:ring-emerald-500 outline-none" rows="3" placeholder="Digite sua mensagem aqui..."></textarea>
@@ -3350,12 +3372,13 @@
         
         window.calcularResumoNotif = function() {
             const mesAtual = window.getMesAtual();
+            const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
             
             const pendentes = window.atletasCache.filter(a => {
                 return !window.verificarPago(a.pagamentos, mesAtual);
             });
             document.getElementById('notif-pendentes-resumo').textContent = 
-                `${pendentes.length} atleta(s) - Mensalidade ${window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual}`;
+                `${pendentes.length} atleta(s) - Mensalidade ${mesNome}`;
             
             const comMultas = window.atletasCache.filter(a => {
                 if (!a.pagamentos) return false;
@@ -3377,6 +3400,61 @@
             const total = window.atletasCache.length;
             document.getElementById('notif-geral-resumo').textContent = 
                 `${total} atleta(s) cadastrado(s) no total`;
+            
+            // --- Popula listas detalhadas ---
+            const containerListas = document.getElementById('notif-listas-detalhadas');
+            if (containerListas) containerListas.classList.remove('hidden');
+            
+            // Inadimplentes
+            const listaInad = document.getElementById('notif-lista-inadimplentes');
+            if (listaInad) {
+                listaInad.innerHTML = pendentes.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">🎉 Todos pagaram este mês!</div>'
+                    : pendentes.map(a => {
+                        let multas = 0;
+                        if (a.pagamentos) Object.values(a.pagamentos).forEach(d => {
+                            if (d.multas) d.multas.forEach(ml => { if (!ml.paga) multas += Number(ml.valor); });
+                        });
+                        const debito = multas > 0 ? 25 + multas : 25;
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
+                            <span class="text-[10px] font-mono font-black ${multas > 0 ? 'text-orange-400' : 'text-red-400'}">R$ ${debito.toFixed(2)}</span>
+                        </div>`;
+                    }).join('');
+            }
+            
+            // Multados
+            const listaMult = document.getElementById('notif-lista-multados');
+            if (listaMult) {
+                listaMult.innerHTML = comMultas.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">✅ Ninguém com multas pendentes!</div>'
+                    : comMultas.map(a => {
+                        let total = 0;
+                        Object.values(a.pagamentos).forEach(d => {
+                            if (d.multas) d.multas.forEach(ml => { if (!ml.paga) total += Number(ml.valor); });
+                        });
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome}</span>
+                            <span class="text-[10px] font-mono font-black text-orange-400">R$ ${total.toFixed(2)}</span>
+                        </div>`;
+                    }).join('');
+            }
+            
+            // Suspensos
+            const listaSusp = document.getElementById('notif-lista-suspensos');
+            if (listaSusp) {
+                listaSusp.innerHTML = suspensos.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">✅ Ninguém suspenso no momento!</div>'
+                    : suspensos.map(a => {
+                        const motivo = (a.amarelos || 0) >= 3 && (a.vermelho || 0) >= 1
+                            ? '🔴⚠️ 3+ amarelos + vermelho'
+                            : (a.amarelos || 0) >= 3 ? '⚠️ 3+ amarelos' : '🔴 Vermelho';
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome}</span>
+                            <span class="text-[9px] text-yellow-400 font-bold">${motivo}</span>
+                        </div>`;
+                    }).join('');
+            }
         };
         
         window.prepararDisparo = function(tipo) {
