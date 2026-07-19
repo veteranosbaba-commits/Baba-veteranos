@@ -2501,11 +2501,6 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
-            // Gerenciamento de histórico para o botão voltar do celular
-            if (!window.isBackNavigation) {
-                history.pushState({ tabId: tabId }, '', '#' + tabId);
-            }
-            window.isBackNavigation = false;
 
             // Renderiza notificações ao abrir a aba
             if (tabId === 'notificacoes-ver') {
@@ -2952,59 +2947,60 @@
 
 
     <script>
-        // Inicializar histórico na página inicial
-        window.addEventListener('load', () => {
-            if (!location.hash || location.hash === '#dashboard') {
-                history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
-            }
-        });
-
-        // Interceptar o botão voltar do navegador/celular
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.tabId) {
-                window.isBackNavigation = true;
-                switchTab(event.state.tabId);
-            } else {
-                // Se voltar além do início, garante que vá para o dashboard em vez de fechar o app
-                window.isBackNavigation = true;
-                switchTab('dashboard');
-                history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
-            }
-        });
-    </script>
-
-
-    <script>
-        // Função para gerenciar o histórico de navegação
+        // =====================================================
+        // NAVEGAÇÃO PROGRESSIVA COM BOTÃO VOLTAR
+        // =====================================================
         (function() {
             const originalSwitchTab = window.switchTab;
-            window.switchTab = function(tabId) {
+            const tabStack = ['dashboard'];
+            
+            window.switchTab = function(tabId, fromPop) {
                 if (typeof originalSwitchTab === 'function') {
                     originalSwitchTab(tabId);
                 }
-                
-                // Se não for uma navegação de 'voltar', adiciona no histórico
-                if (!window._isBacking) {
+                if (!fromPop) {
+                    const last = tabStack[tabStack.length - 1];
+                    if (last !== tabId) {
+                        tabStack.push(tabId);
+                    }
                     history.pushState({ tabId: tabId }, '', '#' + tabId);
                 }
-                window._isBacking = false;
-                
-                // Garante que o menu feche ao trocar de aba
-                if (window.toggleMenu && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) {
-                    // toggleMenu() apenas se estiver aberto
-                    // Mas como switchTab já é chamado pelos botões do menu que têm toggleMenu(), 
-                    // isso é apenas um reforço.
-                }
             };
-
+            
             window.addEventListener('popstate', function(event) {
-                window._isBacking = true;
-                if (event.state && event.state.tabId) {
-                    window.switchTab(event.state.tabId);
+                // Se tem sub-tab admin aberta, volta pro menu admin primeiro
+                const subTabAberta = document.querySelector('.adm-sub-content:not(.hidden)');
+                if (subTabAberta && subTabAberta.id) {
+                    // Esconde sub-tab, mostra só o menu admin
+                    document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
+                    document.querySelectorAll('.adm-sub-btn').forEach(btn => {
+                        btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap font-bold bg-transparent";
+                    });
+                    return;
+                }
+                
+                if (tabStack.length > 1) {
+                    tabStack.pop();
+                    const anterior = tabStack[tabStack.length - 1];
+                    window.switchTab(anterior, true);
+                    return;
+                }
+                
+                // Já está no dashboard → 2 cliques pra sair
+                if (window._exitTimer) {
+                    clearTimeout(window._exitTimer);
+                    window._exitTimer = null;
+                    window.close();
+                    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1c1917;color:#a8a29e;font-family:sans-serif;font-size:14px;">👋 Até o próximo jogo!</div>';
                 } else {
-                    window.switchTab('dashboard');
+                    window._exitTimer = setTimeout(() => { window._exitTimer = null; }, 2000);
+                    window.mostrarToast('⚠️ Pressione VOLTAR novamente para sair');
+                    history.pushState({ tabId: 'dashboard' }, '', '#dashboard');
                 }
             });
+            
+            history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
+        })();
 
             // =====================================================
         // 🔔 SISTEMA DE NOTIFICAÇÕES DO APP
@@ -3590,10 +3586,6 @@
             window._disparoPendente = null;
             window.mostrarToast("Disparo cancelado.");
         };
-
-            // Estado inicial
-            history.replaceState({ tabId: 'dashboard' }, '', '#dashboard');
-        })();
     </script>
 
 </body>
