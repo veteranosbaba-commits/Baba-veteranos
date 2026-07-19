@@ -128,6 +128,11 @@
                 transform: translate(-50%, 0);
             }
         }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
         .rotate-90 { transform: rotate(90deg); }
     </style>
 
@@ -587,6 +592,10 @@
                     <div class="text-center text-stone-600 text-xs italic py-8">Nenhuma notificação.</div>
                 </div>
             </div>
+            
+            <!-- MODAL DE DETALHES DA NOTIFICAÇÃO -->
+            <div id="notif-detalhes-overlay" onclick="window.fecharDetalhesNotificacao()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] hidden transition-opacity duration-200 opacity-0"></div>
+            <div id="notif-detalhes-modal" class="hidden fixed bottom-0 left-0 right-0 z-[90] bg-stone-900/98 backdrop-blur-xl rounded-t-2xl border-t border-stone-700 shadow-2xl p-5 max-h-[80vh] overflow-y-auto animate-slide-up"></div>
         </div>
 
         <div id="busca-ver" class="tab-content space-y-6 pt-4">
@@ -2976,8 +2985,8 @@
             localStorage.setItem('baba_notificacoes', JSON.stringify(window.notificacoesCache));
         };
         
-        // Adiciona uma notificação
-        window.adicionarNotificacao = function(titulo, mensagem, tipo, link) {
+        // Adiciona uma notificação com detalhes
+        window.adicionarNotificacao = function(titulo, mensagem, tipo, link, detalhes) {
             window.carregarNotificacoes();
             window.notificacoesCache.unshift({
                 id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -2986,7 +2995,8 @@
                 tipo: tipo || 'info', // 'info', 'cobranca', 'multa', 'alerta', 'jogo'
                 lida: false,
                 data: new Date().toISOString(),
-                link: link || ''
+                link: link || '',
+                detalhes: detalhes || null // Dados estruturados para o modal
             });
             // Mantém no máximo 50 notificações
             if (window.notificacoesCache.length > 50) {
@@ -3054,7 +3064,7 @@
                 else if (n.tipo === 'alerta') { corBorda = 'border-yellow-800'; icone = 'fa-triangle-exclamation'; corIcone = 'text-yellow-400'; }
                 else if (n.tipo === 'jogo') { corBorda = 'border-emerald-800'; icone = 'fa-futbol'; corIcone = 'text-emerald-400'; }
                 
-                return `<div class="bg-stone-800/50 border-l-4 ${corBorda} rounded-lg p-3 ${n.lida ? 'opacity-60' : ''} transition">
+                return `<div onclick="window.abrirDetalhesNotificacao('${n.id}')" class="bg-stone-800/50 border-l-4 ${corBorda} rounded-lg p-3 ${n.lida ? 'opacity-60' : ''} transition cursor-pointer hover:bg-stone-700/50">
                     <div class="flex items-start gap-2">
                         <i class="fa-solid ${icone} ${corIcone} text-xs mt-0.5"></i>
                         <div class="flex-1 min-w-0">
@@ -3064,7 +3074,10 @@
                             </div>
                             <p class="text-[10px] text-stone-400 mt-1">${n.mensagem}</p>
                         </div>
-                        ${!n.lida ? `<button onclick="window.marcarNotificacaoLida('${n.id}')" class="text-stone-600 hover:text-emerald-400 text-[9px] p-1" title="Marcar como lida"><i class="fa-solid fa-check"></i></button>` : ''}
+                        <div class="flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-right text-[8px] text-stone-600"></i>
+                            ${!n.lida ? `<button onclick="event.stopPropagation(); window.marcarNotificacaoLida('${n.id}')" class="text-stone-600 hover:text-emerald-400 text-[9px] p-1" title="Marcar como lida"><i class="fa-solid fa-check"></i></button>` : ''}
+                        </div>
                     </div>
                 </div>`;
             }).join('');
@@ -3087,6 +3100,89 @@
             window.mostrarToast('Todas notificações marcadas como lidas!');
         };
         
+        // Abre modal de detalhes da notificação
+        window.abrirDetalhesNotificacao = function(id) {
+            window.carregarNotificacoes();
+            const n = window.notificacoesCache.find(x => x.id === id);
+            if (!n) return;
+            
+            // Marca como lida automaticamente
+            if (!n.lida) {
+                n.lida = true;
+                window.salvarNotificacoes();
+                window.atualizarBadgeNotificacoes();
+                window.renderizarNotificacoes();
+            }
+            
+            const modal = document.getElementById('notif-detalhes-modal');
+            const overlay = document.getElementById('notif-detalhes-overlay');
+            if (!modal) return;
+            
+            const data = new Date(n.data);
+            const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const dataStr = `${data.getDate()} de ${meses[data.getMonth()]} de ${data.getFullYear()} às ${data.getHours().toString().padStart(2,'0')}:${data.getMinutes().toString().padStart(2,'0')}`;
+            
+            let html = '';
+            
+            // Cabeçalho
+            html += `
+                <div class="flex items-center justify-between mb-4 border-b border-stone-700 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">${n.tipo === 'cobranca' ? '🔴' : n.tipo === 'multa' ? '💰' : n.tipo === 'alerta' ? '⚠️' : n.tipo === 'jogo' ? '⚽' : '📢'}</span>
+                        <h3 class="text-sm font-black text-stone-200 uppercase">${n.titulo}</h3>
+                    </div>
+                    <button onclick="window.fecharDetalhesNotificacao()" class="text-stone-500 hover:text-stone-300 text-lg p-1">&times;</button>
+                </div>
+                <p class="text-[10px] text-stone-500 mb-4">${dataStr}</p>
+            `;
+            
+            // Se tem detalhes estruturados, exibe bonitinho
+            if (n.detalhes && Array.isArray(n.detalhes) && n.detalhes.length > 0) {
+                html += `<div class="space-y-2 mb-4 max-h-60 overflow-y-auto">`;
+                n.detalhes.forEach(d => {
+                    let itemHtml = `<div class="bg-stone-800/60 rounded-lg p-3 border border-stone-700">`;
+                    itemHtml += `<div class="flex items-center justify-between">`;
+                    if (d.camisa) itemHtml += `<span class="text-[10px] text-stone-500 font-mono">#${d.camisa}</span>`;
+                    itemHtml += `<span class="text-xs font-bold text-stone-200">${d.nome}</span>`;
+                    if (d.time) itemHtml += `<span class="text-[9px] ${d.time === 'fluminense' ? 'text-red-400' : 'text-stone-400'} uppercase font-black">${d.time === 'fluminense' ? '⚪ FLU' : '⚫ BOTA'}</span>`;
+                    itemHtml += `</div>`;
+                    if (d.valor) itemHtml += `<p class="text-[10px] text-stone-400 mt-1">Valor: <span class="font-bold text-${n.tipo === 'cobranca' ? 'red' : 'orange'}-400">R$ ${Number(d.valor).toFixed(2)}</span></p>`;
+                    if (d.motivo) itemHtml += `<p class="text-[10px] text-stone-400">Motivo: ${d.motivo}</p>`;
+                    if (d.amarelos) itemHtml += `<p class="text-[10px] text-stone-400">🟨 ${d.amarelos} amarelo(s)</p>`;
+                    if (d.vermelho) itemHtml += `<p class="text-[10px] text-stone-400">🟥 ${d.vermelho} vermelho(s)</p>`;
+                    if (d.status) itemHtml += `<p class="text-[10px] text-stone-400">Status: ${d.status}</p>`;
+                    if (d.obs) itemHtml += `<p class="text-[10px] text-stone-400 italic">${d.obs}</p>`;
+                    itemHtml += `</div>`;
+                    html += itemHtml;
+                });
+                html += `</div>`;
+            } else {
+                // Se não tem detalhes, mostra a mensagem normal
+                html += `<div class="bg-stone-800/60 rounded-lg p-4 border border-stone-700 mb-4">
+                    <p class="text-xs text-stone-300">${n.mensagem}</p>
+                </div>`;
+            }
+            
+            // Botão de ação
+            if (n.tipo === 'cobranca' || n.tipo === 'multa') {
+                html += `<button onclick="window.fecharDetalhesNotificacao()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase py-3 rounded-xl transition">
+                    <i class="fa-solid fa-check mr-2"></i>Entendi, vou regularizar
+                </button>`;
+            }
+            
+            modal.innerHTML = html;
+            modal.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+            overlay.classList.remove('opacity-0');
+        };
+        
+        window.fecharDetalhesNotificacao = function() {
+            const modal = document.getElementById('notif-detalhes-modal');
+            const overlay = document.getElementById('notif-detalhes-overlay');
+            if (modal) modal.classList.add('hidden');
+            if (overlay) { overlay.classList.add('opacity-0'); setTimeout(() => overlay.classList.add('hidden'), 200); }
+        };
+        
         // Gera notificações automáticas baseadas nos dados atuais
         window.gerarNotificacoesAutomaticas = function() {
             window.carregarNotificacoes();
@@ -3106,10 +3202,20 @@
                 if (!jaTemNotif) {
                     const nomes = inadimplentes.slice(0, 3).map(a => a.nome).join(', ');
                     const resto = inadimplentes.length > 3 ? ` e mais ${inadimplentes.length - 3}` : '';
+                    const detalhes = inadimplentes.map(a => ({
+                        nome: a.nome,
+                        camisa: a.camisa || '',
+                        time: a.time || '',
+                        valor: '—',
+                        motivo: `Mensalidade de ${mesNome} pendente`,
+                        status: '🔴 Pendente'
+                    }));
                     window.adicionarNotificacao(
                         `${inadimplentes.length} atleta(s) inadimplente(s)`,
                         `${nomes}${resto} — Mensalidade de ${mesNome} pendente.`,
-                        'cobranca'
+                        'cobranca',
+                        '',
+                        detalhes
                     );
                 }
             }
@@ -3129,24 +3235,60 @@
                     n.tipo === 'multa' && n.data.includes(new Date().toISOString().split('T')[0])
                 );
                 if (!jaTemNotif) {
+                    const detalhes = comMultas.map(a => {
+                        let total = 0;
+                        let multas = [];
+                        Object.entries(a.pagamentos || {}).forEach(([m, d]) => {
+                            if (d.multas) d.multas.forEach(ml => {
+                                if (!ml.paga) {
+                                    total += Number(ml.valor);
+                                    multas.push(`${ml.motivo || 'Multa'} (R$ ${Number(ml.valor).toFixed(2)})`);
+                                }
+                            });
+                        });
+                        return {
+                            nome: a.nome,
+                            camisa: a.camisa || '',
+                            time: a.time || '',
+                            valor: total,
+                            motivo: multas.join('; '),
+                            status: `💰 R$ ${total.toFixed(2)} pendente`
+                        };
+                    });
                     window.adicionarNotificacao(
                         `${comMultas.length} atleta(s) com multa(s) ativa(s)`,
                         `${comMultas.map(a => a.nome).join(', ')} — Regularize as multas pendentes.`,
-                        'multa'
+                        'multa',
+                        '',
+                        detalhes
                     );
                 }
             }
             
-            // Verifica atletas pendurados (3 amarelos ou 1 vermelho)
+            // Verifica atletas pendurados/suspensos (3+ amarelos ou 1+ vermelho)
             const pendurados = window.atletasCache.filter(a => 
                 (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1
             );
             
             pendurados.forEach(a => {
-                const msg = a.vermelho >= 1 
-                    ? `${a.nome} está com cartão VERMELHO e não pode jogar a próxima partida!`
-                    : `${a.nome} está com ${a.amarelos} cartões amarelos — cuidado com suspensão!`;
-                window.adicionarNotificacao('⚠️ Alerta de Cartões', msg, 'alerta');
+                const jaTemNotif = window.notificacoesCache.some(n => 
+                    n.tipo === 'alerta' && n.mensagem.includes(a.nome)
+                );
+                if (!jaTemNotif) {
+                    const msg = a.vermelho >= 1 
+                        ? `${a.nome} está com cartão VERMELHO e não pode jogar a próxima partida!`
+                        : `${a.nome} está com ${a.amarelos} cartões amarelos — cuidado com suspensão!`;
+                    const detalhes = [{
+                        nome: a.nome,
+                        camisa: a.camisa || '',
+                        time: a.time || '',
+                        amarelos: a.amarelos || 0,
+                        vermelho: a.vermelho || 0,
+                        status: a.vermelho >= 1 ? '🚫 Suspenso' : '🟨 Pendurado',
+                        obs: a.vermelho >= 1 ? 'Não pode jogar a próxima partida.' : `Mais ${3 - (a.amarelos || 0)} amarelo(s) e estará suspenso.`
+                    }];
+                    window.adicionarNotificacao('⚠️ Alerta de Cartões', msg, 'alerta', '', detalhes);
+                }
             });
             
             // Notifica se o placar da última rodada não foi registrado
