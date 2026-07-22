@@ -2320,40 +2320,40 @@
                             <div>
                                 <button onclick="document.getElementById('s-bota-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-bota-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
                                     <span><i class="fa-solid fa-chevron-right chevron-bota-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🏁 Botafogo</span>
-                                    <span class="text-[10px] text-stone-500">${(s.bota?.gols?.length || 0)}⚽ ${(s.bota?.am?.length || 0)}🟨 ${(s.bota?.ver?.length || 0)}🟥</span>
+                                    <span class="text-[10px] text-stone-500">${(s.bota?.gols?.trim() ? '⚽' : '')} ${(s.bota?.am?.trim() ? '🟨' : '')} ${(s.bota?.ver?.trim() ? '🟥' : '')}</span>
                                 </button>
                                 <div id="s-bota-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
-                                        ${s.bota?.gols?.length ? `<div class="flex flex-wrap gap-1">${s.bota.gols.map(g => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-white font-mono">⚽ ${g}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.bota?.gols || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
-                                        ${s.bota?.am?.length ? `<div class="flex flex-wrap gap-1">${s.bota.am.map(a => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-amber-500 font-mono">🟨 ${a}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.bota?.am || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
-                                        ${s.bota?.ver?.length ? `<div class="flex flex-wrap gap-1">${s.bota.ver.map(v => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-red-500 font-mono">🟥 ${v}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.bota?.ver || '---'}</span>
                                     </div>
                                 </div>
                             </div>
                             <div>
                                 <button onclick="document.getElementById('s-flu-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-flu-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
                                     <span><i class="fa-solid fa-chevron-right chevron-flu-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🔥 Fluminense</span>
-                                    <span class="text-[10px] text-stone-500">${(s.flu?.gols?.length || 0)}⚽ ${(s.flu?.am?.length || 0)}🟨 ${(s.flu?.ver?.length || 0)}🟥</span>
+                                    <span class="text-[10px] text-stone-500">${(s.flu?.gols?.trim() ? '⚽' : '')} ${(s.flu?.am?.trim() ? '🟨' : '')} ${(s.flu?.ver?.trim() ? '🟥' : '')}</span>
                                 </button>
                                 <div id="s-flu-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
-                                        ${s.flu?.gols?.length ? `<div class="flex flex-wrap gap-1">${s.flu.gols.map(g => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-white font-mono">⚽ ${g}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.flu?.gols || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
-                                        ${s.flu?.am?.length ? `<div class="flex flex-wrap gap-1">${s.flu.am.map(a => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-amber-500 font-mono">🟨 ${a}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.flu?.am || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
-                                        ${s.flu?.ver?.length ? `<div class="flex flex-wrap gap-1">${s.flu.ver.map(v => `<span class="bg-stone-800/80 border border-stone-700 px-2 py-1 rounded text-[10px] text-red-500 font-mono">🟥 ${v}</span>`).join('')}</div>` : '<span class="text-stone-600 italic text-[10px]">Nenhum</span>'}
+                                        <span class="text-stone-300 text-[10px]">${s.flu?.ver || '---'}</span>
                                     </div>
                                 </div>
                             </div>
