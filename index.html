@@ -2069,42 +2069,6 @@
             }
         };
         
-        window.aplicarAporteAtleta = function(id) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-            const mesAtual = window.getMesAtual();
-            if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[mesAtual]) {
-                a.pagamentos[mesAtual] = { pago: false, aportes: [], multas: [] };
-            }
-            if (!a.pagamentos[mesAtual].aportes) a.pagamentos[mesAtual].aportes = [];
-            const val = parseFloat(document.getElementById(`aporte-valor-${id}`)?.value);
-            if (isNaN(val) || val <= 0) { alert("Digite um valor válido!"); return; }
-            const motivo = document.getElementById(`aporte-motivo-${id}`)?.value?.trim() || 'Aporte Extra';
-            a.pagamentos[mesAtual].aportes.push({ valor: val, motivo, paga: true });
-            document.getElementById(`aporte-valor-${id}`).value = '';
-            if (document.getElementById(`aporte-motivo-${id}`)) document.getElementById(`aporte-motivo-${id}`).value = '';
-            window.mostrarToast("Aporte adicionado!");
-            window.salvarNoStorage();
-            window.renderizarTudo();
-        };
-        
-        window.cancelarAporte = function(atletaId, mes, idx) {
-            const a = window.atletasCache.find(j => j.id === atletaId);
-            if (!a?.pagamentos?.[mes]?.aportes?.[idx]) return;
-            if(confirm(`Arquivar aporte?`)) {
-                if (!a.pagamentos[mes].aportesArquivadosHistorico) a.pagamentos[mes].aportesArquivadosHistorico = [];
-                const ap = a.pagamentos[mes].aportes[idx];
-                a.pagamentos[mes].aportesArquivadosHistorico.push({
-                    valor: parseFloat(ap.valor),
-                    motivo: ap.motivo || 'Aporte Extra'
-                });
-                a.pagamentos[mes].aportes.splice(idx, 1);
-                window.mostrarToast("Aporte arquivado!");
-                window.salvarNoStorage();
-            }
-        };
-        
         function renderAdminScouts() {
             const container = document.getElementById('adm-scouts-container');
             if (!container) return;
@@ -2143,7 +2107,6 @@
                                 if (!ap.arquivado) {
                                     aportesAtivos += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] text-teal-300 bg-teal-900/20">
                                         ${ap.motivo} R$${ap.valor.toFixed(0)}
-                                        <button onclick="window.cancelarAporte('${a.id}','${m}',${idx})" class="text-amber-400"><i class="fa-solid fa-box-archive"></i></button>
                                     </span>`;
                                 }
                             });
@@ -2584,8 +2547,8 @@
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
                     <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
-                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="" placeholder="${totalAportes > 0 ? 'R$ ' + totalAportes.toFixed(2) : '0'}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
-                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-plus"></i></button></td>
+                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${totalAportes || ''}" step="any" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none" onkeydown="if(event.key==='Enter')window.salvarAporteLinha('${a.id}','${mes}')"></td>
+                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black">OK</button></td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
@@ -2607,11 +2570,13 @@
             if (!a) return;
             if(!a.pagamentos) a.pagamentos = {}; 
             if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
-            const valNum = parseFloat(val);
-            if (isNaN(valNum) || valNum <= 0) { alert("Digite um valor válido!"); return; }
-            a.pagamentos[mes].aportes.push({ valor: valNum, motivo: 'Aporte Extra', paga: true });
-            document.getElementById(`extra-${id}`).value = '';
-            window.mostrarToast("Aporte adicionado!"); 
+            const valNum = parseFloat(val) || 0;
+            const totalAtual = (a.pagamentos[mes].aportes || []).reduce((s, ap) => s + Number(ap.valor), 0);
+            const diferenca = valNum - totalAtual;
+            if (diferenca === 0) { window.mostrarToast("Valor igual ao atual."); return; }
+            const sinal = diferenca > 0 ? 'Adicionado' : 'Abatido';
+            a.pagamentos[mes].aportes.push({ valor: diferenca, motivo: 'Aporte Extra', paga: true });
+            window.mostrarToast(`Aporte ${sinal}: R$ ${Math.abs(diferenca).toFixed(2)}`); 
             window.salvarNoStorage(); 
             window.loadAdmFinancas();
         };
