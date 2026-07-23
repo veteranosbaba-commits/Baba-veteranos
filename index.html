@@ -932,7 +932,8 @@
                                 <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
                                     <th class="p-1.5 text-left">Nome</th>
                                     <th class="p-1.5 text-center w-24">Mensalidade</th>
-                                    <th class="p-1.5 text-center w-28">Ação</th>
+                                    <th class="p-1.5 text-center w-24">Extra</th>
+                                    <th class="p-1.5 text-center w-16">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="adm-mensalidades-tabela"></tbody>
@@ -2174,11 +2175,6 @@
                                     <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
                                     <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
                                 </div>
-                                <div class="flex items-center gap-0.5 shrink-0">
-                                    <input type="text" id="aporte-motivo-${a.id}" placeholder="motivo" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
-                                    <input type="number" id="aporte-valor-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
-                                    <button onclick="window.aplicarAporteAtleta('${a.id}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1 py-0.5 rounded text-[8px] font-black">+</button>
-                                </div>
                             </div>
                             ${multasAtivas ? `
                             <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
@@ -2588,7 +2584,8 @@
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
                     <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
-                    <td class="p-1.5 text-teal-400 font-mono text-[10px]">${totalAportes > 0 ? 'R$ ' + totalAportes.toFixed(2) : '—'}</td>
+                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="" placeholder="${totalAportes > 0 ? 'R$ ' + totalAportes.toFixed(2) : '0'}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
+                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-plus"></i></button></td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
