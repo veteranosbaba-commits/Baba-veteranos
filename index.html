@@ -932,8 +932,7 @@
                                 <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
                                     <th class="p-1.5 text-left">Nome</th>
                                     <th class="p-1.5 text-center w-24">Mensalidade</th>
-                                    <th class="p-1.5 text-center w-24">Extra</th>
-                                    <th class="p-1.5 text-center w-16">Ação</th>
+                                    <th class="p-1.5 text-center w-28">Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="adm-mensalidades-tabela"></tbody>
@@ -1175,6 +1174,7 @@
                         placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
                     };
                     // Migração: converte multas arquivadas antigas (só número) para {valor, motivo}
+                    // e migra extra (número) para aportes (array)
                     window.atletasCache.forEach(a => {
                         if (a.pagamentos) {
                             Object.values(a.pagamentos).forEach(p => {
@@ -1186,6 +1186,13 @@
                                         return arq;
                                     });
                                 }
+                                // Migra extra antigo para aportes array
+                                if (p.extra && Number(p.extra) > 0 && (!p.aportes || p.aportes.length === 0)) {
+                                    if (!p.aportes) p.aportes = [];
+                                    p.aportes.push({ valor: Number(p.extra), motivo: 'Aporte Extra', paga: true });
+                                }
+                                delete p.extra;
+                                if (!p.aportes) p.aportes = [];
                             });
                         }
                     });
@@ -1277,7 +1284,14 @@
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (a.pagamentos[mes].pago) totalArrecadado += 25;
-                        totalArrecadado += Number(a.pagamentos[mes].extra || 0);
+                        if (a.pagamentos[mes].aportes) {
+                            a.pagamentos[mes].aportes.forEach(ap => { 
+                                if(ap.paga) totalArrecadado += Number(ap.valor); 
+                            });
+                        }
+                        if (a.pagamentos[mes].aportesArquivadosHistorico) {
+                            a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
+                        }
                         if (a.pagamentos[mes].multas) {
                             a.pagamentos[mes].multas.forEach(m => { 
                                 if(m.paga) totalArrecadado += Number(m.valor); 
@@ -1469,12 +1483,23 @@
                     let extrasHtml = "";
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
-                            const valExtra = Number(a.pagamentos[m].extra || 0);
-                            if (valExtra > 0) {
-                                extrasHtml += `<div class="flex justify-between text-emerald-400 font-mono mt-0.5">
-                                    <span>• Aporte Extra (${m})</span>
-                                    <span class="font-black">+ R$ ${valExtra.toFixed(2)}</span>
-                                </div>`;
+                            if (a.pagamentos[m].aportes) {
+                                a.pagamentos[m].aportes.forEach(ap => {
+                                    extrasHtml += `<div class="flex justify-between text-emerald-400 font-mono mt-0.5">
+                                        <span>• ${ap.motivo} (${m})</span>
+                                        <span class="font-black">+ R$ ${Number(ap.valor).toFixed(2)}</span>
+                                    </div>`;
+                                });
+                            }
+                            if (a.pagamentos[m].aportesArquivadosHistorico) {
+                                a.pagamentos[m].aportesArquivadosHistorico.forEach(arq => {
+                                    const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                    const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                                    extrasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
+                                        <span>• ${motivo} (${m})</span>
+                                        <span class="font-black">ARQUIVADO + R$ ${valor.toFixed(2)}</span>
+                                    </div>`;
+                                });
                             }
                         });
                     }
@@ -1684,14 +1709,19 @@
             }
             
             let mensalMap = {};
-            Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, extra: 0, multas: 0 });
+            Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, aportes: 0, multas: 0 });
             
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (mensalMap[mes]) {
                             if (a.pagamentos[mes].pago) mensalMap[mes].fixo += 25;
-                            if (a.pagamentos[mes].extra) mensalMap[mes].extra += Number(a.pagamentos[mes].extra);
+                            if (a.pagamentos[mes].aportes) {
+                                a.pagamentos[mes].aportes.forEach(ap => { if(ap.paga) mensalMap[mes].aportes += Number(ap.valor); });
+                            }
+                            if (a.pagamentos[mes].aportesArquivadosHistorico) {
+                                a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => mensalMap[mes].aportes += Number(typeof arq === 'object' ? arq.valor : arq));
+                            }
                             if (a.pagamentos[mes].multas) {
                                 a.pagamentos[mes].multas.forEach(ml => { if(ml.paga) mensalMap[mes].multas += Number(ml.valor); });
                             }
@@ -1705,7 +1735,7 @@
             
             let mensalHtml = '';
             Object.keys(mensalMap).forEach(mes => {
-                if (mensalMap[mes].fixo > 0 || mensalMap[mes].extra > 0 || mensalMap[mes].multas > 0) {
+                if (mensalMap[mes].fixo > 0 || mensalMap[mes].aportes > 0 || mensalMap[mes].multas > 0) {
                     mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td>
                         <td class="p-3 text-right text-emerald-400 font-mono">R$ ${mensalMap[mes].fixo.toFixed(2)}</td>
                         
@@ -1791,10 +1821,22 @@
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
-                        const extra = Number(a.pagamentos[mes].extra || 0);
-                        if (extra > 0) {
-                            if (!aportesPorMes[mes]) aportesPorMes[mes] = [];
-                            aportesPorMes[mes].push({ nome: a.nome, valor: extra });
+                        if (!aportesPorMes[mes]) aportesPorMes[mes] = [];
+                        if (a.pagamentos[mes].aportes) {
+                            a.pagamentos[mes].aportes.forEach(ap => {
+                                if (ap.paga && Number(ap.valor) > 0) {
+                                    aportesPorMes[mes].push({ nome: a.nome, motivo: ap.motivo, valor: Number(ap.valor) });
+                                }
+                            });
+                        }
+                        if (a.pagamentos[mes].aportesArquivadosHistorico) {
+                            a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                                if (valor > 0) {
+                                    aportesPorMes[mes].push({ nome: a.nome, motivo: motivo, valor: valor });
+                                }
+                            });
                         }
                     });
                 }
@@ -1812,7 +1854,7 @@
                         const uid = 'aporte-mes-' + mes;
                         html += acordeaoItem(mesesNomes[mes], total, uid, items.map(i =>
                             `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
-                                <span>${i.nome}</span>
+                                <span>${i.nome} <span class="text-stone-600">- ${i.motivo}</span></span>
                                 <span class="text-emerald-400 font-mono">+ R$ ${i.valor.toFixed(2)}</span>
                             </div>`
                         ).join(''));
@@ -1977,7 +2019,7 @@
             const mesAtual = window.getMesAtual();
             if (!a.pagamentos) a.pagamentos = {};
             if (!a.pagamentos[mesAtual]) {
-                a.pagamentos[mesAtual] = { pago: false, extra: 0, multas: [] };
+                a.pagamentos[mesAtual] = { pago: false, aportes: [], multas: [] };
             }
             
             // Garantir que a lista de multas existe
@@ -2026,6 +2068,42 @@
             }
         };
         
+        window.aplicarAporteAtleta = function(id) {
+            const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
+            const mesAtual = window.getMesAtual();
+            if (!a.pagamentos) a.pagamentos = {};
+            if (!a.pagamentos[mesAtual]) {
+                a.pagamentos[mesAtual] = { pago: false, aportes: [], multas: [] };
+            }
+            if (!a.pagamentos[mesAtual].aportes) a.pagamentos[mesAtual].aportes = [];
+            const val = parseFloat(document.getElementById(`aporte-valor-${id}`)?.value);
+            if (isNaN(val) || val <= 0) { alert("Digite um valor válido!"); return; }
+            const motivo = document.getElementById(`aporte-motivo-${id}`)?.value?.trim() || 'Aporte Extra';
+            a.pagamentos[mesAtual].aportes.push({ valor: val, motivo, paga: true });
+            document.getElementById(`aporte-valor-${id}`).value = '';
+            if (document.getElementById(`aporte-motivo-${id}`)) document.getElementById(`aporte-motivo-${id}`).value = '';
+            window.mostrarToast("Aporte adicionado!");
+            window.salvarNoStorage();
+            window.renderizarTudo();
+        };
+        
+        window.cancelarAporte = function(atletaId, mes, idx) {
+            const a = window.atletasCache.find(j => j.id === atletaId);
+            if (!a?.pagamentos?.[mes]?.aportes?.[idx]) return;
+            if(confirm(`Arquivar aporte?`)) {
+                if (!a.pagamentos[mes].aportesArquivadosHistorico) a.pagamentos[mes].aportesArquivadosHistorico = [];
+                const ap = a.pagamentos[mes].aportes[idx];
+                a.pagamentos[mes].aportesArquivadosHistorico.push({
+                    valor: parseFloat(ap.valor),
+                    motivo: ap.motivo || 'Aporte Extra'
+                });
+                a.pagamentos[mes].aportes.splice(idx, 1);
+                window.mostrarToast("Aporte arquivado!");
+                window.salvarNoStorage();
+            }
+        };
+        
         function renderAdminScouts() {
             const container = document.getElementById('adm-scouts-container');
             if (!container) return;
@@ -2049,6 +2127,7 @@
 
                 t.atletas.forEach(a => {
                     let multasAtivas = '';
+                    let aportesAtivos = '';
                     
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
@@ -2058,6 +2137,14 @@
                                     <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500 scale-75">
                                     <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-500'}"><i class="fa-solid fa-box-archive"></i></button>
                                 </span>`;
+                            });
+                            a.pagamentos[m].aportes?.forEach((ap, idx) => {
+                                if (!ap.arquivado) {
+                                    aportesAtivos += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] text-teal-300 bg-teal-900/20">
+                                        ${ap.motivo} R$${ap.valor.toFixed(0)}
+                                        <button onclick="window.cancelarAporte('${a.id}','${m}',${idx})" class="text-amber-400"><i class="fa-solid fa-box-archive"></i></button>
+                                    </span>`;
+                                }
                             });
                         });
                     }
@@ -2087,10 +2174,19 @@
                                     <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
                                     <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
                                 </div>
+                                <div class="flex items-center gap-0.5 shrink-0">
+                                    <input type="text" id="aporte-motivo-${a.id}" placeholder="motivo" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <input type="number" id="aporte-valor-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <button onclick="window.aplicarAporteAtleta('${a.id}')" class="bg-teal-600 hover:bg-teal-500 text-black px-1 py-0.5 rounded text-[8px] font-black">+</button>
+                                </div>
                             </div>
                             ${multasAtivas ? `
                             <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
                                 ${multasAtivas}
+                            </div>` : ''}
+                            ${aportesAtivos ? `
+                            <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
+                                ${aportesAtivos}
                             </div>` : ''}
                         </div>`;
                 });
@@ -2165,12 +2261,27 @@
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(m => {
-                        const extra = Number(a.pagamentos[m].extra || 0);
-                        if (extra > 0) {
-                            const mesNome = window.mesesNomes?.[m] || m;
-                            html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-teal-400">Aporte (${mesNome})</td>
-                                <td class="p-2 text-right text-emerald-400">R$ ${extra.toFixed(2)}</td>
-                                <td class="p-2 text-center text-stone-600">—</td></tr>`;
+                        if (a.pagamentos[m].aportes) {
+                            a.pagamentos[m].aportes.forEach(ap => {
+                                if (ap.paga && Number(ap.valor) > 0) {
+                                    const mesNome = window.mesesNomes?.[m] || m;
+                                    html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-teal-400">${ap.motivo} (${mesNome})</td>
+                                        <td class="p-2 text-right text-emerald-400">R$ ${Number(ap.valor).toFixed(2)}</td>
+                                        <td class="p-2 text-center text-stone-600">—</td></tr>`;
+                                }
+                            });
+                        }
+                        if (a.pagamentos[m].aportesArquivadosHistorico) {
+                            a.pagamentos[m].aportesArquivadosHistorico.forEach(arq => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                                if (valor > 0) {
+                                    const mesNome = window.mesesNomes?.[m] || m;
+                                    html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-stone-500">${motivo} (${mesNome}) - ARQUIVADO</td>
+                                        <td class="p-2 text-right text-stone-500">R$ ${valor.toFixed(2)}</td>
+                                        <td class="p-2 text-center text-stone-600">—</td></tr>`;
+                                }
+                            });
                         }
                     });
                 }
@@ -2472,12 +2583,12 @@
             const mes = document.getElementById('adm-mes-filtro')?.value || '05';
             let html = '';
             window.atletasCache.forEach(a => {
-                const dados = a.pagamentos?.[mes] || { pago: false, extra: 0 };
+                const dados = a.pagamentos?.[mes] || { pago: false, aportes: [] };
+                const totalAportes = (dados.aportes || []).reduce((s, ap) => s + Number(ap.valor), 0);
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
                     <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
-                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${dados.extra || 0}" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none"></td>
-                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black"><i class="fa-solid fa-floppy-disk"></i></button></td>
+                    <td class="p-1.5 text-teal-400 font-mono text-[10px]">${totalAportes > 0 ? 'R$ ' + totalAportes.toFixed(2) : '—'}</td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
@@ -2488,7 +2599,7 @@
             const a = window.atletasCache.find(j => j.id === id); 
             if (!a) return;
             if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
             a.pagamentos[mes].pago = isChecked; 
             window.salvarNoStorage(); 
         };
@@ -2498,10 +2609,14 @@
             const a = window.atletasCache.find(j => j.id === id); 
             if (!a) return;
             if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, extra: 0, multas: [] }; 
-            a.pagamentos[mes].extra = parseFloat(val || 0); 
-            window.mostrarToast("Aporte salvo!"); 
+            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
+            const valNum = parseFloat(val);
+            if (isNaN(valNum) || valNum <= 0) { alert("Digite um valor válido!"); return; }
+            a.pagamentos[mes].aportes.push({ valor: valNum, motivo: 'Aporte Extra', paga: true });
+            document.getElementById(`extra-${id}`).value = '';
+            window.mostrarToast("Aporte adicionado!"); 
             window.salvarNoStorage(); 
+            window.loadAdmFinancas();
         };
         
         // =====================================================
@@ -2720,9 +2835,23 @@
                                 rowsEntradas.push([atleta.nome, `Mensalidade (${mNomeCurto})`, `R$ 25,00`]);
                                 totalEntradas += 25;
                             }
-                            if (dados.extra && Number(dados.extra) > 0) {
-                                rowsEntradas.push([atleta.nome, `Aporte Extra (${mNomeCurto})`, `R$ ${Number(dados.extra).toFixed(2)}`]);
-                                totalEntradas += Number(dados.extra);
+                            if (dados.aportes) {
+                                dados.aportes.forEach(ap => {
+                                    if (ap.paga && Number(ap.valor) > 0) {
+                                        rowsEntradas.push([atleta.nome, `${ap.motivo} (${mNomeCurto})`, `R$ ${Number(ap.valor).toFixed(2)}`]);
+                                        totalEntradas += Number(ap.valor);
+                                    }
+                                });
+                            }
+                            if (dados.aportesArquivadosHistorico) {
+                                dados.aportesArquivadosHistorico.forEach(arq => {
+                                    const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                    const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                                    if (valor > 0) {
+                                        rowsEntradas.push([atleta.nome, `${motivo} (${mNomeCurto})`, `R$ ${valor.toFixed(2)}`]);
+                                        totalEntradas += valor;
+                                    }
+                                });
                             }
                             if (dados.multas) {
                                 dados.multas.forEach(ml => {
@@ -2854,6 +2983,7 @@
                     if(a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
                             delete a.pagamentos[m].multasArquivadasHistorico;
+                            delete a.pagamentos[m].aportesArquivadosHistorico;
                         });
                     }
                 });
