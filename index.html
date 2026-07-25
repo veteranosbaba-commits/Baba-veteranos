@@ -641,6 +641,7 @@
             <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-x-auto">
                 <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">Atletas</button>
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Scouts</button>
+                <button onclick="switchAdminSubTab('adm-mensalidades')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Mensalidades</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
                 <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Partidas</button>
@@ -673,6 +674,30 @@
 
             <div id="adm-scouts" class="adm-sub-content hidden space-y-4">
                 <div id="adm-scouts-container" class="space-y-3"></div>
+            </div>
+
+            <div id="adm-mensalidades" class="adm-sub-content hidden space-y-6">
+                <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
+                    <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2 flex-wrap gap-2">
+                        <h4 class="font-bold text-emerald-400 text-xs uppercase">
+                            <i class="fa-solid fa-money-bill mr-1"></i> Mensalidades
+                        </h4>
+                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse min-w-[400px]">
+                            <thead>
+                                <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
+                                    <th class="p-1.5 text-left">Nome</th>
+                                    <th class="p-1.5 text-center w-24">Mensalidade</th>
+                                    <th class="p-1.5 text-center w-24">Extra</th>
+                                    <th class="p-1.5 text-center w-16">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adm-mensalidades-tabela"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div id="adm-socios" class="adm-sub-content hidden space-y-6">
@@ -919,26 +944,6 @@
                         <thead><tr class="bg-stone-800 text-stone-400 border-b border-stone-700"><th class="p-2.5">Data</th><th class="p-2.5">Descrição</th><th class="p-2.5 text-right">Valor</th><th class="p-2.5 text-center">Ação</th></tr></thead>
                         <tbody id="adm-gastos-tabela"></tbody>
                     </table>
-                </div>
-
-                <div class="bg-stone-900/95 rounded-2xl p-4 border border-stone-700 shadow-xl">
-                    <div class="flex justify-between items-center mb-3 border-b border-stone-800 pb-2 flex-wrap gap-2">
-                        <h4 class="font-bold text-emerald-400 text-xs uppercase">Mensalidades</h4>
-                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse min-w-[400px]">
-                            <thead>
-                                <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
-                                    <th class="p-1.5 text-left">Nome</th>
-                                    <th class="p-1.5 text-center w-24">Mensalidade</th>
-                                    <th class="p-1.5 text-center w-24">Extra</th>
-                                    <th class="p-1.5 text-center w-16">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adm-mensalidades-tabela"></tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
         </div>
@@ -2962,6 +2967,7 @@
             if (subTabId === 'adm-notificacoes') window.calcularResumoNotif();
             if (subTabId === 'adm-atletas') renderAdminAtletas();
             if (subTabId === 'adm-sumulas') window.renderSumulasAdmin();
+            if (subTabId === 'adm-mensalidades') window.loadAdmFinancas();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
                     btn.className = "adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap font-black";
