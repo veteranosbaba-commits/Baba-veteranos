@@ -1938,10 +1938,23 @@
             if (!nome || isNaN(camisa) || !time) { alert('Preencha todos os campos!'); return; }
             if (camisa < 0 || camisa > 99) { alert('Número da camisa deve ser entre 0 e 99!'); return; }
             
-            window.atletasCache.push({ 
+            const novoAtleta = { 
                 id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
                 histAmarelos: 0, histVermelhos: 0, pagamentos: {} 
-            }); 
+            };
+            
+            // Inserir na posição correta pelo time (BOTAFOGO primeiro, FLUMINENSE depois)
+            const ordemTimes = { "BOTAFOGO": 0, "FLUMINENSE": 1 };
+            const timeNovo = ordemTimes[time] ?? 0;
+            let posInsercao = window.atletasCache.length;
+            for (let i = 0; i < window.atletasCache.length; i++) {
+                const timeAtual = ordemTimes[window.atletasCache[i].time] ?? 0;
+                if (timeAtual > timeNovo) {
+                    posInsercao = i;
+                    break;
+                }
+            }
+            window.atletasCache.splice(posInsercao, 0, novoAtleta);
             
             document.getElementById('form-cadastro-atleta')?.reset(); 
             window.mostrarToast("Jogador cadastrado!"); 
