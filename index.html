@@ -185,7 +185,7 @@
         };
         
         // Função robusta: verifica pagamento em qualquer formato (07, 7, 2026-07, etc)
-        window.verificarPago = function(pagamentos, mesAtual) {
+        window.verificarPago = function(pagamentos, mesAtual, atleta) {
             if (!pagamentos || typeof pagamentos !== 'object') return false;
             // Tenta o formato padrão MM (ex: "07")
             if (pagamentos[mesAtual]?.pago === true) return true;
@@ -196,6 +196,8 @@
             const ano = new Date().getFullYear();
             if (pagamentos[`${ano}-${mesAtual}`]?.pago === true) return true;
             if (pagamentos[`${ano}-${semZero}`]?.pago === true) return true;
+            // Verifica se foi abatida do crédito
+            if (atleta && (atleta.abatimentos || []).some(ab => ab.mes === mesAtual && ab.motivo === 'Mensalidade ' + mesAtual)) return true;
             return false;
         };
         
@@ -1202,7 +1204,8 @@
                                 if (!p.aportes) p.aportes = [];
                             });
                         }
-                        a.creditoUtilizado = a.creditoUtilizado || 0;
+                        a.abatimentos = a.abatimentos || [];
+                        delete a.creditoUtilizado;
                     });
                 }
                 
@@ -1291,7 +1294,9 @@
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
-                        if (a.pagamentos[mes].pago) totalArrecadado += 25;
+                        // Se foi paga com crédito (abatimento), não soma de novo (já está nos aportes)
+                        const abatida = (a.abatimentos || []).some(ab => ab.mes === mes && ab.motivo === 'Mensalidade ' + mes);
+                        if (a.pagamentos[mes].pago && !abatida) totalArrecadado += 25;
                         if (a.pagamentos[mes].aportes) {
                             a.pagamentos[mes].aportes.forEach(ap => { 
                                 if(ap.paga) totalArrecadado += Number(ap.valor); 
@@ -1365,7 +1370,7 @@
                 let mensalidadeDebito = 0;
                 
                 // Mês atual é 06
-                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual());
+                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
                 if (!pagoMes) mensalidadeDebito = 25;
                 
                 if (a.pagamentos) {
@@ -1376,7 +1381,9 @@
                     });
                 }
                 
-                const totalDebito = mensalidadeDebito + multasDebito;
+                // Se tiver crédito, abate do débito
+                const credito = window.calcularCreditoAtleta(a);
+                const totalDebito = Math.max(0, mensalidadeDebito + multasDebito - credito);
                 
                 if (totalDebito > 0) {
                     let detalhes = [];
@@ -1435,9 +1442,8 @@
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual());
-                html += `<tr class="hover:bg-stone-800/30 transition text-center">
-                    <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
+                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
+                html += `<td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
                     <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
                     <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
@@ -1460,7 +1466,7 @@
                 let html = '';
                 achados.forEach(a => {
                     const mesAtual = window.getMesAtual();
-                    const pagoMes = window.verificarPago(a.pagamentos, mesAtual);
+                    const pagoMes = window.verificarPago(a.pagamentos, mesAtual, a);
                     
                     let multasHtml = "";
                     let totalMultasAberto = 0;
@@ -1723,7 +1729,8 @@
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
                         if (mensalMap[mes]) {
-                            if (a.pagamentos[mes].pago) mensalMap[mes].fixo += 25;
+                            const abatida = (a.abatimentos || []).some(ab => ab.mes === mes && ab.motivo === 'Mensalidade ' + mes);
+                            if (a.pagamentos[mes].pago && !abatida) mensalMap[mes].fixo += 25;
                             if (a.pagamentos[mes].aportes) {
                                 a.pagamentos[mes].aportes.forEach(ap => { if(ap.paga) mensalMap[mes].aportes += Number(ap.valor); });
                             }
@@ -2571,16 +2578,15 @@
         };
         
         window.calcularCreditoAtleta = function(a) {
-            // Soma todos os aportes de todos os meses (histórico)
             let totalAportes = 0;
             if (a.pagamentos) {
                 Object.values(a.pagamentos).forEach(p => {
                     (p.aportes || []).forEach(ap => { if (ap.paga) totalAportes += Number(ap.valor); });
                 });
             }
-            // Subtrai o que já foi usado
-            const usado = a.creditoUtilizado || 0;
-            return Math.max(0, totalAportes - usado);
+            // Subtrai abatimentos já registrados
+            const totalAbatido = (a.abatimentos || []).reduce((s, ab) => s + Number(ab.valor), 0);
+            return Math.max(0, totalAportes - totalAbatido);
         };
         
         window.calcularTotalAportesAtleta = function(a) {
@@ -2601,8 +2607,10 @@
             if (!a.pagamentos) a.pagamentos = {};
             if (!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] };
             a.pagamentos[mes].pago = true;
-            a.creditoUtilizado = (a.creditoUtilizado || 0) + 25;
-            window.mostrarToast(`✅ Mensalidade abatida do crédito! Saldo: R$ ${(credito - 25).toFixed(2)}`);
+            if (!a.abatimentos) a.abatimentos = [];
+            a.abatimentos.push({ valor: 25, motivo: 'Mensalidade ' + mes, mes: mes, data: new Date().toISOString() });
+            const restante = window.calcularCreditoAtleta(a);
+            window.mostrarToast(`✅ Mensalidade abatida do crédito! Saldo: R$ ${restante.toFixed(2)}`);
             window.salvarNoStorage();
             window.loadAdmFinancas();
         };
@@ -2612,8 +2620,19 @@
             if (!a) return;
             if(!a.pagamentos) a.pagamentos = {}; 
             if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
+            if (isChecked) {
+                // Se tem crédito, abate automaticamente
+                const credito = window.calcularCreditoAtleta(a);
+                if (credito >= 25) {
+                    return window.abaterMensalidade(id, mes);
+                }
+            } else {
+                // Se desmarcar, remove o abatimento dessa mensalidade se existir
+                if (a.abatimentos) {
+                    a.abatimentos = a.abatimentos.filter(ab => ab.mes !== mes || ab.motivo !== 'Mensalidade ' + mes);
+                }
+            }
             a.pagamentos[mes].pago = isChecked; 
-            a.creditoUtilizado = (a.creditoUtilizado || 0) + (isChecked ? 25 : -25);
             window.salvarNoStorage(); 
         };
         
@@ -3431,7 +3450,7 @@
             
             // Verifica inadimplentes
             const inadimplentes = window.atletasCache.filter(a => {
-                return !window.verificarPago(a.pagamentos, mesAtual);
+                return !window.verificarPago(a.pagamentos, mesAtual, a);
             });
             
             if (inadimplentes.length > 0) {
@@ -3573,7 +3592,7 @@
             const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
             
             const pendentes = window.atletasCache.filter(a => {
-                return !window.verificarPago(a.pagamentos, mesAtual);
+                return !window.verificarPago(a.pagamentos, mesAtual, a);
             });
             document.getElementById('notif-pendentes-resumo').textContent = 
                 `${pendentes.length} atleta(s) - Mensalidade ${mesNome}`;
@@ -3665,7 +3684,7 @@
             
             if (tipo === 'pendentes') {
                 alvos = window.atletasCache.filter(a => {
-                    return !window.verificarPago(a.pagamentos, mesAtual);
+                    return !window.verificarPago(a.pagamentos, mesAtual, a);
                 });
                 titulo = `📬 Cobrança de Mensalidade - ${mesNome.toUpperCase()}`;
                 corpo = alvos.map(a => `• ${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})`).join('\n');
