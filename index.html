@@ -3584,13 +3584,12 @@
                 .catch(() => {});
         }
         
-        // Inicializa notificações ao carregar
+        // Inicializa notificações ao carregar — só carrega as existentes, sem gerar novas
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 window.carregarNotificacoes();
                 window.atualizarBadgeNotificacoes();
                 window.renderizarNotificacoes();
-                window.gerarNotificacoesAutomaticas();
             }, 2000); // Espera dados carregarem
         });
 
