@@ -3261,6 +3261,31 @@
             localStorage.setItem('baba_notificacoes', JSON.stringify(window.notificacoesCache));
         };
         
+        // Alerta sonoro curto para novas notificações.
+        // O navegador só permite áudio depois que o usuário interage com o app.
+        window.tocarAlertaNotificacao = function() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const agora = ctx.currentTime;
+                const ganho = ctx.createGain();
+                ganho.gain.setValueAtTime(0.0001, agora);
+                ganho.gain.exponentialRampToValueAtTime(0.16, agora + 0.015);
+                ganho.gain.exponentialRampToValueAtTime(0.0001, agora + 0.42);
+                ganho.connect(ctx.destination);
+                [740, 988].forEach((frequencia, indice) => {
+                    const oscilador = ctx.createOscillator();
+                    oscilador.type = 'sine';
+                    oscilador.frequency.value = frequencia;
+                    oscilador.connect(ganho);
+                    oscilador.start(agora + indice * 0.10);
+                    oscilador.stop(agora + 0.43);
+                });
+                setTimeout(() => ctx.close().catch(() => {}), 700);
+            } catch (e) {}
+        };
+
         // Adiciona uma notificação com detalhes
         window.adicionarNotificacao = function(titulo, mensagem, tipo, link, detalhes) {
             window.carregarNotificacoes();
@@ -3281,6 +3306,8 @@
             window.salvarNotificacoes();
             window.atualizarBadgeNotificacoes();
             window.renderizarNotificacoes();
+            // Toca o alerta apenas para uma notificação nova, nunca ao carregar o app.
+            window.tocarAlertaNotificacao();
             // Tenta notificação push nativa
             window.tentarNotificacaoPush(titulo, mensagem);
         };
