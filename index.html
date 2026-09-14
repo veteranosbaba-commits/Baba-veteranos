@@ -733,10 +733,30 @@
                     </div>
                 </div>
 
+                <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
+                    <h4 class="font-bold text-red-400 text-xs uppercase mb-3">
+                        <i class="fa-solid fa-minus mr-1"></i> Lançar Despesa
+                    </h4>
+                    <form id="form-gasto" onsubmit="window.processarGasto(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <input type="date" id="gasto-data" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <input type="text" id="gasto-descricao" placeholder="Descrição" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <input type="number" step="0.01" id="gasto-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar</button>
+                    </form>
+                </div>
+
                 <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[400px]">
                         <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Origem</th><th class="p-3 text-center">Tipo</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Excluir</th></tr></thead>
                         <tbody id="adm-receitas-tabela"></tbody>
+                    </table>
+                </div>
+
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl overflow-x-auto">
+                    <h4 class="font-bold text-red-400 text-xs uppercase mb-3">Despesas Lançadas</h4>
+                    <table class="w-full text-left text-xs min-w-[500px]">
+                        <thead><tr class="bg-stone-800 text-stone-400 border-b border-stone-700"><th class="p-2.5">Data</th><th class="p-2.5">Descrição</th><th class="p-2.5 text-right">Valor</th><th class="p-2.5 text-center">Ação</th></tr></thead>
+                        <tbody id="adm-gastos-tabela"></tbody>
                     </table>
                 </div>
             </div>
@@ -934,23 +954,7 @@
                     <div id="adm-historico-exclusao-container" class="space-y-2"></div>
                 </div>
 
-                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <h4 class="font-bold text-red-400 text-xs uppercase mb-3">
-                        <i class="fa-solid fa-minus mr-1"></i> Lançar Despesa
-                    </h4>
-                    <form id="form-gasto" onsubmit="window.processarGasto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input type="text" id="gasto-descricao" placeholder="Descrição" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none md:col-span-1">
-                        <input type="number" step="0.01" id="gasto-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold p-2 rounded-lg text-xs uppercase transition">Computar</button>
-                    </form>
-                </div>
 
-                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl overflow-x-auto">
-                    <table class="w-full text-left text-xs min-w-[500px]">
-                        <thead><tr class="bg-stone-800 text-stone-400 border-b border-stone-700"><th class="p-2.5">Data</th><th class="p-2.5">Descrição</th><th class="p-2.5 text-right">Valor</th><th class="p-2.5 text-center">Ação</th></tr></thead>
-                        <tbody id="adm-gastos-tabela"></tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>
@@ -2283,15 +2287,17 @@
         
         window.processarGasto = function(e) {
             e.preventDefault();
+            const data = document.getElementById('gasto-data')?.value;
             const descricao = document.getElementById('gasto-descricao')?.value?.trim();
             const valor = parseFloat(document.getElementById('gasto-valor')?.value);
-            if (!descricao || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
-            const hj = new Date();
+            if (!data || !descricao || isNaN(valor) || valor <= 0) { alert('Informe data, descrição e um valor válido!'); return; }
+            const [ano, mes, dia] = data.split('-');
             window.gastosCache.push({ 
                 id: 'gasto_' + Date.now(), 
                 descricao, 
                 valor, 
-                dataStr: `${hj.getDate()}/${hj.getMonth()+1}` 
+                data: data,
+                dataStr: `${dia}/${mes}/${ano}` 
             });
             document.getElementById('form-gasto')?.reset();
             window.mostrarToast("Despesa registrada!");
