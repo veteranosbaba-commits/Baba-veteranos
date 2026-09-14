@@ -2771,7 +2771,9 @@
             // Atualiza de forma confiável o item ativo no rodapé.
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
                 b.classList.remove('text-emerald-400', 'text-amber-500', 'font-black', 'nav-ativo');
-                b.querySelector('i')?.classList.remove('nav-icone-ativo');
+                const icone = b.querySelector('i');
+                icone?.classList.remove('nav-icone-ativo');
+                if (icone) icone.style.transform = '';
                 b.classList.add('text-stone-500');
                 b.removeAttribute('aria-current');
             });
@@ -2779,14 +2781,24 @@
             if (activeNav) {
                 activeNav.classList.remove('text-stone-500');
                 activeNav.classList.add('text-emerald-400', 'font-black', 'nav-ativo');
-                activeNav.querySelector('i')?.classList.add('nav-icone-ativo');
+                const iconeAtiva = activeNav.querySelector('i');
+                iconeAtiva?.classList.add('nav-icone-ativo');
+                if (iconeAtiva) {
+                    iconeAtiva.style.transform = 'scale(1.38)';
+                    iconeAtiva.style.transition = 'transform 0.2s ease';
+                }
                 activeNav.setAttribute('aria-current', 'page');
             } else if (tabId === 'admin-panel') {
                 const adminNav = document.getElementById('nav-admin');
                 if (adminNav) {
                     adminNav.classList.remove('text-stone-500');
                     adminNav.classList.add('text-amber-500', 'font-black', 'nav-ativo');
-                    adminNav.querySelector('i')?.classList.add('nav-icone-ativo');
+                    const iconeAdmin = adminNav.querySelector('i');
+                    iconeAdmin?.classList.add('nav-icone-ativo');
+                    if (iconeAdmin) {
+                        iconeAdmin.style.transform = 'scale(1.38)';
+                        iconeAdmin.style.transition = 'transform 0.2s ease';
+                    }
                     adminNav.setAttribute('aria-current', 'page');
                 }
             }
