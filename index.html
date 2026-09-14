@@ -3883,6 +3883,47 @@
             window._disparoPendente = null;
             window.mostrarToast("Disparo cancelado.");
         };
+
+        // Navegação por gesto lateral nas telas principais do app.
+        window.iniciarNavegacaoPorGesto = function() {
+            const telas = ['dashboard', 'jogadores', 'artilharia-ver', 'alertas-ver', 'busca-ver', 'historico-sumulas', 'financeiro-ver', 'regras-ver'];
+            let inicioX = 0;
+            let inicioY = 0;
+            let alvoValido = false;
+
+            document.addEventListener('touchstart', function(event) {
+                const toque = event.touches && event.touches[0];
+                if (!toque) return;
+                const elemento = event.target;
+                const bloqueado = elemento.closest('input, select, textarea, button, a, [data-no-swipe]');
+                alvoValido = !bloqueado && !elemento.closest('.overflow-x-auto');
+                if (alvoValido) {
+                    inicioX = toque.clientX;
+                    inicioY = toque.clientY;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(event) {
+                if (!alvoValido) return;
+                const toque = event.changedTouches && event.changedTouches[0];
+                if (!toque) return;
+                const deslocamentoX = toque.clientX - inicioX;
+                const deslocamentoY = toque.clientY - inicioY;
+                alvoValido = false;
+
+                // Ignora toques curtos e movimentos verticais de rolagem.
+                if (Math.abs(deslocamentoX) < 65 || Math.abs(deslocamentoY) > Math.abs(deslocamentoX) * 0.75) return;
+                const atual = document.querySelector('.tab-content.active')?.id;
+                const indice = telas.indexOf(atual);
+                if (indice < 0) return;
+                const proximoIndice = deslocamentoX < 0 ? indice + 1 : indice - 1;
+                if (proximoIndice >= 0 && proximoIndice < telas.length) {
+                    switchTab(telas[proximoIndice]);
+                }
+            }, { passive: true });
+        };
+
+        window.iniciarNavegacaoPorGesto();
     </script>
 
 </body>
