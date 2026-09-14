@@ -1815,7 +1815,11 @@
             
             // Acordeão: Gastos por mês
             let gastosPorMes = {};
-            window.gastosCache.forEach(g => {
+            [...window.gastosCache].sort((a, b) => {
+                const da = a.data ? new Date(a.data + 'T00:00:00').getTime() : 0;
+                const db = b.data ? new Date(b.data + 'T00:00:00').getTime() : 0;
+                return db - da;
+            }).forEach(g => {
                 const partes = (g.dataStr || '').split('/');
                 const mes = partes[1]?.padStart(2, '0');
                 if (!mes) return;
@@ -2566,7 +2570,11 @@
         
         function renderAdminGastosTabela() {
             let html = '';
-            window.gastosCache.forEach(g => { 
+            [...window.gastosCache].sort((a, b) => {
+                const da = a.data ? new Date(a.data + 'T00:00:00').getTime() : 0;
+                const db = b.data ? new Date(b.data + 'T00:00:00').getTime() : 0;
+                return db - da;
+            }).forEach(g => { 
                 html += `<tr><td class="p-2 text-stone-500 font-mono">${g.dataStr}</td>
                     <td class="p-2 font-bold uppercase text-xs">${g.descricao}</td>
                     <td class="p-2 text-right text-red-400">R$ ${Number(g.valor).toFixed(2)}</td>
@@ -2929,7 +2937,11 @@
             // 4. GASTOS
             const rowsSaidas = [];
             if (window.gastosCache) {
-                window.gastosCache.forEach(g => {
+                [...window.gastosCache].sort((a, b) => {
+                const da = a.data ? new Date(a.data + 'T00:00:00').getTime() : 0;
+                const db = b.data ? new Date(b.data + 'T00:00:00').getTime() : 0;
+                return db - da;
+            }).forEach(g => {
                     if (mesSelecionado !== "TODOS") {
                         const partes = (g.dataStr || "").split('/');
                         let mesGasto = partes[1]; 
