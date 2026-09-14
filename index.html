@@ -43,8 +43,12 @@
 
         /* Destaque consistente do ícone da tela atual */
         .nav-ativo {
-            transform: scale(1.22);
-            transition: transform 0.2s ease, color 0.2s ease;
+            transition: color 0.2s ease;
+        }
+        .nav-icone-ativo {
+            display: inline-block;
+            transform: scale(1.38);
+            transition: transform 0.2s ease;
         }
         
         .soccer-bg {
@@ -2767,6 +2771,7 @@
             // Atualiza de forma confiável o item ativo no rodapé.
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
                 b.classList.remove('text-emerald-400', 'text-amber-500', 'font-black', 'nav-ativo');
+                b.querySelector('i')?.classList.remove('nav-icone-ativo');
                 b.classList.add('text-stone-500');
                 b.removeAttribute('aria-current');
             });
@@ -2774,12 +2779,14 @@
             if (activeNav) {
                 activeNav.classList.remove('text-stone-500');
                 activeNav.classList.add('text-emerald-400', 'font-black', 'nav-ativo');
+                activeNav.querySelector('i')?.classList.add('nav-icone-ativo');
                 activeNav.setAttribute('aria-current', 'page');
             } else if (tabId === 'admin-panel') {
                 const adminNav = document.getElementById('nav-admin');
                 if (adminNav) {
                     adminNav.classList.remove('text-stone-500');
                     adminNav.classList.add('text-amber-500', 'font-black', 'nav-ativo');
+                    adminNav.querySelector('i')?.classList.add('nav-icone-ativo');
                     adminNav.setAttribute('aria-current', 'page');
                 }
             }
