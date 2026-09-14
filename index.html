@@ -2760,20 +2760,20 @@
 
             // Atualiza de forma confiável o item ativo no rodapé.
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
-                b.classList.remove('text-emerald-400', 'text-amber-500', 'font-black');
+                b.classList.remove('text-emerald-400', 'text-amber-500', 'font-black', 'scale-125');
                 b.classList.add('text-stone-500');
                 b.removeAttribute('aria-current');
             });
             const activeNav = document.getElementById('nav-' + tabId);
             if (activeNav) {
                 activeNav.classList.remove('text-stone-500');
-                activeNav.classList.add('text-emerald-400', 'font-black');
+                activeNav.classList.add('text-emerald-400', 'font-black', 'scale-125', 'transition-transform');
                 activeNav.setAttribute('aria-current', 'page');
             } else if (tabId === 'admin-panel') {
                 const adminNav = document.getElementById('nav-admin');
                 if (adminNav) {
                     adminNav.classList.remove('text-stone-500');
-                    adminNav.classList.add('text-amber-500', 'font-black');
+                    adminNav.classList.add('text-amber-500', 'font-black', 'scale-125', 'transition-transform');
                     adminNav.setAttribute('aria-current', 'page');
                 }
             }
@@ -3893,66 +3893,7 @@
             window.mostrarToast("Disparo cancelado.");
         };
 
-        // Navegação por gesto lateral nas telas principais do app.
-        window.iniciarNavegacaoPorGesto = function() {
-            const telas = ['dashboard', 'jogadores', 'artilharia-ver', 'alertas-ver', 'busca-ver', 'historico-sumulas', 'financeiro-ver', 'regras-ver'];
-            let inicioX = 0;
-            let inicioY = 0;
-            let gestoAtivo = false;
-            let gestoHorizontal = false;
-
-            document.addEventListener('touchstart', function(event) {
-                const toque = event.touches?.[0];
-                const elemento = event.target;
-                if (!toque || !elemento?.closest) return;
-                const bloqueado = elemento.closest('input, select, textarea, button, a, [data-no-swipe], .overflow-x-auto');
-                gestoAtivo = !bloqueado;
-                gestoHorizontal = false;
-                if (gestoAtivo) {
-                    inicioX = toque.clientX;
-                    inicioY = toque.clientY;
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchmove', function(event) {
-                if (!gestoAtivo) return;
-                const toque = event.touches?.[0];
-                if (!toque) return;
-                const dx = toque.clientX - inicioX;
-                const dy = toque.clientY - inicioY;
-                if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.15) {
-                    gestoHorizontal = true;
-                    // Evita que um gesto horizontal seja interpretado como rolagem.
-                    if (event.cancelable) event.preventDefault();
-                } else if (Math.abs(dy) > 18 && Math.abs(dy) > Math.abs(dx)) {
-                    gestoAtivo = false;
-                }
-            }, { passive: false });
-
-            document.addEventListener('touchend', function(event) {
-                if (!gestoAtivo || !gestoHorizontal) {
-                    gestoAtivo = false;
-                    gestoHorizontal = false;
-                    return;
-                }
-                const toque = event.changedTouches?.[0];
-                if (!toque) return;
-                const deslocamentoX = toque.clientX - inicioX;
-                gestoAtivo = false;
-                gestoHorizontal = false;
-                if (Math.abs(deslocamentoX) < 55) return;
-
-                const atual = document.querySelector('.tab-content.active')?.id;
-                const indice = telas.indexOf(atual);
-                if (indice < 0) return;
-                const proximoIndice = deslocamentoX < 0 ? indice + 1 : indice - 1;
-                if (proximoIndice >= 0 && proximoIndice < telas.length) {
-                    window.switchTab(telas[proximoIndice]);
-                }
-            }, { passive: true });
-        };
-
-        window.iniciarNavegacaoPorGesto();
+        // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
 
 </body>
