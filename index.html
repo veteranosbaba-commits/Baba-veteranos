@@ -2758,15 +2758,24 @@
             const pageTitle = document.getElementById('page-title-bar');
             if (pageTitle) pageTitle.textContent = (nomes[tabId] || tabId).toUpperCase();
 
-            // Atualiza nav ativa no rodapé
+            // Atualiza de forma confiável o item ativo no rodapé.
             document.querySelectorAll('.fixed.bottom-0 button').forEach(b => {
-                b.className = "flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500";
+                b.classList.remove('text-emerald-400', 'text-amber-500', 'font-black');
+                b.classList.add('text-stone-500');
+                b.removeAttribute('aria-current');
             });
             const activeNav = document.getElementById('nav-' + tabId);
-            if(activeNav) activeNav.className = "flex flex-col items-center justify-center w-12 text-emerald-400 font-black transition";
-            else if (tabId === 'admin-panel') {
+            if (activeNav) {
+                activeNav.classList.remove('text-stone-500');
+                activeNav.classList.add('text-emerald-400', 'font-black');
+                activeNav.setAttribute('aria-current', 'page');
+            } else if (tabId === 'admin-panel') {
                 const adminNav = document.getElementById('nav-admin');
-                if(adminNav) adminNav.className = "flex flex-col items-center justify-center w-12 text-amber-500 font-black transition";
+                if (adminNav) {
+                    adminNav.classList.remove('text-stone-500');
+                    adminNav.classList.add('text-amber-500', 'font-black');
+                    adminNav.setAttribute('aria-current', 'page');
+                }
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -3889,36 +3898,56 @@
             const telas = ['dashboard', 'jogadores', 'artilharia-ver', 'alertas-ver', 'busca-ver', 'historico-sumulas', 'financeiro-ver', 'regras-ver'];
             let inicioX = 0;
             let inicioY = 0;
-            let alvoValido = false;
+            let gestoAtivo = false;
+            let gestoHorizontal = false;
 
             document.addEventListener('touchstart', function(event) {
-                const toque = event.touches && event.touches[0];
-                if (!toque) return;
+                const toque = event.touches?.[0];
                 const elemento = event.target;
-                const bloqueado = elemento.closest('input, select, textarea, button, a, [data-no-swipe]');
-                alvoValido = !bloqueado && !elemento.closest('.overflow-x-auto');
-                if (alvoValido) {
+                if (!toque || !elemento?.closest) return;
+                const bloqueado = elemento.closest('input, select, textarea, button, a, [data-no-swipe], .overflow-x-auto');
+                gestoAtivo = !bloqueado;
+                gestoHorizontal = false;
+                if (gestoAtivo) {
                     inicioX = toque.clientX;
                     inicioY = toque.clientY;
                 }
             }, { passive: true });
 
+            document.addEventListener('touchmove', function(event) {
+                if (!gestoAtivo) return;
+                const toque = event.touches?.[0];
+                if (!toque) return;
+                const dx = toque.clientX - inicioX;
+                const dy = toque.clientY - inicioY;
+                if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+                    gestoHorizontal = true;
+                    // Evita que um gesto horizontal seja interpretado como rolagem.
+                    if (event.cancelable) event.preventDefault();
+                } else if (Math.abs(dy) > 18 && Math.abs(dy) > Math.abs(dx)) {
+                    gestoAtivo = false;
+                }
+            }, { passive: false });
+
             document.addEventListener('touchend', function(event) {
-                if (!alvoValido) return;
-                const toque = event.changedTouches && event.changedTouches[0];
+                if (!gestoAtivo || !gestoHorizontal) {
+                    gestoAtivo = false;
+                    gestoHorizontal = false;
+                    return;
+                }
+                const toque = event.changedTouches?.[0];
                 if (!toque) return;
                 const deslocamentoX = toque.clientX - inicioX;
-                const deslocamentoY = toque.clientY - inicioY;
-                alvoValido = false;
+                gestoAtivo = false;
+                gestoHorizontal = false;
+                if (Math.abs(deslocamentoX) < 55) return;
 
-                // Ignora toques curtos e movimentos verticais de rolagem.
-                if (Math.abs(deslocamentoX) < 65 || Math.abs(deslocamentoY) > Math.abs(deslocamentoX) * 0.75) return;
                 const atual = document.querySelector('.tab-content.active')?.id;
                 const indice = telas.indexOf(atual);
                 if (indice < 0) return;
                 const proximoIndice = deslocamentoX < 0 ? indice + 1 : indice - 1;
                 if (proximoIndice >= 0 && proximoIndice < telas.length) {
-                    switchTab(telas[proximoIndice]);
+                    window.switchTab(telas[proximoIndice]);
                 }
             }, { passive: true });
         };
