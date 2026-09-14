@@ -1422,6 +1422,31 @@
             if (pendEl) pendEl.innerHTML = pendentesHtml || '<p class="text-xs text-emerald-400 p-2">Tudo em dia!</p>';
             if (suspEl) suspEl.innerHTML = suspensosHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhum suspenso.</p>';
         }
+
+        // Renderização independente da lista de gols, usada ao abrir a aba ou trocar o filtro.
+        window.renderDashArtilharia = function() {
+            const filtro = document.getElementById('artilharia-filtro')?.value || 'geral';
+            const lista = document.getElementById('dash-artilharia');
+            if (!lista) return;
+            let artilheiros = (window.atletasCache || []).filter(a => filtro === 'geral' || a.time === filtro);
+            artilheiros = artilheiros
+                .map(a => ({ ...a, gols: Number(a.gols) || 0 }))
+                .filter(a => a.gols > 0)
+                .sort((a, b) => b.gols - a.gols);
+            lista.innerHTML = artilheiros.length ? artilheiros.map((a, idx) => {
+                const medalha = idx === 0 ? '<i class="fa-solid fa-trophy text-amber-400 mr-2"></i>'
+                    : idx === 1 ? '<i class="fa-solid fa-trophy text-stone-300 mr-2"></i>'
+                    : idx === 2 ? '<i class="fa-solid fa-trophy text-amber-700 mr-2"></i>'
+                    : `<span class="font-mono text-stone-500 mr-2">${idx + 1}º</span>`;
+                return `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center text-sm">
+                    <div class="flex items-center">${medalha}<div class="leading-tight">
+                        <p class="font-black text-xs uppercase text-white">${a.nome || 'Sem nome'}</p>
+                        <p class="text-[9px] font-bold ${a.time === 'FLUMINENSE' ? 'text-emerald-500' : 'text-stone-400'} uppercase tracking-widest">${a.time || ''}</p>
+                    </div></div>
+                    <span class="text-xs font-black text-white bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-700 flex items-center gap-1.5"><i class="fa-solid fa-soccer-ball text-[10px] text-emerald-400"></i>${a.gols}</span>
+                </li>`;
+            }).join('') : '<li class="text-center py-10 opacity-30"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-xs italic">Nenhum gol registrado.</p></li>';
+        };
         
         window.filterTimeList = function(time) {
             window.timeFiltroAtual = time;
@@ -2708,6 +2733,10 @@
             // Renderiza notificações ao abrir a aba
             if (tabId === 'notificacoes-ver') {
                 window.renderizarNotificacoes();
+            }
+            // Garante que a artilharia seja atualizada ao abrir a aba.
+            if (tabId === 'artilharia-ver' && typeof window.renderDashArtilharia === 'function') {
+                window.renderDashArtilharia();
             }
 
             // Atualiza nome da página no topo
