@@ -210,8 +210,6 @@
             const ano = new Date().getFullYear();
             if (pagamentos[`${ano}-${mesAtual}`]?.pago === true) return true;
             if (pagamentos[`${ano}-${semZero}`]?.pago === true) return true;
-            // Verifica se foi abatida do crédito
-            if (atleta && (atleta.abatimentos || []).some(ab => ab.mes === mesAtual && ab.motivo === 'Mensalidade ' + mesAtual)) return true;
             return false;
         };
         
@@ -440,13 +438,7 @@
                 <div id="financeiro-socios-acordeao" class="space-y-1"></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
-                    <h4 class="font-black text-emerald-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
-                        <i class="fa-solid fa-circle-plus mr-2"></i>Aportes Extras
-                    </h4>
-                    <div id="financeiro-aportes-acordeao" class="space-y-1"></div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-gavel mr-2"></i>Multas Pagas
@@ -701,14 +693,11 @@
                         <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse min-w-[400px]">
+                        <table class="w-full text-left text-xs border-collapse min-w-[260px]">
                             <thead>
                                 <tr class="bg-stone-800 text-stone-400 border-b border-stone-700">
                                     <th class="p-1.5 text-left">Nome</th>
-                                    <th class="p-1.5 text-center w-28">Mensalidade</th>
-                                    <th class="p-1.5 text-center w-16">Crédito</th>
-                                    <th class="p-1.5 text-center w-24">Extra</th>
-                                    <th class="p-1.5 text-center w-16">Ação</th>
+                                    <th class="p-1.5 text-center">Mensalidade</th>
                                 </tr>
                             </thead>
                             <tbody id="adm-mensalidades-tabela"></tbody>
@@ -1212,16 +1201,12 @@
                                         return arq;
                                     });
                                 }
-                                // Migra extra antigo para aportes array
-                                if (p.extra && Number(p.extra) > 0 && (!p.aportes || p.aportes.length === 0)) {
-                                    if (!p.aportes) p.aportes = [];
-                                    p.aportes.push({ valor: Number(p.extra), motivo: 'Aporte Extra', paga: true });
-                                }
                                 delete p.extra;
-                                if (!p.aportes) p.aportes = [];
+                                delete p.aportes;
+                                delete p.aportesArquivadosHistorico;
                             });
                         }
-                        a.abatimentos = a.abatimentos || [];
+                        delete a.abatimentos;
                         delete a.creditoUtilizado;
                     });
                 }
@@ -1311,17 +1296,7 @@
             window.atletasCache.forEach(a => {
                 if (a.pagamentos) {
                     Object.keys(a.pagamentos).forEach(mes => {
-                        // Se foi paga com crédito (abatimento), não soma de novo (já está nos aportes)
-                        const abatida = (a.abatimentos || []).some(ab => ab.mes === mes && ab.motivo === 'Mensalidade ' + mes);
-                        if (a.pagamentos[mes].pago && !abatida) totalArrecadado += 25;
-                        if (a.pagamentos[mes].aportes) {
-                            a.pagamentos[mes].aportes.forEach(ap => { 
-                                if(ap.paga) totalArrecadado += Number(ap.valor); 
-                            });
-                        }
-                        if (a.pagamentos[mes].aportesArquivadosHistorico) {
-                            a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
-                        }
+                        if (a.pagamentos[mes].pago) totalArrecadado += 25;
                         if (a.pagamentos[mes].multas) {
                             a.pagamentos[mes].multas.forEach(m => { 
                                 if(m.paga) totalArrecadado += Number(m.valor); 
@@ -1398,9 +1373,7 @@
                     });
                 }
                 
-                // Se tiver crédito, abate do débito
-                const credito = window.calcularCreditoAtleta(a);
-                const totalDebito = Math.max(0, mensalidadeDebito + multasDebito - credito);
+                const totalDebito = mensalidadeDebito + multasDebito;
                 
                 if (totalDebito > 0) {
                     let detalhes = [];
@@ -1605,12 +1578,6 @@
                                 </div>
                             </div>
 
-                            <div class="bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/10">
-                                <p class="text-[9px] font-bold text-emerald-400 uppercase mb-1">Aportes Extras / Créditos</p>
-                                <div class="max-h-24 overflow-y-auto space-y-0.5">
-                                    ${extrasHtml || '<p class="text-[9px] text-stone-600 italic">Nenhum aporte registrado</p>'}
-                                </div>
-                            </div>
                         </div>
                     </div>`;
                 });
@@ -2089,7 +2056,7 @@
             const mesAtual = window.getMesAtual();
             if (!a.pagamentos) a.pagamentos = {};
             if (!a.pagamentos[mesAtual]) {
-                a.pagamentos[mesAtual] = { pago: false, aportes: [], multas: [] };
+                a.pagamentos[mesAtual] = { pago: false, multas: [] };
             }
             
             // Garantir que a lista de multas existe
@@ -2211,10 +2178,6 @@
                             ${multasAtivas ? `
                             <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
                                 ${multasAtivas}
-                            </div>` : ''}
-                            ${aportesAtivos ? `
-                            <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
-                                ${aportesAtivos}
                             </div>` : ''}
                         </div>`;
                 });
@@ -2611,101 +2574,23 @@
             const mes = document.getElementById('adm-mes-filtro')?.value || '05';
             let html = '';
             window.atletasCache.forEach(a => {
-                const dados = a.pagamentos?.[mes] || { pago: false, aportes: [] };
-                const totalAportes = (dados.aportes || []).reduce((s, ap) => s + Number(ap.valor), 0);
-                const credito = window.calcularCreditoAtleta(a);
-                const totalHistorico = window.calcularTotalAportesAtleta(a);
-                const pago = dados.pago;
+                const dados = a.pagamentos?.[mes] || { pago: false };
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
-                    <td class="p-1.5">
-                        ${pago ? '<span class="text-emerald-400 font-black">✅ PAGO</span>' 
-                               : credito >= 25 ? `<button onclick="window.abaterMensalidade('${a.id}','${mes}')" class="bg-amber-600 hover:bg-amber-500 text-black px-1.5 py-1 rounded text-[9px] font-black">Abater (R$ ${credito.toFixed(0)})</button>`
-                                               : '<span class="text-stone-600">—</span>'}
-                    </td>
-                    <td class="p-1.5"><span class="text-amber-400 font-bold text-[11px]">R$ ${credito.toFixed(0)}</span><br><span class="text-stone-500 text-[8px]">de R$ ${totalHistorico.toFixed(0)}</span></td>
-                    <td class="p-1.5"><input type="number" id="extra-${a.id}" value="${totalAportes || ''}" step="any" class="bg-stone-800 text-center rounded p-1 w-14 text-[11px] text-white outline-none" onkeydown="if(event.key==='Enter')window.salvarAporteLinha('${a.id}','${mes}')"></td>
-                    <td class="p-1.5"><button onclick="window.salvarAporteLinha('${a.id}','${mes}')" class="bg-teal-600 hover:bg-teal-500 text-black px-2 py-1 rounded text-[9px] font-black">OK</button></td>
+                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
             if (tabela) tabela.innerHTML = html;
         };
-        
-        window.calcularCreditoAtleta = function(a) {
-            let totalAportes = 0;
-            if (a.pagamentos) {
-                Object.values(a.pagamentos).forEach(p => {
-                    (p.aportes || []).forEach(ap => { if (ap.paga) totalAportes += Number(ap.valor); });
-                });
-            }
-            // Subtrai abatimentos já registrados
-            const totalAbatido = (a.abatimentos || []).reduce((s, ab) => s + Number(ab.valor), 0);
-            return Math.max(0, totalAportes - totalAbatido);
-        };
-        
-        window.calcularTotalAportesAtleta = function(a) {
-            let total = 0;
-            if (a.pagamentos) {
-                Object.values(a.pagamentos).forEach(p => {
-                    (p.aportes || []).forEach(ap => { if (ap.paga) total += Number(ap.valor); });
-                });
-            }
-            return total;
-        };
-        
-        window.abaterMensalidade = function(id, mes) {
+
+        window.toggleMensalidade = function(id, mes, isChecked) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
-            const credito = window.calcularCreditoAtleta(a);
-            if (credito < 25) { window.mostrarToast("Crédito insuficiente!"); return; }
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] };
-            a.pagamentos[mes].pago = true;
-            if (!a.abatimentos) a.abatimentos = [];
-            a.abatimentos.push({ valor: 25, motivo: 'Mensalidade ' + mes, mes: mes, data: new Date().toISOString() });
-            const restante = window.calcularCreditoAtleta(a);
-            window.mostrarToast(`✅ Mensalidade abatida do crédito! Saldo: R$ ${restante.toFixed(2)}`);
+            if (!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, multas: [] };
+            a.pagamentos[mes].pago = isChecked;
             window.salvarNoStorage();
-            window.loadAdmFinancas();
-        };
-        
-        window.toggleMensalidade = function(id, mes, isChecked) { 
-            const a = window.atletasCache.find(j => j.id === id); 
-            if (!a) return;
-            if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
-            if (isChecked) {
-                // Se tem crédito, abate automaticamente
-                const credito = window.calcularCreditoAtleta(a);
-                if (credito >= 25) {
-                    return window.abaterMensalidade(id, mes);
-                }
-            } else {
-                // Se desmarcar, remove o abatimento dessa mensalidade se existir
-                if (a.abatimentos) {
-                    a.abatimentos = a.abatimentos.filter(ab => ab.mes !== mes || ab.motivo !== 'Mensalidade ' + mes);
-                }
-            }
-            a.pagamentos[mes].pago = isChecked; 
-            window.salvarNoStorage(); 
-        };
-        
-        window.salvarAporteLinha = function(id, mes) { 
-            const val = document.getElementById(`extra-${id}`)?.value; 
-            const a = window.atletasCache.find(j => j.id === id); 
-            if (!a) return;
-            if(!a.pagamentos) a.pagamentos = {}; 
-            if(!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, aportes: [], multas: [] }; 
-            const valNum = parseFloat(val) || 0;
-            const totalAtual = (a.pagamentos[mes].aportes || []).reduce((s, ap) => s + Number(ap.valor), 0);
-            const diferenca = valNum - totalAtual;
-            if (diferenca === 0) { window.mostrarToast("Valor igual ao atual."); return; }
-            const sinal = diferenca > 0 ? 'Adicionado' : 'Abatido';
-            a.pagamentos[mes].aportes.push({ valor: diferenca, motivo: 'Aporte Extra', paga: true });
-            window.mostrarToast(`Aporte ${sinal}: R$ ${Math.abs(diferenca).toFixed(2)} | Crédito disponível: R$ ${window.calcularCreditoAtleta(a).toFixed(2)}`); 
-            window.salvarNoStorage(); 
-            window.loadAdmFinancas();
         };
         
         // =====================================================
