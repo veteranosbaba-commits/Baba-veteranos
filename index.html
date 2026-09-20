@@ -3260,7 +3260,7 @@
         // Sincroniza notificações do Firebase ao abrir o app e também em tempo real.
         window.iniciarEscutaNotificacoesRemotas = function() {
             if (!window.dbRef) return;
-            if (window._escutaNotifRemota) { window.sincronizarNotificacoesRemotas?.(); return;
+            if (window._escutaNotifRemota) { window.sincronizarNotificacoesRemotas?.(); return; }
             const ref = window.dbRef.child('notificacoes_remotas');
             let vistas = {};
             try { vistas = JSON.parse(localStorage.getItem('baba_notificacoes_remotas_vistas') || '{}'); } catch(e) {}
