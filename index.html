@@ -1100,6 +1100,7 @@
                 }
                 window.dbRef = firebase.database().ref('baba');
                 window.firebaseInicializado = true;
+                setTimeout(() => window.iniciarEscutaNotificacoesRemotas?.(), 500);
                 document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
                 return true;
             } catch (error) {
@@ -3256,8 +3257,25 @@
             } catch (e) {}
         };
 
+        // Escuta notificações publicadas pelo ADM em qualquer aparelho conectado.
+        window.iniciarEscutaNotificacoesRemotas = function() {
+            if (!window.dbRef || window._escutaNotifRemota) return;
+            const ref = window.dbRef.child('notificacoes_remotas');
+            ref.once('value').then(snapshot => {
+                const existentes = {};
+                snapshot.forEach(child => { existentes[child.key] = true; });
+                ref.on('child_added', child => {
+                    if (existentes[child.key]) return;
+                    existentes[child.key] = true;
+                    const n = child.val() || {};
+                    window.adicionarNotificacao(n.titulo, n.mensagem, n.tipo, n.link || '', n.detalhes || null, true);
+                });
+                window._escutaNotifRemota = true;
+            }).catch(() => {});
+        };
+
         // Adiciona uma notificação com detalhes
-        window.adicionarNotificacao = function(titulo, mensagem, tipo, link, detalhes) {
+        window.adicionarNotificacao = function(titulo, mensagem, tipo, link, detalhes, recebidaRemotamente) {
             window.carregarNotificacoes();
             window.notificacoesCache.unshift({
                 id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -3807,8 +3825,21 @@
                 }
             }
             
-            // Adiciona a notificação real na central interna (global - Opção B)
-            window.adicionarNotificacao(tituloNotif, msgNotif, tipo === 'geral' ? 'info' : tipo, '', detalhes);
+            // Publica no Firebase para que os demais aparelhos recebam em tempo real.
+            const notificacaoRemota = {
+                titulo: tituloNotif,
+                mensagem: msgNotif,
+                tipo: tipo === 'geral' ? 'info' : tipo,
+                link: '',
+                detalhes: detalhes || null,
+                data: new Date().toISOString()
+            };
+            if (window.dbRef) {
+                window.dbRef.child('notificacoes_remotas').push(notificacaoRemota);
+            }
+
+            // Adiciona também neste aparelho, sem esperar o Firebase.
+            window.adicionarNotificacao(tituloNotif, msgNotif, tipo === 'geral' ? 'info' : tipo, '', detalhes, true);
             
             window.mostrarToast("✅ Notificação enviada com sucesso!");
             document.getElementById('notificacao-preview').classList.add('hidden');
