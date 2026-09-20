@@ -1,5 +1,5 @@
 // Service Worker - BABA VETERANOS v3 - alerta sonoro/vibração atualizado
-const CACHE_NAME = 'baba-veteranos-v3';
+const CACHE_NAME = 'baba-veteranos-v4';
 const urlsToCache = [
   '/Baba-veteranos/',
   '/Baba-veteranos/index.html',
@@ -51,7 +51,6 @@ self.addEventListener('push', event => {
       body: data.body || 'Nova notificação do Baba Veteranos',
       icon: '/Baba-veteranos/icon-192.png',
       badge: '/Baba-veteranos/icon-192.png',
-      image: '/Baba-veteranos/icon-512.png',
       vibrate: [200, 100, 200],
       silent: false,
       data: { url: data.url || '/Baba-veteranos/' }
@@ -71,7 +70,6 @@ self.addEventListener('message', event => {
       body: event.data.body || '',
       icon: '/Baba-veteranos/icon-192.png',
       badge: '/Baba-veteranos/icon-192.png',
-      image: '/Baba-veteranos/icon-512.png',
       vibrate: [200, 100, 200],
       silent: false,
       tag: event.data.tag || 'baba-notification',
