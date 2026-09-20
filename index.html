@@ -3259,7 +3259,8 @@
 
         // Sincroniza notificações do Firebase ao abrir o app e também em tempo real.
         window.iniciarEscutaNotificacoesRemotas = function() {
-            if (!window.dbRef || window._escutaNotifRemota) return;
+            if (!window.dbRef) return;
+            if (window._escutaNotifRemota) { window.sincronizarNotificacoesRemotas?.(); return;
             const ref = window.dbRef.child('notificacoes_remotas');
             let vistas = {};
             try { vistas = JSON.parse(localStorage.getItem('baba_notificacoes_remotas_vistas') || '{}'); } catch(e) {}
@@ -3283,6 +3284,15 @@
                 salvarVistas();
             };
 
+            window.sincronizarNotificacoesRemotas = function() {
+                ref.once('value').then(snapshot => {
+                    const itens = [];
+                    snapshot.forEach(child => itens.push({ key: child.key, valor: child.val() || {} }));
+                    itens.sort((a,b) => String(a.valor.data || '').localeCompare(String(b.valor.data || '')));
+                    itens.forEach(item => entregar(item.key, item.valor));
+                }).catch(() => {});
+            };
+
             // Busca o que foi lançado enquanto este aparelho estava fechado.
             ref.once('value').then(snapshot => {
                 const itens = [];
@@ -3295,6 +3305,17 @@
                 window._escutaNotifRemota = true;
             }).catch(() => {});
         };
+
+        // Reconfere notificações ao voltar do segundo plano, ao recuperar conexão
+        // e periodicamente enquanto o app estiver aberto.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') window.iniciarEscutaNotificacoesRemotas?.();
+        });
+        window.addEventListener('pageshow', () => window.iniciarEscutaNotificacoesRemotas?.());
+        window.addEventListener('online', () => window.iniciarEscutaNotificacoesRemotas?.());
+        setInterval(() => {
+            if (document.visibilityState === 'visible') window.iniciarEscutaNotificacoesRemotas?.();
+        }, 60000);
 
         // Adiciona uma notificação com detalhes
         window.adicionarNotificacao = function(titulo, mensagem, tipo, link, detalhes, recebidaRemotamente) {
