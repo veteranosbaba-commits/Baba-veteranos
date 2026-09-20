@@ -3257,19 +3257,41 @@
             } catch (e) {}
         };
 
-        // Escuta notificações publicadas pelo ADM em qualquer aparelho conectado.
+        // Sincroniza notificações do Firebase ao abrir o app e também em tempo real.
         window.iniciarEscutaNotificacoesRemotas = function() {
             if (!window.dbRef || window._escutaNotifRemota) return;
             const ref = window.dbRef.child('notificacoes_remotas');
+            let vistas = {};
+            try { vistas = JSON.parse(localStorage.getItem('baba_notificacoes_remotas_vistas') || '{}'); } catch(e) {}
+            window._notificacoesRemotasVistas = vistas;
+
+            const salvarVistas = () => {
+                const chaves = Object.keys(vistas).sort((a,b) => vistas[b] - vistas[a]).slice(0, 200);
+                const reduzido = {};
+                chaves.forEach(k => reduzido[k] = vistas[k]);
+                vistas = reduzido;
+                window._notificacoesRemotasVistas = vistas;
+                localStorage.setItem('baba_notificacoes_remotas_vistas', JSON.stringify(vistas));
+            };
+            const entregar = (key, n) => {
+                if (!n || vistas[key]) return;
+                const data = n.data ? new Date(n.data).getTime() : Date.now();
+                // Mantém uma janela de 30 dias para não despejar avisos muito antigos.
+                if (data < Date.now() - 30 * 24 * 60 * 60 * 1000) { vistas[key] = Date.now(); return; }
+                vistas[key] = Date.now();
+                window.adicionarNotificacao(n.titulo, n.mensagem, n.tipo, n.link || '', n.detalhes || null, true);
+                salvarVistas();
+            };
+
+            // Busca o que foi lançado enquanto este aparelho estava fechado.
             ref.once('value').then(snapshot => {
-                const existentes = {};
-                snapshot.forEach(child => { existentes[child.key] = true; });
-                ref.on('child_added', child => {
-                    if (existentes[child.key]) return;
-                    existentes[child.key] = true;
-                    const n = child.val() || {};
-                    window.adicionarNotificacao(n.titulo, n.mensagem, n.tipo, n.link || '', n.detalhes || null, true);
-                });
+                const itens = [];
+                snapshot.forEach(child => itens.push({ key: child.key, valor: child.val() || {} }));
+                itens.sort((a,b) => String(a.valor.data || '').localeCompare(String(b.valor.data || '')));
+                itens.forEach(item => entregar(item.key, item.valor));
+
+                // E acompanha novos lançamentos enquanto o app estiver aberto.
+                ref.on('child_added', child => entregar(child.key, child.val() || {}));
                 window._escutaNotifRemota = true;
             }).catch(() => {});
         };
@@ -3835,7 +3857,13 @@
                 data: new Date().toISOString()
             };
             if (window.dbRef) {
-                window.dbRef.child('notificacoes_remotas').push(notificacaoRemota);
+                const novaRef = window.dbRef.child('notificacoes_remotas').push();
+                const chaveRemota = novaRef.key;
+                novaRef.set(notificacaoRemota);
+                if (chaveRemota && window._notificacoesRemotasVistas) {
+                    window._notificacoesRemotasVistas[chaveRemota] = Date.now();
+                    localStorage.setItem('baba_notificacoes_remotas_vistas', JSON.stringify(window._notificacoesRemotasVistas));
+                }
             }
 
             // Adiciona também neste aparelho, sem esperar o Firebase.
