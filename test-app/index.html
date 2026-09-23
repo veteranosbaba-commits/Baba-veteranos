@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Baba Veteranos · Ambiente de teste</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--card:#182436;--line:#293a50;--text:#edf4ff;--muted:#a9bad0;--blue:#80bcff;--green:#88e0b0;--red:#ff9e9e}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0d1727,#17283a);font:16px system-ui,sans-serif;color:var(--text);min-height:100vh;padding:28px 16px}.wrap{max-width:850px;margin:auto}.banner{border:1px solid #725a16;background:#2b281b;color:#ffdf86;padding:12px 16px;border-radius:12px;font-weight:700}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 10px 30px #0002}h1{font-size:1.55rem;margin:8px 0}h2{font-size:1.15rem;margin:0 0 14px}.muted{color:var(--muted);line-height:1.5}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input{background:#0e1928;color:var(--text);border:1px solid #40546d;border-radius:9px;padding:12px;min-width:220px;flex:1}button{background:#2563a6;color:white;border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}button.secondary{background:#34465c}button:disabled{opacity:.5;cursor:not-allowed}.status{padding:11px;border-radius:9px;background:#0e1928;border:1px solid var(--line);white-space:pre-wrap;overflow-wrap:anywhere}.log{max-height:320px;overflow:auto;font:13px ui-monospace,monospace;line-height:1.5}.ok{color:var(--green)}.bad{color:var(--red)}[hidden]{display:none!important}footer{color:var(--muted);font-size:.85rem;padding:10px}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head><body><main class="wrap">
+<div class="banner">AMBIENTE ISOLADO DE TESTE — contas e dados sintéticos. Não use dados reais.</div>
+<h1>Baba Veteranos · Validação de login e permissões</h1>
+<p class="muted">Este endereço aponta exclusivamente para o projeto de teste Firebase. Não registra notificações, não ativa service worker e não contém referência ao banco de produção.</p>
+<section class="card" id="loginCard"><h2>Conta de teste</h2><div class="row"><input id="email" type="email" autocomplete="username" placeholder="E-mail de teste"><input id="password" type="password" autocomplete="current-password" placeholder="Senha (definida por você)"></div><div class="row" style="margin-top:12px"><button id="signin">Entrar</button><button id="signup" class="secondary">Criar conta de teste</button></div><p class="muted">A conta recém-criada ainda não recebe função automaticamente; um administrador precisa vinculá-la pelo UID no projeto de teste.</p></section>
+<section class="card"><h2>Sessão e rota por função</h2><div id="session" class="status">Verificando estado…</div><div id="roleActions" class="row" style="margin-top:12px" hidden><button id="runTests">Executar testes de permissões</button><button id="logout" class="secondary">Sair</button></div></section>
+<section class="card"><h2>Leitura pública de elenco fictício</h2><div id="publicData" class="status">Carregando…</div></section>
+<section class="card"><h2>Resultados dos testes de runtime</h2><div id="results" class="status log">Nenhum teste de runtime foi executado nesta sessão.</div></section>
+<footer>Ambiente independente · Firebase Authentication + Realtime Database · sem cobrança habilitada pelo app.</footer>
+</main>
+<script>
+(() => {
+  const cfg={apiKey:"AIzaSyCgHDw9YYsIjwEGCpeuh8-ndEWl_eWX4Ao",authDomain:"baba-veteranos---teste-auth.firebaseapp.com",databaseURL:"https://baba-veteranos---teste-auth-default-rtdb.firebaseio.com",projectId:"baba-veteranos---teste-auth",storageBucket:"baba-veteranos---teste-auth.firebasestorage.app",messagingSenderId:"693322003433",appId:"1:693322003433:web:23a0bb93a914adf0f3d178"};
+  firebase.initializeApp(cfg); const auth=firebase.auth(), db=firebase.database();
+  const $=id=>document.getElementById(id), log=[];
+  function msg(s){$('session').textContent=s}
+  function out(s,ok){log.push(`${ok?'PASS':'FAIL'} — ${s}`);$('results').innerHTML=log.map(x=>`<div class="${x.startsWith('PASS')?'ok':'bad'}">${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</div>`).join('')}
+  async function attempt(label,fn,shouldPass){try{const v=await fn();const pass=shouldPass;out(`${label}${v!==undefined?`: ${JSON.stringify(v)}`:''}`,pass);return pass}catch(e){const pass=!shouldPass;out(`${label}: ${e.code||e.message}`,pass);return pass}}
+  async function loadPublic(){try{const s=await db.ref('baba/public/data').once('value');const v=s.val();$('publicData').textContent=v?JSON.stringify(v,null,2):'Leitura pública autorizada; dataset ainda vazio.'}catch(e){$('publicData').textContent=`Leitura pública falhou: ${e.code||e.message}`}}
+  $('signin').onclick=async()=>{try{await auth.signInWithEmailAndPassword($('email').value.trim(),$('password').value);msg('Autenticação concluída. Consultando função…')}catch(e){msg(`Falha ao entrar: ${e.code||e.message}`)}};
+  $('signup').onclick=async()=>{try{await auth.createUserWithEmailAndPassword($('email').value.trim(),$('password').value);msg('Conta criada no projeto de teste. Sem função atribuída até ser vinculada no console.')}catch(e){msg(`Falha ao criar: ${e.code||e.message}`)}};
+  $('logout').onclick=()=>auth.signOut();
+  $('runTests').onclick=async()=>{
+    log.length=0; $('results').textContent='Executando…'; const u=auth.currentUser; if(!u)return;
+    await attempt('Leitura pública (baba/public/data)',async()=>{const s=await db.ref('baba/public/data').once('value');return s.exists()},true);
+    if(window.testRole==='admin'){
+      await attempt('Admin lê os registros privados sintéticos',async()=>{const s=await db.ref('baba/private/athletes').once('value');return Object.keys(s.val()||{})},true);
+      await attempt('Admin lê o caminho financeiro de teste',async()=>{const s=await db.ref('baba/private/finance').once('value');return s.exists()},true);
+      await attempt('Admin grava marcador de teste em dado público',async()=>{const r=db.ref('baba/public/data/qaWriteProbe');await r.set({actor:'admin-test',at:Date.now()});return 'escrita concluída'},true);
+      await attempt('Admin grava registro privado sintético',async()=>{await db.ref('baba/private/athletes/athlete-demo-001/qaWriteProbe').set('ok');return 'escrita concluída'},true);
+    } else if(window.testRole==='athlete'){
+      const id=String(window.testAthleteId||'');
+      await attempt(`Atleta lê o próprio registro (${id})`,async()=>{const s=await db.ref(`baba/private/athletes/${id}`).once('value');return s.exists()},true);
+      await attempt('Atleta tenta ler o registro de outro atleta (esperado: negado)',async()=>{const s=await db.ref(`baba/private/athletes/${id==='athlete-demo-001'?'athlete-demo-002':'athlete-demo-001'}`).once('value');return s.exists()},false);
+      await attempt('Atleta tenta ler finanças (esperado: negado)',async()=>{const s=await db.ref('baba/private/finance').once('value');return s.exists()},false);
+      await attempt('Atleta tenta gravar no próprio registro (esperado: negado)',async()=>{await db.ref(`baba/private/athletes/${id}/qaWriteProbe`).set('não permitido');return 'escrita concluída'},false);
+    } else {out('Conta autenticada, sem função válida: rota privada negada até associação pelo administrador.',true)}
+  };
+  auth.onAuthStateChanged(async user=>{
+    $('loginCard').hidden=!!user;$('roleActions').hidden=!user;
+    if(!user){window.testRole=null;window.testAthleteId=null;msg('Sem sessão. Entre com uma conta de teste.');await loadPublic();return}
+    msg(`Autenticado no projeto de teste · ${user.email||user.uid}\nUID: ${user.uid}\nValidando função…`);await loadPublic();
+    try{const a=await db.ref(`baba/roles/admins/${user.uid}`).once('value');if(a.val()===true){window.testRole='admin';msg(`Rota: ADMINISTRADOR\nUID: ${user.uid}\nProjeto: baba-veteranos---teste-auth`);return}
+      const p=(await db.ref(`baba/roles/users/${user.uid}`).once('value')).val();if(p&&p.role==='athlete'&&p.athleteId){window.testRole='athlete';window.testAthleteId=String(p.athleteId);msg(`Rota: ATLETA · registro ${p.athleteId}\nUID: ${user.uid}\nProjeto: baba-veteranos---teste-auth`);return}
+      window.testRole='unassigned';msg(`Rota: CONTA AUTENTICADA SEM FUNÇÃO\nUID: ${user.uid}\nLeituras privadas bloqueadas; solicite associação pelo administrador do projeto de teste.`)
+    }catch(e){window.testRole='unassigned';msg(`Rota privada negada durante a validação da função: ${e.code||e.message}`)}
+  });
+})();
+</script></body></html>
