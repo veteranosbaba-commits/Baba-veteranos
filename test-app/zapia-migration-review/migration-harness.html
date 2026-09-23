@@ -1,0 +1,110 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teste isolado da migração — Baba Veteranos</title><style>body{font:16px system-ui;max-width:900px;margin:28px auto;padding:0 18px;background:#0c1017;color:#edf2f7}h1{color:#fde68a}.warning{background:#7f1d1d;padding:12px;border-radius:8px;font-weight:bold}.pass{color:#86efac}.fail{color:#fca5a5}li{margin:8px 0}.small{color:#cbd5e1}</style></head><body><div class="warning">AMBIENTE PÚBLICO DE TESTE — somente dados fictícios em memória. Nenhum Firebase é conectado.</div><h1>Verificação isolada da migração</h1><p class="small">Este harness executa a função de migração do rascunho local contra um RTDB simulado em memória. Ele não grava em Firebase nem usa dados reais.</p><p id="summary">Executando…</p><ol id="results"></ol><pre id="migration-status"></pre><script>
+window.migrarDadosLegados = async function() {
+            const status = document.getElementById('migration-status');
+            if (!window.isAdminLogado || !window.firebaseUser) {
+                if (status) status.textContent = 'Somente o administrador autenticado pode executar esta migração.';
+                return;
+            }
+            if (status) status.textContent = 'Lendo e validando os dados antigos…';
+            const normalizarParaComparacao = valor => Array.isArray(valor)
+                ? valor.map(normalizarParaComparacao)
+                : valor && typeof valor === 'object'
+                    ? Object.fromEntries(Object.keys(valor).sort().map(chave => [chave, normalizarParaComparacao(valor[chave])]))
+                    : valor;
+            const iguais = (a, b) => JSON.stringify(normalizarParaComparacao(a)) === JSON.stringify(normalizarParaComparacao(b));
+            let destinosGravados = false;
+            try {
+                const snapshot = await window.dbRef.once('value');
+                const legacy = snapshot.val() || {};
+                const destinosExistentes = [
+                    ['public/data', legacy.public?.data],
+                    ['private/athletes', legacy.private?.athletes],
+                    ['private/finance', legacy.private?.finance]
+                ].filter(([, valor]) => valor !== undefined && valor !== null).map(([caminho]) => caminho);
+                if (destinosExistentes.length) {
+                    if (status) status.textContent = `Migração interrompida sem sobrescrever: já existem dados em ${destinosExistentes.join(', ')}. Revise-os antes de tentar novamente.`;
+                    return;
+                }
+                const rows = Array.isArray(legacy.atletas) ? legacy.atletas : Object.values(legacy.atletas || {});
+                if (!rows.length) throw new Error('Não encontrei a lista antiga de atletas.');
+                const publicFields = new Set(['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos']);
+                const atletasPublicos = [];
+                const atletasPrivados = {};
+                const ids = new Set();
+                for (const atleta of rows) {
+                    if (!atleta || atleta.id === undefined || atleta.id === null || String(atleta.id) === '') throw new Error('Há atleta sem ID estável; interrompi sem apagar dados.');
+                    const id = String(atleta.id);
+                    if (ids.has(id)) throw new Error('Há IDs de atleta repetidos; interrompi sem apagar dados.');
+                    ids.add(id);
+                    atletasPublicos.push(Object.fromEntries(Object.entries(atleta).filter(([key]) => publicFields.has(key))));
+                    const privado = Object.fromEntries(Object.entries(atleta).filter(([key]) => !publicFields.has(key)));
+                    if (Object.keys(privado).length) atletasPrivados[id] = privado;
+                }
+                const dataPublica = {
+                    atletas: atletasPublicos,
+                    sumulas: legacy.sumulas || [],
+                    partidaEstatisticas: legacy.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 },
+                    historicoPlacares: legacy.historicoPlacares || [],
+                    ultimaAtualizacao: new Date().toISOString(),
+                    public_access: typeof legacy.public_access === 'boolean' ? legacy.public_access : true
+                };
+                const dadosFinanceirosPrivados = {
+                    gastos: legacy.gastos || [],
+                    socios: legacy.socios || [],
+                    patrocinios: legacy.patrocinios || []
+                };
+                await window.dbRef.update({
+                    'public/data': dataPublica,
+                    'private/athletes': atletasPrivados,
+                    'private/finance': dadosFinanceirosPrivados
+                });
+                destinosGravados = true;
+                const [publicCheck, athletesCheck, financeCheck] = await Promise.all([
+                    window.publicRef.child('data').once('value'),
+                    window.privateRef.child('athletes').once('value'),
+                    window.privateRef.child('finance').once('value')
+                ]);
+                const migratedPublic = publicCheck.val() || {};
+                const migratedAthletes = athletesCheck.val() || {};
+                const migratedFinance = financeCheck.val() || {};
+                const legacyAfter = (await window.dbRef.once('value')).val() || {};
+                const camposLegados = ['atletas', 'gastos', 'socios', 'patrocinios', 'sumulas', 'historicoPlacares', 'partidaEstatisticas', 'public_access', 'ultimaAtualizacao'];
+                const legadoPreservado = camposLegados.every(chave => iguais(legacy[chave], legacyAfter[chave]));
+                if (!iguais(dataPublica, migratedPublic) || !iguais(atletasPrivados, migratedAthletes) || !iguais(dadosFinanceirosPrivados, migratedFinance) || !legadoPreservado) {
+                    throw new Error('A conferência integral não bateu; os dados antigos foram mantidos para recuperação. Não publique as regras ainda.');
+                }
+                window.publicAthletesCache = migratedPublic.atletas || [];
+                window.privateAthletesCache = migratedAthletes;
+                window.privateFinanceCache = migratedFinance;
+                window.gastosCache = migratedFinance.gastos || [];
+                window.sociosCache = migratedFinance.socios || [];
+                window.patrociniosCache = migratedFinance.patrocinios || [];
+                window.aplicarCachePrivado();
+                window.renderizarTudo();
+                if (status) status.textContent = 'Migração conferida. Os dados antigos foram preservados; agora confira a tela pública e a área do administrador.';
+                window.mostrarToast('Cópia separada de dados concluída.');
+            } catch (error) {
+                if (status) status.textContent = destinosGravados
+                    ? `${error.message || 'A verificação da migração falhou.'} A cópia nova permanece para revisão; os dados antigos não foram apagados. Não tente novamente até revisar os destinos.`
+                    : (error.message || 'Falha na migração. Os dados antigos não foram apagados.');
+            }
+        };
+function clone(x){return x===undefined?undefined:JSON.parse(JSON.stringify(x))}
+function snapshot(v){return {val:()=>clone(v)}}
+function putPath(root,path,value){const parts=path.split('/');let node=root;for(let i=0;i<parts.length-1;i++){if(!node[parts[i]]||typeof node[parts[i]]!=='object')node[parts[i]]={};node=node[parts[i]]}node[parts[parts.length-1]]=clone(value)}
+function makeMock(seed,opts={}){let data=clone(seed),updates=0,rootReads=0,readsAfterUpdate=0;const dbRef={once:async()=>{rootReads++;return snapshot(data)},update:async patch=>{updates++;if(opts.failWrite)throw new Error('Falha de gravação sintética');for(const [p,v] of Object.entries(patch))putPath(data,p,v)}};const publicRef={child:key=>({once:async()=>{if(updates)readsAfterUpdate++;return snapshot(data.public&&data.public[key])}})};const privateRef={child:key=>({once:async()=>{if(updates)readsAfterUpdate++;let value=data.private&&data.private[key];if(opts.mismatchFinance&&key==='finance'&&updates)value={...(clone(value)||{}),gastos:[{id:'corrompido-sintetico'}]};return snapshot(value)}})};return {dbRef,publicRef,privateRef,get data(){return data},get updates(){return updates},get rootReads(){return rootReads},get readsAfterUpdate(){return readsAfterUpdate}}}
+function legacySeed(){return {atletas:[{id:'athlete-demo-001',nome:'Atleta Fictício Alfa',camisa:8,gols:1,telefone:'555-0101'}],gastos:[{id:'gasto-ficticio-1',valor:12.34,descricao:'teste'}],socios:[],patrocinios:[],sumulas:[],historicoPlacares:[],partidaEstatisticas:{placarFlu:0,placarBota:0,vitFlu:0,vitBota:0},public_access:true,ultimaAtualizacao:'original-sintetico'}}
+const legacyKeys=['atletas','gastos','socios','patrocinios','sumulas','historicoPlacares','partidaEstatisticas','public_access','ultimaAtualizacao'];
+function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function legacyView(o){const x={};for(const k of legacyKeys)if(Object.prototype.hasOwnProperty.call(o,k))x[k]=o[k];return x}
+function resetWindow(mock,admin=true){window.isAdminLogado=admin;window.firebaseUser={uid:'synthetic-admin'};window.dbRef=mock.dbRef;window.publicRef=mock.publicRef;window.privateRef=mock.privateRef;window.aplicarCachePrivado=()=>{};window.renderizarTudo=()=>{};window.mostrarToast=()=>{};document.getElementById('migration-status').textContent=''}
+async function runCase(name,fn){try{const detail=await fn();document.getElementById('results').insertAdjacentHTML('beforeend',`<li class="pass"><b>PASS</b> — ${name}: ${detail}</li>`);return true}catch(e){document.getElementById('results').insertAdjacentHTML('beforeend',`<li class="fail"><b>FAIL</b> — ${name}: ${String(e&&e.message||e)}</li>`);return false}}
+(async()=>{let passed=0,total=0;async function test(name,fn){total++;if(await runCase(name,fn))passed++}
+await test('Migração limpa copia os dados e preserva a origem',async()=>{const seed=legacySeed(),before=legacyView(seed),m=makeMock(seed);resetWindow(m);await window.migrarDadosLegados();if(m.updates!==1)throw Error('esperava 1 update');if(!same(before,legacyView(m.data)))throw Error('origem legada mudou');if(m.data.public.data.atletas[0].nome!=='Atleta Fictício Alfa')throw Error('atleta público não copiado');if(m.data.private.athletes['athlete-demo-001'].telefone!=='555-0101')throw Error('dado privado não copiado');if(m.data.private.finance.gastos[0].id!=='gasto-ficticio-1')throw Error('finanças privadas não copiadas');if(!document.getElementById('migration-status').textContent.includes('Migração conferida'))throw Error('mensagem de sucesso ausente');return '1 gravação; público/privado conferidos; legado intacto'});
+for(const [path,add] of [['public/data',o=>{o.public={data:{atletas:[]}}}],['private/athletes',o=>{o.private={athletes:{}}}],['private/finance',o=>{o.private={finance:{}}}]])await test(`Destino pré-existente ${path} interrompe sem sobrescrever`,async()=>{const seed=legacySeed(),before=legacyView(seed);add(seed);const m=makeMock(seed);resetWindow(m);await window.migrarDadosLegados();if(m.updates!==0)throw Error('houve escrita inesperada');if(!same(before,legacyView(m.data)))throw Error('origem legada mudou');if(!document.getElementById('migration-status').textContent.includes('Migração interrompida'))throw Error('mensagem de interrupção ausente');return '0 gravações; origem preservada'});
+await test('Falha de verificação avisa e preserva origem',async()=>{const seed=legacySeed(),before=legacyView(seed),m=makeMock(seed,{mismatchFinance:true});resetWindow(m);await window.migrarDadosLegados();const msg=document.getElementById('migration-status').textContent;if(m.updates!==1)throw Error('esperava uma gravação');if(!same(before,legacyView(m.data)))throw Error('origem legada mudou');if(!msg.includes('Não tente novamente até revisar os destinos'))throw Error('aviso de revisão ausente');return 'destinos ficam para revisão; legado preservado; aviso de não repetir presente'});
+await test('Reexecução após falha de verificação não faz outra gravação',async()=>{const seed=legacySeed(),m=makeMock(seed,{mismatchFinance:true});resetWindow(m);await window.migrarDadosLegados();const n=m.updates;await window.migrarDadosLegados();if(n!==1||m.updates!==1)throw Error('reexecução gravou novamente');return 'a segunda tentativa abortou ao detectar destinos existentes'});
+await test('Falha do update não apaga legado nem simula rollback',async()=>{const seed=legacySeed(),before=legacyView(seed),m=makeMock(seed,{failWrite:true});resetWindow(m);await window.migrarDadosLegados();if(!same(before,legacyView(m.data)))throw Error('origem legada mudou');if(m.updates!==1)throw Error('update não chamado');if(document.getElementById('migration-status').textContent.includes('Não tente novamente até revisar os destinos'))throw Error('marcou destino gravado apesar do update falhar');return 'origem intacta; sem aviso indevido de pós-gravação'});
+await test('Conta não administradora para antes de ler o banco',async()=>{const m=makeMock(legacySeed());resetWindow(m,false);await window.migrarDadosLegados();if(m.rootReads!==0||m.updates!==0)throw Error('o gate não impediu acesso');return '0 leituras e 0 gravações'});
+document.getElementById('summary').textContent=`Resultado: ${passed}/${total} cenários passaram. Somente mock em memória; não substitui teste de concorrência ou teste com Firebase Emulator.`;})();
+</script></body></html>
