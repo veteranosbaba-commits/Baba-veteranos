@@ -275,7 +275,7 @@
                         <i class="fa-solid fa-user-gear"></i> ADMIN 
                         <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
                     </div>
-                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" class="text-[9px] text-stone-300 font-bold border border-stone-700 rounded px-2 py-1">Entrar</button>
+                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded px-2 py-1">Atleta</button>
                     <button id="member-profile-button" onclick="window.abrirMeuCadastro()" class="hidden text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded px-2 py-1">Meu cadastro</button>
                     <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                         <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
@@ -298,7 +298,14 @@
 
         <!-- DASHBOARD -->
         <div id="dashboard" class="tab-content active space-y-6">
-            
+            <section id="athlete-access-prompt" class="bg-emerald-950/70 border border-emerald-600 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h2 class="text-emerald-300 font-black text-sm uppercase tracking-wide"><i class="fa-solid fa-user-lock mr-2"></i>Acesso e cadastro do atleta</h2>
+                    <p class="text-stone-300 text-xs mt-1">Este acesso é separado do painel administrativo. Crie sua conta com seu próprio e-mail e senha.</p>
+                </div>
+                <button type="button" onclick="window.toggleAthleteAuth()" class="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-black text-xs px-4 py-3 rounded-xl">Entrar ou criar conta</button>
+            </section>
+
             <div id="dashboard-finance-summary" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-black/90 rounded-2xl border-2 border-emerald-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-emerald-500 text-black font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Disponível</div>
@@ -1216,9 +1223,10 @@
                     atualizarAcessoFinanceiro();
                     const botao = document.getElementById('member-auth-button');
                     if (botao) {
-                        botao.textContent = user ? 'Sair' : 'Entrar';
-                        botao.title = user ? `Conectado: ${user.email || 'conta autenticada'}` : 'Entrar com e-mail';
+                        botao.textContent = user ? 'Sair' : 'Atleta';
+                        botao.title = user ? `Conectado: ${user.email || 'conta autenticada'}` : 'Acesso do atleta: entrar ou criar conta';
                     }
+                    document.getElementById('athlete-access-prompt')?.classList.toggle('hidden', Boolean(user));
                     if (!user) {
                         document.getElementById('admin-badge')?.classList.add('hidden');
                         return;
