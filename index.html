@@ -1119,7 +1119,7 @@
             }
         }
         
-        window.salvarNoStorage = function() {
+        window.salvarNoStorage = function(opcoes = {}) {
             if (!window.firebaseInicializado || !window.dbRef) {
                 if (!inicializarFirebase()) {
                     window.mostrarToast('Sem conexão com banco!', true);
@@ -1128,12 +1128,12 @@
             }
             
             if (syncEmAndamento) {
-                setTimeout(() => window.salvarNoStorage(), 500);
+                setTimeout(() => window.salvarNoStorage(opcoes), 500);
                 return;
             }
             
             syncEmAndamento = true;
-            document.getElementById('loading-overlay')?.classList.remove('hidden');
+            if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.remove('hidden');
             
             // Salvar estado dos acordeões antes de renderizar
             const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
@@ -1154,7 +1154,7 @@
             window.dbRef.set(dadosParaSalvar)
                 .then(() => {
                     console.log('Dados salvos');
-                    window.renderizarTudo();
+                    if (!opcoes.silencioso) window.renderizarTudo();
                     
                     // Restaurar estado dos acordeões
                     if (abertoBota) {
@@ -1167,13 +1167,13 @@
                     }
 
                     syncEmAndamento = false;
-                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                    if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
                 })
                 .catch((error) => {
                     console.error('Erro ao salvar:', error);
                     window.mostrarToast('Erro ao salvar! Tentando novamente...', true);
                     syncEmAndamento = false;
-                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                    if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
                     setTimeout(() => window.salvarNoStorage(), 3000);
                 });
         };
@@ -1224,9 +1224,11 @@
                     });
                 }
                 
-                document.getElementById('loading-overlay')?.classList.add('hidden');
-                window.renderizarTudo();
-                window.calcularResumoNotif();
+                if (!syncEmAndamento) {
+                    document.getElementById('loading-overlay')?.classList.add('hidden');
+                    window.renderizarTudo();
+                    window.calcularResumoNotif();
+                }
             }, (error) => {
                 console.error('Erro no real-time:', error);
                 document.getElementById('loading-overlay')?.classList.add('hidden');
@@ -2008,6 +2010,30 @@
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="5" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
         }
         
+        function atualizarResumosAposScout() {
+            loadDashboard();
+            renderListaJogadoresPublica();
+            renderFinanceiroPublico();
+            window.renderDashArtilharia?.();
+        }
+
+        function atualizarScoutsSemPerderPosicao() {
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
+            const abertoFlu = !document.getElementById('scouts-list-FLUMINENSE')?.classList.contains('hidden');
+            renderAdminScouts();
+            if (abertoBota) {
+                document.getElementById('scouts-list-BOTAFOGO')?.classList.remove('hidden');
+                document.querySelector('[onclick*="BOTAFOGO"] .chevron')?.classList.add('rotate-90');
+            }
+            if (abertoFlu) {
+                document.getElementById('scouts-list-FLUMINENSE')?.classList.remove('hidden');
+                document.querySelector('[onclick*="FLUMINENSE"] .chevron')?.classList.add('rotate-90');
+            }
+            atualizarResumosAposScout();
+            requestAnimationFrame(() => window.scrollTo(0, y));
+        }
+
         window.alterarNumero = function(id, campo, valor) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
@@ -2016,7 +2042,10 @@
             if (campo === 'amarelos' && novo > 3) return;
             if (campo === 'vermelho' && novo > 1) return;
             a[campo] = novo;
-            window.salvarNoStorage();
+            const valorNaTela = document.getElementById(`scout-stat-${campo}-${id}`);
+            if (valorNaTela) valorNaTela.textContent = novo;
+            atualizarResumosAposScout();
+            window.salvarNoStorage({ silencioso: true });
         };
         
         window.salvarHistoricoCartao = function(id) {
@@ -2046,8 +2075,8 @@
                 a.amarelos = novosAmarelos;
                 a.vermelho = novosVermelhos;
                 window.mostrarToast("Cartões arquivados!");
-                window.salvarNoStorage();
-                window.renderizarTudo(); // Força atualização da tela
+                window.salvarNoStorage({ silencioso: true });
+                atualizarScoutsSemPerderPosicao();
             } else {
                 window.mostrarToast("Sem cartões no limite (3 am. ou 1 ver.) para arquivar.", true);
             }
@@ -2093,15 +2122,15 @@
             if (valorInput) valorInput.value = '';
             
             window.mostrarToast("Multa aplicada!");
-            window.salvarNoStorage();
-            window.renderizarTudo(); // Força atualização da tela
+            window.salvarNoStorage({ silencioso: true });
+            atualizarScoutsSemPerderPosicao();
         };
         
         window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (a?.pagamentos?.[mes]?.multas?.[idx]) {
                 a.pagamentos[mes].multas[idx].paga = isChecked;
-                window.salvarNoStorage();
+                window.salvarNoStorage({ silencioso: true });
             }
         };
         
@@ -2118,7 +2147,8 @@
                 });
                 a.pagamentos[mes].multas.splice(idx, 1);
                 window.mostrarToast("Multa arquivada!");
-                window.salvarNoStorage();
+                window.salvarNoStorage({ silencioso: true });
+                atualizarScoutsSemPerderPosicao();
             }
         };
         
@@ -2172,17 +2202,17 @@
                                 <span class="font-bold text-stone-200 w-16 truncate shrink-0" title="${a.nome}"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</span>
                                 <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
                                     <button onclick="window.alterarNumero('${a.id}','gols',-1)" class="w-4 h-4 bg-stone-700 text-red-400 rounded flex items-center justify-center text-[8px]">-</button>
-                                    <span class="w-3 text-center font-black text-white">${a.gols || 0}</span>
+                                    <span id="scout-stat-gols-${a.id}" class="w-3 text-center font-black text-white">${a.gols || 0}</span>
                                     <button onclick="window.alterarNumero('${a.id}','gols',1)" class="w-4 h-4 bg-stone-700 text-emerald-400 rounded flex items-center justify-center text-[8px]">+</button>
                                 </span>
                                 <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
                                     <button onclick="window.alterarNumero('${a.id}','amarelos',-1)" class="w-4 h-4 bg-stone-700 rounded flex items-center justify-center text-[8px]">-</button>
-                                    <span class="w-3 text-center font-black text-amber-500">${a.amarelos || 0}</span>
+                                    <span id="scout-stat-amarelos-${a.id}" class="w-3 text-center font-black text-amber-500">${a.amarelos || 0}</span>
                                     <button onclick="window.alterarNumero('${a.id}','amarelos',1)" class="w-4 h-4 bg-stone-700 text-amber-500 rounded flex items-center justify-center text-[8px]">+</button>
                                 </span>
                                 <span class="flex items-center gap-0.5 shrink-0 bg-stone-800/50 p-0.5 rounded">
                                     <button onclick="window.alterarNumero('${a.id}','vermelho',-1)" class="w-4 h-4 bg-stone-700 rounded flex items-center justify-center text-[8px]">-</button>
-                                    <span class="w-3 text-center font-black text-red-500">${a.vermelho || 0}</span>
+                                    <span id="scout-stat-vermelho-${a.id}" class="w-3 text-center font-black text-red-500">${a.vermelho || 0}</span>
                                     <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-4 h-4 bg-stone-700 text-red-500 rounded flex items-center justify-center text-[8px]">+</button>
                                 </span>
                                 <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-1.5 py-0.5 rounded text-[8px] uppercase font-black shrink-0" title="Arquivar cartões">📦</button>
