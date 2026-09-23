@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#064e3b">
+  <title>Teste de acesso — Baba Veteranos</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #11130f; color: #f5f5f4; }
+    main { width: min(100%, 440px); background: #1c211a; border: 1px solid #374136; border-radius: 20px; padding: 28px; box-shadow: 0 20px 60px #0008; }
+    h1 { font-size: 1.45rem; margin: 0 0 8px; }
+    .intro, .notice { color: #c5cec1; line-height: 1.5; }
+    label { display: block; margin: 18px 0 6px; font-weight: 650; }
+    input { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid #52604e; background: #10140f; color: white; font: inherit; }
+    button { width: 100%; margin-top: 20px; border: 0; border-radius: 11px; padding: 13px; background: #3c9a63; color: #07140c; font: inherit; font-weight: 750; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { min-height: 1.5em; margin-top: 16px; line-height: 1.45; }
+    #notice { margin-top: 20px; padding: 12px 14px; border-left: 3px solid #8d9d87; background: #151a14; font-size: .9rem; }
+    .success { color: #8ce0a5; } .error { color: #ffaaa3; }
+    #logout { background: #596353; color: white; }
+    [hidden] { display: none !important; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Teste de acesso — Baba Veteranos</h1>
+    <p class="intro">Entre com o e-mail e a senha da conta de teste para confirmar que o Firebase Authentication aceita o login.</p>
+    <form id="login-form" autocomplete="on">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button id="login-button" type="submit">Entrar</button>
+    </form>
+    <div id="signed-in" hidden>
+      <p id="signed-in-message" class="success"></p>
+      <button id="logout" type="button">Sair</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <div id="notice" class="notice">Este teste verifica somente o login. Não lê nem altera dados do app ou do banco de atletas.</div>
+  </main>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_LRcqXQ3FC3OWpDxgGqB7MFRw7j3ad7A",
+      authDomain: "baba-veteranos.firebaseapp.com",
+      projectId: "baba-veteranos",
+      appId: "1:636505907297:web:4a9a2f7674329f9cffca20"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const form = document.getElementById('login-form');
+    const status = document.getElementById('status');
+    const button = document.getElementById('login-button');
+    const signedIn = document.getElementById('signed-in');
+    const signedInMessage = document.getElementById('signed-in-message');
+    const errorText = {
+      'auth/invalid-email': 'Confira o formato do e-mail.',
+      'auth/user-disabled': 'Esta conta está desativada.',
+      'auth/user-not-found': 'Não encontrei uma conta com esse e-mail.',
+      'auth/wrong-password': 'A senha não confere.',
+      'auth/invalid-credential': 'E-mail ou senha não conferem.',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.',
+      'auth/unauthorized-domain': 'Este endereço ainda não está autorizado no Firebase Authentication.',
+      'auth/network-request-failed': 'Sem conexão com o serviço de autenticação. Confira a internet e tente de novo.'
+    };
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        form.hidden = true;
+        signedIn.hidden = false;
+        signedInMessage.textContent = 'Login confirmado para ' + (user.email || 'sua conta') + '.';
+        status.textContent = '';
+        status.className = '';
+      } else {
+        form.hidden = false;
+        signedIn.hidden = true;
+      }
+    });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      status.textContent = 'Verificando…';
+      status.className = '';
+      button.disabled = true;
+      try {
+        await auth.signInWithEmailAndPassword(
+          document.getElementById('email').value.trim(),
+          document.getElementById('password').value
+        );
+        document.getElementById('password').value = '';
+      } catch (error) {
+        status.textContent = errorText[error.code] || 'Não foi possível entrar. Confira os dados e tente novamente.';
+        status.className = 'error';
+      } finally {
+        button.disabled = false;
+      }
+    });
+    document.getElementById('logout').addEventListener('click', async () => {
+      await auth.signOut();
+      status.textContent = 'Você saiu da conta.';
+      status.className = '';
+    });
+  </script>
+</body>
+</html>
