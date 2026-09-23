@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -274,6 +275,8 @@
                         <i class="fa-solid fa-user-gear"></i> ADMIN 
                         <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
                     </div>
+                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" class="text-[9px] text-stone-300 font-bold border border-stone-700 rounded px-2 py-1">Entrar</button>
+                    <button id="member-profile-button" onclick="window.abrirMeuCadastro()" class="hidden text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded px-2 py-1">Meu cadastro</button>
                     <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                         <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
                         <span class="hidden sm:inline">Online</span>
@@ -296,7 +299,7 @@
         <!-- DASHBOARD -->
         <div id="dashboard" class="tab-content active space-y-6">
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div id="dashboard-finance-summary" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-black/90 rounded-2xl border-2 border-emerald-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-emerald-500 text-black font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Disponível</div>
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
@@ -582,7 +585,7 @@
                     </div>
                     <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm"></ul>
                 </div>
-                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                <div id="alertas-inadimplentes" class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <div class="mb-4 pb-2 border-b border-stone-800">
                         <h4 class="font-black text-red-500 uppercase tracking-wide text-xs">
                             <i class="fa-solid fa-triangle-exclamation mr-2"></i>Inadimplentes (Mês Atual)
@@ -679,6 +682,28 @@
                         </select>
                         <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-black font-black p-2 rounded-lg text-xs uppercase transition">Cadastrar</button>
                     </form>
+                </div>
+                <div class="bg-stone-900/95 rounded-xl p-4 border border-amber-700/60">
+                    <h4 class="font-bold text-amber-300 text-xs uppercase mb-2">Migração inicial dos dados existentes</h4>
+                    <p class="text-stone-400 text-[10px] mb-3">Copie os dados antigos para as áreas pública e privada sem apagar a origem. Faça uma vez, depois de conferir o backup.</p>
+                    <button type="button" onclick="window.migrarDadosLegados()" class="bg-amber-500 text-stone-950 font-bold p-2 rounded-lg text-xs">Migrar dados existentes</button>
+                    <p id="migration-status" class="text-stone-400 text-[10px] mt-2" aria-live="polite"></p>
+                </div>
+                <div class="bg-stone-900/95 rounded-xl p-4 border border-emerald-800/60">
+                    <div class="flex justify-between items-center gap-2 mb-2">
+                        <h4 class="font-bold text-emerald-300 text-xs uppercase">Solicitações de vínculo</h4>
+                        <button type="button" onclick="window.carregarFilaVinculos()" class="text-[10px] bg-stone-800 text-emerald-300 px-2 py-1 rounded">Atualizar fila</button>
+                    </div>
+                    <div id="link-request-queue" class="space-y-2 text-xs" aria-live="polite"></div>
+                </div>
+                <div class="bg-stone-900/95 rounded-xl p-4 border border-emerald-800/60">
+                    <h4 class="font-bold text-emerald-300 text-xs uppercase mb-2">Vincular conta ao atleta</h4>
+                    <p class="text-stone-400 text-[10px] mb-3">Use o UID copiado em Authentication → Usuários. Não solicite a senha do jogador.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <input id="vinculo-uid" type="text" placeholder="UID do Firebase Auth" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                        <select id="vinculo-atleta" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
+                        <button type="button" onclick="window.vincularAtletaDoFormulario()" class="bg-emerald-700 text-white font-bold p-2 rounded-lg text-xs">Vincular com segurança</button>
+                    </div>
                 </div>
                 <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[300px]">
@@ -989,7 +1014,7 @@
             <button onclick="switchTab('historico-sumulas')" id="nav-historico" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-file-contract text-lg"></i>
             </button>
-            <button onclick="switchTab('financeiro-ver')" id="nav-financeiro" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('financeiro-ver')" id="nav-financeiro" class="hidden flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-receipt text-lg"></i>
             </button>
             <button onclick="switchTab('regras-ver')" id="nav-regras" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
@@ -1024,11 +1049,43 @@
                 <button onclick="closeAdminModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form onsubmit="window.autenticarAdmin(event)" class="space-y-4">
-                <input type="text" id="login-user" placeholder="Usuário" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                <input type="email" id="login-user" autocomplete="username" placeholder="E-mail" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
                 <input type="password" id="login-pass" placeholder="Senha" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
                 <div id="login-erro" class="text-xs text-red-500 font-bold hidden">Credenciais incorretas!</div>
                 <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest hover:bg-amber-400 transition">Entrar</button>
             </form>
+        </div>
+    </div>
+
+    <!-- LOGIN DE ATLETA -->
+    <div id="athlete-auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[80] flex items-center justify-center hidden">
+        <div class="bg-stone-900 border border-emerald-700 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider"><i class="fa-solid fa-user-lock text-emerald-400 mr-1"></i> Acesso do atleta</h3>
+                <button type="button" onclick="window.toggleAthleteAuth(true)" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="window.entrarAtletaFirebase(event)" class="space-y-3">
+                <input type="email" id="athlete-auth-email" autocomplete="username" placeholder="Seu e-mail" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                <input type="password" id="athlete-auth-password" autocomplete="current-password" placeholder="Senha (mínimo 8 caracteres para conta nova)" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                <p id="athlete-auth-message" class="hidden text-xs font-bold" aria-live="polite"></p>
+                <button id="athlete-auth-submit" type="submit" class="w-full bg-emerald-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest">Entrar</button>
+                <button type="button" onclick="window.criarContaAtleta()" class="w-full bg-stone-800 text-emerald-300 font-bold p-2.5 rounded-lg text-xs">Criar conta e receber confirmação</button>
+                <button type="button" onclick="window.enviarConfirmacaoAtleta()" class="w-full text-stone-400 text-xs underline">Reenviar link de confirmação</button>
+                <button type="button" onclick="window.confirmarEmailAtleta()" class="w-full text-emerald-300 text-xs underline">Já confirmei meu e-mail</button>
+                <button type="button" onclick="window.solicitarVinculoAtleta()" class="w-full bg-stone-800 text-amber-300 font-bold p-2.5 rounded-lg text-xs">Solicitar vínculo ao cadastro</button>
+                <button type="button" onclick="window.redefinirSenhaAtleta()" class="w-full text-stone-400 text-xs underline">Esqueci minha senha</button>
+            </form>
+            <p class="text-stone-500 text-[10px] mt-3">Cada atleta mantém a própria senha. O vínculo só libera dados privados após aprovação do administrador.</p>
+        </div>
+    </div>
+
+    <div id="athlete-profile-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[80] flex items-center justify-center hidden">
+        <div class="bg-stone-900 border border-emerald-700 rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-gray-200 text-sm uppercase tracking-wider"><i class="fa-solid fa-id-card text-emerald-400 mr-1"></i> Meu cadastro</h3>
+                <button type="button" onclick="document.getElementById('athlete-profile-modal').classList.add('hidden')" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="athlete-profile-content" class="space-y-2 text-sm"></div>
         </div>
     </div>
 
@@ -1051,8 +1108,22 @@
         };
         window.timeFiltroAtual = 'FLUMINENSE';
         window.isAdminLogado = false;
+        window.isAtletaLogado = false;
+        window.currentAthleteId = null;
+        window.currentUserProfile = null;
+        window.bootstrapAdminUid = '38bRRVjvfnQwjp2HyMGq3ExLs2C3';
         window.dbRef = null;
+        window.publicRef = null;
+        window.privateRef = null;
+        window.rolesRef = null;
+        window.authRef = null;
+        window.firebaseUser = null;
+        window.publicAthletesCache = [];
+        window.privateAthletesCache = {};
+        window.privateFinanceCache = {};
+        window.privateListeners = [];
         window.firebaseInicializado = false;
+        window.publicAccess = true;
         
         let toastTimeout = null;
         let syncEmAndamento = false;
@@ -1100,6 +1171,22 @@
         // FUNÇÕES DO FIREBASE
         // =====================================================
         
+        function atualizarAcessoFinanceiro() {
+            const permitido = Boolean(window.isAdminLogado && window.firebaseUser);
+            ['nav-financeiro', 'sidebar-financeiro-link', 'financeiro-ver', 'dashboard-finance-summary', 'alertas-inadimplentes'].forEach(id => {
+                document.getElementById(id)?.classList.toggle('hidden', !permitido);
+            });
+            if (!permitido) {
+                const saldo = document.getElementById('dash-saldo-total');
+                const gastos = document.getElementById('dash-saldo-gastos');
+                const pendentes = document.getElementById('dash-pendentes');
+                if (saldo) saldo.textContent = '—';
+                if (gastos) gastos.textContent = '—';
+                if (pendentes) pendentes.textContent = 'Informação disponível apenas para administradores.';
+                if (document.getElementById('admin-panel')?.classList.contains('active')) switchTab('dashboard');
+            }
+        }
+
         function inicializarFirebase() {
             try {
                 if (!firebase.apps.length) {
@@ -1107,6 +1194,76 @@
                     console.log('Firebase inicializado');
                 }
                 window.dbRef = firebase.database().ref('baba');
+                window.publicRef = window.dbRef.child('public');
+                window.privateRef = window.dbRef.child('private');
+                window.rolesRef = window.dbRef.child('roles');
+                window.authRef = firebase.auth();
+                window.authRef.onAuthStateChanged(async (user) => {
+                    window.firebaseUser = user || null;
+                    window.isAdminLogado = false;
+                    window.isAtletaLogado = false;
+                    window.currentAthleteId = null;
+                    window.currentUserProfile = null;
+                    removerEscutasPrivadas();
+                    window.privateAthletesCache = {};
+                    window.privateFinanceCache = {};
+                    window.gastosCache = [];
+                    window.sociosCache = [];
+                    window.patrociniosCache = [];
+                    aplicarCachePrivado();
+                    document.getElementById('member-profile-button')?.classList.add('hidden');
+                    document.getElementById('athlete-profile-modal')?.classList.add('hidden');
+                    atualizarAcessoFinanceiro();
+                    const botao = document.getElementById('member-auth-button');
+                    if (botao) {
+                        botao.textContent = user ? 'Sair' : 'Entrar';
+                        botao.title = user ? `Conectado: ${user.email || 'conta autenticada'}` : 'Entrar com e-mail';
+                    }
+                    if (!user) {
+                        document.getElementById('admin-badge')?.classList.add('hidden');
+                        return;
+                    }
+                    try {
+                        if (user.uid !== window.bootstrapAdminUid && !user.emailVerified) {
+                            window.mostrarToast('Confirme seu e-mail antes de solicitar acesso aos dados privados.', true);
+                            return;
+                        }
+                        if (user.uid === window.bootstrapAdminUid) {
+                            window.isAdminLogado = true;
+                        } else {
+                            const adminSnapshot = await window.rolesRef.child(`admins/${user.uid}`).once('value');
+                            window.isAdminLogado = adminSnapshot.val() === true;
+                        }
+                        if (window.isAdminLogado) {
+                            atualizarAcessoFinanceiro();
+                            document.getElementById('admin-badge')?.classList.remove('hidden');
+                            await window.carregarDadosPrivadosAdmin?.();
+                            window.renderizarTudo();
+                            switchTab('admin-panel');
+                            void window.carregarFilaVinculos?.();
+                            return;
+                        }
+                        const profileSnapshot = await window.rolesRef.child(`users/${user.uid}`).once('value');
+                        const profile = profileSnapshot.val();
+                        if (profile?.role === 'athlete' && profile.athleteId) {
+                            window.isAtletaLogado = true;
+                            window.currentAthleteId = String(profile.athleteId);
+                            window.currentUserProfile = profile;
+                            document.getElementById('member-profile-button')?.classList.remove('hidden');
+                            await window.carregarDadosPrivadosAtleta?.(window.currentAthleteId);
+                        } else {
+                            const pendingSnapshot = await window.rolesRef.child(`pending/${user.uid}`).once('value');
+                            if (pendingSnapshot.exists()) {
+                                window.mostrarToast('Sua solicitação está aguardando aprovação do administrador.');
+                            } else {
+                                window.mostrarToast('Conta conectada; confirme o e-mail e solicite o vínculo ao cadastro.', true);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Falha ao validar perfil autenticado.');
+                        window.mostrarToast('Não foi possível validar o perfil. Acesso privado bloqueado.', true);
+                    }
+                });
                 window.firebaseInicializado = true;
                 setTimeout(() => window.iniciarEscutaNotificacoesRemotas?.(), 500);
                 document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
@@ -1119,6 +1276,57 @@
             }
         }
         
+        function removerEscutasPrivadas() {
+            (window.privateListeners || []).forEach(({ref, callback}) => ref.off('value', callback));
+            window.privateListeners = [];
+        }
+
+        function aplicarCachePrivado() {
+            window.atletasCache = (window.publicAthletesCache || []).map(publico => {
+                const atleta = JSON.parse(JSON.stringify(publico));
+                const dadosPrivados = window.privateAthletesCache?.[String(atleta.id)];
+                if (dadosPrivados && (window.isAdminLogado || String(atleta.id) === String(window.currentAthleteId))) {
+                    Object.assign(atleta, JSON.parse(JSON.stringify(dadosPrivados)));
+                }
+                return atleta;
+            });
+        }
+
+        window.carregarDadosPrivadosAdmin = async function() {
+            removerEscutasPrivadas();
+            const athletesRef = window.privateRef.child('athletes');
+            const financeRef = window.privateRef.child('finance');
+            const onAthletes = snapshot => {
+                window.privateAthletesCache = snapshot.val() || {};
+                aplicarCachePrivado();
+                if (!syncEmAndamento) window.renderizarTudo();
+            };
+            const onFinance = snapshot => {
+                window.privateFinanceCache = snapshot.val() || {};
+                window.gastosCache = window.privateFinanceCache.gastos || [];
+                window.sociosCache = window.privateFinanceCache.socios || [];
+                window.patrociniosCache = window.privateFinanceCache.patrocinios || [];
+                if (!syncEmAndamento) window.renderizarTudo();
+            };
+            athletesRef.on('value', onAthletes);
+            financeRef.on('value', onFinance);
+            window.privateListeners.push({ref: athletesRef, callback: onAthletes}, {ref: financeRef, callback: onFinance});
+        };
+
+        window.carregarDadosPrivadosAtleta = async function(athleteId) {
+            removerEscutasPrivadas();
+            window.privateAthletesCache = {};
+            const athleteRef = window.privateRef.child(`athletes/${athleteId}`);
+            const onAthlete = snapshot => {
+                window.privateAthletesCache = snapshot.val() ? {[String(athleteId)]: snapshot.val()} : {};
+                aplicarCachePrivado();
+                window.renderMeuCadastro?.();
+                if (!syncEmAndamento) window.renderizarTudo();
+            };
+            athleteRef.on('value', onAthlete);
+            window.privateListeners.push({ref: athleteRef, callback: onAthlete});
+        };
+
         window.salvarNoStorage = function(opcoes = {}) {
             if (!window.firebaseInicializado || !window.dbRef) {
                 if (!inicializarFirebase()) {
@@ -1131,6 +1339,10 @@
                 setTimeout(() => window.salvarNoStorage(opcoes), 500);
                 return;
             }
+            if (!window.isAdminLogado || !window.firebaseUser) {
+                window.mostrarToast('Apenas um administrador autenticado pode salvar alterações.', true);
+                return;
+            }
             
             syncEmAndamento = true;
             if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.remove('hidden');
@@ -1139,19 +1351,33 @@
             const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
             const abertoFlu = !document.getElementById('scouts-list-FLUMINENSE')?.classList.contains('hidden');
 
-            const dadosParaSalvar = {
-                atletas: window.atletasCache,
-                gastos: window.gastosCache,
-                socios: window.sociosCache,
-                patrocinios: window.patrociniosCache,
+            const camposPublicos = ['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos'];
+            const atletasPublicos = window.atletasCache.map(a => Object.fromEntries(camposPublicos.filter(k => a[k] !== undefined).map(k => [k, a[k]])));
+            const atletasPrivados = {};
+            window.atletasCache.forEach(a => {
+                const privado = {...a};
+                camposPublicos.forEach(k => delete privado[k]);
+                if (Object.keys(privado).length) atletasPrivados[String(a.id)] = privado;
+            });
+            const dataPublica = {
+                atletas: atletasPublicos,
                 sumulas: window.sumulasCache,
                 partidaEstatisticas: window.partidaEstatisticas,
                 historicoPlacares: window.historicoPlacares,
                 ultimaAtualizacao: new Date().toISOString(),
-                public_access: true
+                public_access: window.publicAccess
+            };
+            const dadosFinanceirosPrivados = {
+                gastos: window.gastosCache,
+                socios: window.sociosCache,
+                patrocinios: window.patrociniosCache
             };
             
-            window.dbRef.set(dadosParaSalvar)
+            Promise.all([
+                window.publicRef.child('data').set(dataPublica),
+                window.privateRef.child('athletes').set(atletasPrivados),
+                window.privateRef.child('finance').set(dadosFinanceirosPrivados)
+            ])
                 .then(() => {
                     console.log('Dados salvos');
                     if (!opcoes.silencioso) window.renderizarTudo();
@@ -1174,64 +1400,37 @@
                     window.mostrarToast('Erro ao salvar! Tentando novamente...', true);
                     syncEmAndamento = false;
                     if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
-                    setTimeout(() => window.salvarNoStorage(), 3000);
+                    setTimeout(() => window.salvarNoStorage(opcoes), 3000);
                 });
         };
         
         async function carregarDadosIniciais() {
-            if (!window.firebaseInicializado) {
-                if (!inicializarFirebase()) return;
-            }
-            
-            // Mostrar loading apenas no primeiro carregamento
-            if (window.atletasCache.length === 0) {
-                document.getElementById('loading-overlay')?.classList.remove('hidden');
-            }
-            
-            // Usar .on em vez de .once para atualizações instantâneas (Real-time)
-            window.dbRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    window.atletasCache = data.atletas || [];
-                    window.gastosCache = data.gastos || [];
-                    window.sociosCache = data.socios || [];
-                    window.patrociniosCache = data.patrocinios || [];
-                    window.sumulasCache = data.sumulas || [];
-                    window.historicoPlacares = data.historicoPlacares || [];
-                    window.partidaEstatisticas = data.partidaEstatisticas || { 
-                        placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 
-                    };
-                    // Migração: converte multas arquivadas antigas (só número) para {valor, motivo}
-                    // e migra extra (número) para aportes (array)
-                    window.atletasCache.forEach(a => {
-                        if (a.pagamentos) {
-                            Object.values(a.pagamentos).forEach(p => {
-                                if (p.multasArquivadasHistorico) {
-                                    p.multasArquivadasHistorico = p.multasArquivadasHistorico.map(arq => {
-                                        if (typeof arq === 'number') {
-                                            return { valor: arq, motivo: 'Arquivado' };
-                                        }
-                                        return arq;
-                                    });
-                                }
-                                delete p.extra;
-                                delete p.aportes;
-                                delete p.aportesArquivadosHistorico;
-                            });
-                        }
-                        delete a.abatimentos;
-                        delete a.creditoUtilizado;
-                    });
+            if (!window.firebaseInicializado && !inicializarFirebase()) return;
+            if (!window.publicRef) return;
+            if (window.publicAthletesCache.length === 0) document.getElementById('loading-overlay')?.classList.remove('hidden');
+
+            window.publicRef.child('data').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                window.publicAthletesCache = Array.isArray(data.atletas) ? data.atletas : Object.values(data.atletas || {});
+                window.sumulasCache = data.sumulas || [];
+                window.historicoPlacares = data.historicoPlacares || [];
+                window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
+                window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
+                aplicarCachePrivado();
+                if (!window.isAdminLogado) {
+                    window.gastosCache = [];
+                    window.sociosCache = [];
+                    window.patrociniosCache = [];
                 }
-                
                 if (!syncEmAndamento) {
                     document.getElementById('loading-overlay')?.classList.add('hidden');
                     window.renderizarTudo();
                     window.calcularResumoNotif();
                 }
             }, (error) => {
-                console.error('Erro no real-time:', error);
+                console.error('Falha ao carregar dados públicos.');
                 document.getElementById('loading-overlay')?.classList.add('hidden');
+                window.mostrarToast('Não foi possível carregar os dados públicos.', true);
             });
         }
         
@@ -2008,6 +2207,13 @@
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="5" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
+            const seletor = document.getElementById('vinculo-atleta');
+            if (seletor) {
+                const valorAnterior = seletor.value;
+                seletor.replaceChildren(new Option('Selecione o atleta', ''));
+                window.atletasCache.forEach(a => seletor.add(new Option(`${a.nome} (#${a.camisa}) · ${a.id}`, String(a.id))));
+                if (window.atletasCache.some(a => String(a.id) === valorAnterior)) seletor.value = valorAnterior;
+            }
         }
         
         function atualizarResumosAposScout() {
@@ -2650,33 +2856,501 @@
         // AUTENTICAÇÃO
         // =====================================================
         
-        window.autenticarAdmin = function(e) {
+        window.toggleAthleteAuth = function(forceClose = false) {
+            const modal = document.getElementById('athlete-auth-modal');
+            if (forceClose) { modal?.classList.add('hidden'); return; }
+            if (window.authRef?.currentUser) {
+                window.authRef.signOut().catch(() => window.mostrarToast('Não foi possível sair da conta.', true));
+                return;
+            }
+            modal?.classList.remove('hidden');
+        };
+
+        window.entrarAtletaFirebase = async function(e) {
             e.preventDefault();
-            const user = document.getElementById('login-user')?.value;
-            const pass = document.getElementById('login-pass')?.value;
-            if(user === 'veteranos07' && pass === 'veteranos07') { 
-                window.isAdminLogado = true; 
-                document.getElementById('login-modal')?.classList.add('hidden'); 
-                document.getElementById('admin-badge')?.classList.remove('hidden'); 
-                switchTab('admin-panel'); 
-                window.renderizarTudo(); 
-            } else { 
-                document.getElementById('login-erro')?.classList.remove('hidden'); 
+            const email = document.getElementById('athlete-auth-email')?.value?.trim();
+            const password = document.getElementById('athlete-auth-password')?.value;
+            const button = document.getElementById('athlete-auth-submit');
+            const message = document.getElementById('athlete-auth-message');
+            if (!window.authRef) { window.mostrarToast('Autenticação ainda indisponível.', true); return; }
+            if (button) { button.disabled = true; button.textContent = 'Aguarde...'; }
+            if (message) { message.classList.add('hidden'); message.textContent = ''; }
+            try {
+                await window.authRef.signInWithEmailAndPassword(email, password);
+                document.getElementById('athlete-auth-password').value = '';
+                document.getElementById('athlete-auth-modal')?.classList.add('hidden');
+                window.mostrarToast('Login confirmado. Aguardando vínculo seguro ao atleta.');
+            } catch (error) {
+                const mensagens = {
+                    'auth/invalid-email': 'Confira o formato do e-mail.',
+                    'auth/invalid-credential': 'E-mail ou senha incorretos.',
+                    'auth/user-not-found': 'Conta não encontrada.',
+                    'auth/wrong-password': 'E-mail ou senha incorretos.',
+                    'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.'
+                };
+                if (message) { message.textContent = mensagens[error.code] || 'Não foi possível entrar. Tente novamente.'; message.classList.remove('hidden'); }
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Entrar'; }
+            }
+        };
+
+        function exibirMensagemAcessoAtleta(texto, erro = false) {
+            const mensagem = document.getElementById('athlete-auth-message');
+            if (!mensagem) return;
+            mensagem.textContent = texto;
+            mensagem.classList.remove('hidden', 'text-red-400', 'text-emerald-300');
+            mensagem.classList.add(erro ? 'text-red-400' : 'text-emerald-300');
+        }
+
+        window.criarContaAtleta = async function() {
+            const email = document.getElementById('athlete-auth-email')?.value?.trim();
+            const password = document.getElementById('athlete-auth-password')?.value || '';
+            if (!email || password.length < 8) {
+                exibirMensagemAcessoAtleta('Informe um e-mail válido e uma senha sua com pelo menos 8 caracteres.', true);
+                return;
+            }
+            try {
+                const credential = await window.authRef.createUserWithEmailAndPassword(email, password);
+                document.getElementById('athlete-auth-password').value = '';
+                await credential.user.sendEmailVerification();
+                exibirMensagemAcessoAtleta('Conta criada. Enviamos um link de confirmação; confirme o e-mail e volte aqui.');
+            } catch (error) {
+                const mensagens = {
+                    'auth/email-already-in-use': 'Esse e-mail já tem conta. Entre e use a opção de confirmação, se necessário.',
+                    'auth/invalid-email': 'Confira o formato do e-mail.',
+                    'auth/weak-password': 'Escolha uma senha com pelo menos 8 caracteres.',
+                    'auth/operation-not-allowed': 'A criação de contas por e-mail está desativada no Firebase.'
+                };
+                exibirMensagemAcessoAtleta(mensagens[error.code] || 'Não foi possível criar a conta. Confira os dados e tente novamente.', true);
+            }
+        };
+
+        window.enviarConfirmacaoAtleta = async function() {
+            const user = window.authRef?.currentUser;
+            if (!user) { exibirMensagemAcessoAtleta('Entre na sua conta para reenviar o link de confirmação.', true); return; }
+            try {
+                await user.sendEmailVerification();
+                exibirMensagemAcessoAtleta('Enviamos outro link de confirmação para seu e-mail.');
+            } catch (error) {
+                exibirMensagemAcessoAtleta('Não foi possível reenviar o link agora. Tente novamente mais tarde.', true);
+            }
+        };
+
+        window.confirmarEmailAtleta = async function() {
+            const user = window.authRef?.currentUser;
+            if (!user) { exibirMensagemAcessoAtleta('Entre na sua conta primeiro.', true); return; }
+            try {
+                await user.reload();
+                await user.getIdToken(true);
+                if (!window.authRef.currentUser.emailVerified) {
+                    exibirMensagemAcessoAtleta('Ainda não consta como confirmado. Abra o link do e-mail e tente novamente.', true);
+                    return;
+                }
+                exibirMensagemAcessoAtleta('E-mail confirmado. Agora você pode solicitar o vínculo ao cadastro.');
+            } catch (error) {
+                exibirMensagemAcessoAtleta('Não foi possível confirmar o status do e-mail. Tente novamente.', true);
+            }
+        };
+
+        window.solicitarVinculoAtleta = async function() {
+            const user = window.authRef?.currentUser;
+            if (!user) { exibirMensagemAcessoAtleta('Crie sua conta ou entre antes de solicitar o vínculo.', true); return; }
+            try {
+                await user.reload();
+                await user.getIdToken(true);
+                const atual = window.authRef.currentUser;
+                if (!atual?.emailVerified) throw new Error('Confirme seu e-mail antes de solicitar o vínculo.');
+                const [perfil, admin, pedido] = await Promise.all([
+                    window.rolesRef.child(`users/${atual.uid}`).once('value'),
+                    window.rolesRef.child(`admins/${atual.uid}`).once('value'),
+                    window.rolesRef.child(`pending/${atual.uid}`).once('value')
+                ]);
+                if (perfil.exists() || admin.val() === true) throw new Error('Esta conta já possui um vínculo ou papel administrativo.');
+                if (pedido.exists()) { exibirMensagemAcessoAtleta('Sua solicitação já está na fila do administrador.'); return; }
+                await window.rolesRef.child(`pending/${atual.uid}`).set({ email: atual.email, requestedAt: Date.now() });
+                exibirMensagemAcessoAtleta('Solicitação enviada. Seus dados privados continuam bloqueados até a aprovação.');
+            } catch (error) {
+                exibirMensagemAcessoAtleta(error.message || 'Não foi possível enviar a solicitação.', true);
+            }
+        };
+
+        window.migrarDadosLegados = async function() {
+            const status = document.getElementById('migration-status');
+            if (!window.isAdminLogado || !window.firebaseUser) {
+                if (status) status.textContent = 'Somente o administrador autenticado pode executar esta migração.';
+                return;
+            }
+            if (!window.dbRef || !window.publicRef || !window.privateRef) {
+                if (status) status.textContent = 'O banco ainda não está pronto. Atualize a tela e tente novamente.';
+                return;
+            }
+            if (status) status.textContent = 'Validando e copiando atomicamente os dados antigos…';
+            const normalizarParaComparacao = valor => Array.isArray(valor)
+                ? valor.map(normalizarParaComparacao)
+                : valor && typeof valor === 'object'
+                    ? Object.fromEntries(Object.keys(valor).sort().map(chave => [chave, normalizarParaComparacao(valor[chave])]))
+                    : valor;
+            const iguais = (a, b) => JSON.stringify(normalizarParaComparacao(a)) === JSON.stringify(normalizarParaComparacao(b));
+            const clonar = valor => valor === undefined ? undefined : JSON.parse(JSON.stringify(valor));
+            let erroDeValidacao = null;
+            let dadosEsperados = null;
+            let raizEsperada = null;
+            let transacaoIniciada = false;
+            let transacaoConfirmada = false;
+            let abortadaSemGravar = false;
+            try {
+                // Seed the RTDB cache with the complete node before a root transaction.
+                // Admin UI listeners only subscribe to selected child branches; without this
+                // read, the transaction callback could start from a partial cached snapshot.
+                const preflightSnapshot = await window.dbRef.once('value');
+                const preflightData = preflightSnapshot.val();
+                if (!preflightData || typeof preflightData !== 'object' || Array.isArray(preflightData)) {
+                    throw new Error('Não consegui ler um conjunto completo de dados legados para migrar.');
+                }
+                transacaoIniciada = true;
+                const resultado = await window.dbRef.transaction(dadosAtuais => {
+                    erroDeValidacao = null;
+                    dadosEsperados = null;
+                    raizEsperada = null;
+                    if (!dadosAtuais || typeof dadosAtuais !== 'object' || Array.isArray(dadosAtuais)) {
+                        erroDeValidacao = 'Não encontrei dados legados válidos para migrar.';
+                        return;
+                    }
+                    const legacy = dadosAtuais;
+                    for (const [caminho, valor] of [['public', legacy.public], ['private', legacy.private]]) {
+                        if (valor !== undefined && valor !== null && (typeof valor !== 'object' || Array.isArray(valor))) {
+                            erroDeValidacao = `Conflito no ramo ${caminho}; interrompi para não substituir dados existentes.`;
+                            return;
+                        }
+                    }
+                    const destinosExistentes = [
+                        ['public/data', legacy.public?.data],
+                        ['private/athletes', legacy.private?.athletes],
+                        ['private/finance', legacy.private?.finance]
+                    ].filter(([, valor]) => valor !== undefined && valor !== null).map(([caminho]) => caminho);
+                    if (destinosExistentes.length) {
+                        erroDeValidacao = `Migração interrompida sem sobrescrever: já existem dados em ${destinosExistentes.join(', ')}. Revise-os antes de tentar novamente.`;
+                        return;
+                    }
+                    const rows = Array.isArray(legacy.atletas) ? legacy.atletas : Object.values(legacy.atletas || {});
+                    // Uma lista vazia é válida para iniciar o app do zero; o admin cadastrará atletas depois.
+                    const publicFields = new Set(['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos']);
+                    const atletasPublicos = [];
+                    const atletasPrivados = {};
+                    const ids = new Set();
+                    for (const atleta of rows) {
+                        if (!atleta || atleta.id === undefined || atleta.id === null || String(atleta.id) === '') {
+                            erroDeValidacao = 'Há atleta sem ID estável; interrompi sem apagar dados.';
+                            return;
+                        }
+                        const id = String(atleta.id);
+                        if (ids.has(id)) {
+                            erroDeValidacao = 'Há IDs de atleta repetidos; interrompi sem apagar dados.';
+                            return;
+                        }
+                        ids.add(id);
+                        atletasPublicos.push(Object.fromEntries(Object.entries(atleta).filter(([key]) => publicFields.has(key))));
+                        const privado = Object.fromEntries(Object.entries(atleta).filter(([key]) => !publicFields.has(key)));
+                        if (Object.keys(privado).length) atletasPrivados[id] = privado;
+                    }
+                    const dataPublica = {
+                        atletas: atletasPublicos,
+                        sumulas: legacy.sumulas || [],
+                        partidaEstatisticas: legacy.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 },
+                        historicoPlacares: legacy.historicoPlacares || [],
+                        ultimaAtualizacao: new Date().toISOString(),
+                        public_access: typeof legacy.public_access === 'boolean' ? legacy.public_access : true
+                    };
+                    const dadosFinanceirosPrivados = {
+                        gastos: legacy.gastos || [],
+                        socios: legacy.socios || [],
+                        patrocinios: legacy.patrocinios || []
+                    };
+                    const novaRaiz = clonar(legacy);
+                    novaRaiz.public = novaRaiz.public || {};
+                    novaRaiz.private = novaRaiz.private || {};
+                    novaRaiz.public.data = dataPublica;
+                    novaRaiz.private.athletes = atletasPrivados;
+                    novaRaiz.private.finance = dadosFinanceirosPrivados;
+                    dadosEsperados = { dataPublica, atletasPrivados, dadosFinanceirosPrivados };
+                    raizEsperada = clonar(novaRaiz);
+                    return novaRaiz;
+                }, undefined, false);
+                if (!resultado.committed) {
+                    abortadaSemGravar = true;
+                    throw new Error(erroDeValidacao || 'Os dados mudaram em paralelo; a transação foi cancelada sem gravar. Atualize a tela e revise o banco antes de tentar novamente.');
+                }
+                transacaoConfirmada = true;
+                if (!dadosEsperados || !raizEsperada) throw new Error('A transação terminou, mas não consegui preparar a conferência. Revise os destinos antes de qualquer nova tentativa.');
+                const [publicCheck, athletesCheck, financeCheck] = await Promise.all([
+                    window.publicRef.child('data').once('value'),
+                    window.privateRef.child('athletes').once('value'),
+                    window.privateRef.child('finance').once('value')
+                ]);
+                const migratedPublic = publicCheck.val() || {};
+                const migratedAthletes = athletesCheck.val() || {};
+                const migratedFinance = financeCheck.val() || {};
+                const raizDepois = (await window.dbRef.once('value')).val() || {};
+                const raizPreservada = iguais(raizEsperada, raizDepois);
+                if (!iguais(dadosEsperados.dataPublica, migratedPublic) || !iguais(dadosEsperados.atletasPrivados, migratedAthletes) || !iguais(dadosEsperados.dadosFinanceirosPrivados, migratedFinance) || !raizPreservada) {
+                    throw new Error('A conferência integral divergiu; os dados antigos não foram apagados. Não tente novamente até revisar os destinos.');
+                }
+                window.publicAthletesCache = migratedPublic.atletas || [];
+                window.privateAthletesCache = migratedAthletes;
+                window.privateFinanceCache = migratedFinance;
+                window.gastosCache = migratedFinance.gastos || [];
+                window.sociosCache = migratedFinance.socios || [];
+                window.patrociniosCache = migratedFinance.patrocinios || [];
+                window.aplicarCachePrivado();
+                window.renderizarTudo();
+                if (status) status.textContent = 'Migração transacional conferida. A estrutura antiga foi preservada; confira a tela pública e a área do administrador.';
+                window.mostrarToast('Cópia transacional conferida.');
+            } catch (error) {
+                if (transacaoIniciada && !transacaoConfirmada && !abortadaSemGravar && raizEsperada) {
+                    try {
+                        const atual = (await window.dbRef.once('value')).val() || {};
+                        if (iguais(raizEsperada, atual)) transacaoConfirmada = true;
+                    } catch (_) {}
+                }
+                if (status) status.textContent = transacaoConfirmada
+                    ? `${error.message || 'A conferência da migração falhou.'} A transação pode ter gravado a nova cópia; os dados antigos não foram apagados. Não repita até revisar os destinos.`
+                    : (abortadaSemGravar
+                        ? (error.message || 'Migração cancelada sem gravações.')
+                        : (transacaoIniciada
+                            ? `${error.message || 'Não foi possível confirmar a transação.'} O resultado é inconclusivo; confira os destinos antes de tentar novamente. Os dados antigos não são removidos.`
+                            : (error.message || 'Falha na migração. Os dados antigos não são removidos.')));
+            }
+        };
+
+        window.carregarFilaVinculos = async function() {
+            const host = document.getElementById('link-request-queue');
+            if (!host || !window.isAdminLogado || !window.firebaseUser) return;
+            host.textContent = 'Carregando solicitações…';
+            try {
+                const [pendingSnap, usersSnap, publicSnap] = await Promise.all([
+                    window.rolesRef.child('pending').once('value'),
+                    window.rolesRef.child('users').once('value'),
+                    window.publicRef.child('data').once('value')
+                ]);
+                const pending = pendingSnap.val() || {};
+                const users = usersSnap.val() || {};
+                const publicData = publicSnap.val() || {};
+                const athletes = Array.isArray(publicData.atletas) ? publicData.atletas : Object.values(publicData.atletas || {});
+                const occupied = new Set(Object.values(users).map(profile => String(profile?.athleteId || '')));
+                const entries = Object.entries(pending);
+                host.replaceChildren();
+                if (!entries.length) { host.textContent = 'Nenhuma solicitação pendente.'; return; }
+                for (const [uid, request] of entries) {
+                    const card = document.createElement('div');
+                    card.className = 'rounded-lg border border-stone-700 bg-stone-950 p-3 space-y-2';
+                    const title = document.createElement('p');
+                    title.className = 'font-bold text-white';
+                    title.textContent = request?.email || 'E-mail não informado';
+                    card.appendChild(title);
+                    const meta = document.createElement('p');
+                    meta.className = 'text-stone-400 text-[10px]';
+                    meta.textContent = `UID: ${uid} · pedido: ${request?.requestedAt ? new Date(request.requestedAt).toLocaleString('pt-BR') : '—'}`;
+                    card.appendChild(meta);
+                    const select = document.createElement('select');
+                    select.className = 'w-full bg-stone-800 border border-stone-600 p-2 rounded text-xs text-white';
+                    const first = document.createElement('option');
+                    first.value = '';
+                    first.textContent = 'Escolha o cadastro do atleta';
+                    select.appendChild(first);
+                    for (const athlete of athletes) {
+                        const id = String(athlete?.id || '');
+                        if (!id || occupied.has(id)) continue;
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = `${athlete.nome || id} · ${id}`;
+                        select.appendChild(option);
+                    }
+                    card.appendChild(select);
+                    const actions = document.createElement('div');
+                    actions.className = 'flex gap-2';
+                    const approve = document.createElement('button');
+                    approve.type = 'button';
+                    approve.className = 'bg-emerald-700 text-white font-bold p-2 rounded text-[10px]';
+                    approve.textContent = 'Aprovar vínculo';
+                    approve.disabled = select.options.length < 2;
+                    approve.addEventListener('click', async () => {
+                        try {
+                            await window.aprovarSolicitacaoVinculo(uid, select.value);
+                            await window.carregarFilaVinculos();
+                        } catch (error) { host.insertAdjacentText('afterbegin', error.message || 'Não foi possível aprovar. '); }
+                    });
+                    const reject = document.createElement('button');
+                    reject.type = 'button';
+                    reject.className = 'bg-red-800 text-white font-bold p-2 rounded text-[10px]';
+                    reject.textContent = 'Recusar';
+                    reject.addEventListener('click', async () => {
+                        try {
+                            await window.recusarSolicitacaoVinculo(uid);
+                            await window.carregarFilaVinculos();
+                        } catch (error) { host.insertAdjacentText('afterbegin', error.message || 'Não foi possível recusar. '); }
+                    });
+                    actions.append(approve, reject);
+                    card.appendChild(actions);
+                    host.appendChild(card);
+                }
+            } catch (error) {
+                host.textContent = 'Não foi possível carregar a fila. Confira o acesso do administrador.';
+            }
+        };
+
+        window.aprovarSolicitacaoVinculo = async function(uid, athleteId) {
+            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente administrador autenticado pode aprovar.');
+            if (!athleteId) throw new Error('Escolha o cadastro correto do atleta.');
+            const [requestSnap, usersSnap, adminsSnap, publicSnap] = await Promise.all([
+                window.rolesRef.child(`pending/${uid}`).once('value'),
+                window.rolesRef.child('users').once('value'),
+                window.rolesRef.child(`admins/${uid}`).once('value'),
+                window.publicRef.child('data').once('value')
+            ]);
+            if (!requestSnap.exists()) throw new Error('A solicitação já não está pendente.');
+            if (adminsSnap.val() === true) throw new Error('Esta conta é administradora e não deve ser vinculada como atleta.');
+            const publicData = publicSnap.val() || {};
+            const athletes = Array.isArray(publicData.atletas) ? publicData.atletas : Object.values(publicData.atletas || {});
+            if (!athletes.some(athlete => String(athlete?.id) === String(athleteId))) throw new Error('ID de atleta não encontrado.');
+            const users = usersSnap.val() || {};
+            if (users[uid]) throw new Error('Esta conta já está vinculada.');
+            if (Object.values(users).some(profile => String(profile?.athleteId || '') === String(athleteId))) throw new Error('Este cadastro já está vinculado a outra conta.');
+            const updates = {};
+            updates[`roles/users/${uid}`] = { role: 'athlete', athleteId: String(athleteId), linkedAt: new Date().toISOString(), linkedBy: window.firebaseUser.uid };
+            updates[`roles/pending/${uid}`] = null;
+            await window.dbRef.update(updates);
+            window.mostrarToast('Vínculo aprovado. O atleta deve entrar novamente para carregar os dados.');
+        };
+
+        window.recusarSolicitacaoVinculo = async function(uid) {
+            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente administrador autenticado pode recusar.');
+            await window.rolesRef.child(`pending/${uid}`).remove();
+            window.mostrarToast('Solicitação recusada; a conta continua sem acesso privado.');
+        };
+
+        window.redefinirSenhaAtleta = async function() {
+            const email = document.getElementById('athlete-auth-email')?.value?.trim();
+            if (!email) { window.mostrarToast('Digite seu e-mail primeiro.', true); return; }
+            try {
+                await window.authRef.sendPasswordResetEmail(email);
+                window.mostrarToast('Enviamos as instruções para o e-mail.');
+            } catch (error) {
+                window.mostrarToast('Não foi possível enviar a recuperação. Confira o e-mail.', true);
+            }
+        };
+
+        window.renderMeuCadastro = function() {
+            const content = document.getElementById('athlete-profile-content');
+            if (!content || !window.isAtletaLogado) return;
+            content.replaceChildren();
+            const athlete = window.atletasCache.find(a => String(a.id) === String(window.currentAthleteId));
+            if (!athlete) {
+                const pending = document.createElement('p');
+                pending.className = 'text-amber-300';
+                pending.textContent = 'Carregando seus dados...';
+                content.appendChild(pending);
+                return;
+            }
+            const addLine = (label, value, className = 'text-stone-200') => {
+                const line = document.createElement('p');
+                line.className = className;
+                line.textContent = `${label}: ${value}`;
+                content.appendChild(line);
+            };
+            addLine('Atleta', athlete.nome || '—', 'font-bold text-white');
+            addLine('Time', athlete.time || '—');
+            addLine('Camisa', athlete.camisa ?? '—');
+            addLine('Gols', athlete.gols || 0);
+            addLine('Cartões amarelos', athlete.amarelos || 0);
+            addLine('Cartões vermelhos', athlete.vermelho || 0);
+            const pagamentos = athlete.pagamentos || {};
+            const meses = Object.keys(pagamentos).sort().reverse();
+            const heading = document.createElement('h4');
+            heading.className = 'border-t border-stone-700 pt-3 mt-3 font-black text-emerald-400 uppercase text-xs';
+            heading.textContent = 'Mensalidades e multas';
+            content.appendChild(heading);
+            if (!meses.length) addLine('Pagamentos', 'Nenhum registro encontrado', 'text-stone-400');
+            meses.forEach(mes => {
+                const info = pagamentos[mes] || {};
+                const linha = document.createElement('div');
+                linha.className = 'rounded bg-stone-800 p-2 text-xs';
+                const titulo = document.createElement('p');
+                titulo.className = 'font-bold text-white';
+                titulo.textContent = `${mes}: mensalidade ${info.pago ? 'paga' : 'pendente'}`;
+                linha.appendChild(titulo);
+                (info.multas || []).forEach(multa => {
+                    const detalhe = document.createElement('p');
+                    detalhe.className = multa.paga ? 'text-emerald-300' : 'text-amber-300';
+                    detalhe.textContent = `${multa.motivo || 'Multa'} — R$ ${Number(multa.valor || 0).toFixed(2)} — ${multa.paga ? 'paga' : 'pendente'}`;
+                    linha.appendChild(detalhe);
+                });
+                content.appendChild(linha);
+            });
+        };
+
+        window.abrirMeuCadastro = function() {
+            if (!window.isAtletaLogado) return;
+            window.renderMeuCadastro();
+            document.getElementById('athlete-profile-modal')?.classList.remove('hidden');
+        };
+
+        window.vincularContaAtleta = async function(uid, athleteId) {
+            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente administrador autenticado pode vincular contas.');
+            const atletaExiste = window.atletasCache.some(a => String(a.id) === String(athleteId));
+            if (!atletaExiste) throw new Error('ID de atleta não encontrado.');
+            await window.rolesRef.child(`users/${uid}`).set({
+                role: 'athlete',
+                athleteId: String(athleteId),
+                linkedAt: new Date().toISOString(),
+                linkedBy: window.firebaseUser.uid
+            });
+            return true;
+        };
+
+        window.vincularAtletaDoFormulario = async function() {
+            const uid = document.getElementById('vinculo-uid')?.value?.trim();
+            const athleteId = document.getElementById('vinculo-atleta')?.value;
+            if (!uid || !athleteId) { window.mostrarToast('Informe o UID e selecione o atleta.', true); return; }
+            try {
+                await window.vincularContaAtleta(uid, athleteId);
+                document.getElementById('vinculo-uid').value = '';
+                window.mostrarToast('Conta vinculada ao ID do atleta.');
+            } catch (error) {
+                window.mostrarToast(error.message || 'Não foi possível vincular a conta.', true);
+            }
+        };
+
+        window.autenticarAdmin = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-user')?.value?.trim();
+            const password = document.getElementById('login-pass')?.value;
+            const erro = document.getElementById('login-erro');
+            try {
+                await window.authRef.signInWithEmailAndPassword(email, password);
+                document.getElementById('login-modal')?.classList.add('hidden');
+                document.getElementById('login-pass').value = '';
+                erro?.classList.add('hidden');
+            } catch (error) {
+                if (erro) { erro.textContent = 'E-mail ou senha incorretos.'; erro.classList.remove('hidden'); }
             }
         };
         
         window.logoutAdmin = function() { 
-            window.isAdminLogado = false; 
-            document.getElementById('admin-panel')?.classList.add('hidden'); 
-            document.getElementById('admin-badge')?.classList.add('hidden'); 
+            window.authRef?.signOut();
+            document.getElementById('admin-panel')?.classList.add('hidden');
+            document.getElementById('admin-badge')?.classList.add('hidden');
             switchTab('dashboard'); 
-        };
+        }; 
         
         // =====================================================
         // NAVEGAÇÃO
         // =====================================================
         
         function switchTab(tabId) {
+            if ((tabId === 'financeiro-ver' || tabId === 'admin-panel') && !(window.isAdminLogado && window.firebaseUser)) {
+                window.mostrarToast('Acesso restrito a administradores.', true);
+                tabId = 'dashboard';
+            }
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
@@ -3108,7 +3782,7 @@
         iniciarContagemRegressiva();
         
         console.log('BABA VETERANOS - Sistema inicializado');
-        console.log('Regras de segurança integradas e validadas');
+        console.log('Staging: autenticação preparada; regras de produção não alteradas nem validadas em emulador.');
     </script>
 
     <script>
@@ -3162,7 +3836,7 @@
                 <button onclick="switchTab('busca-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-search text-lg w-6"></i> Buscar Atleta
                 </button>
-                <button onclick="switchTab('financeiro-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
+                <button id="sidebar-financeiro-link" onclick="switchTab('financeiro-ver'); toggleMenu()" class="hidden flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
                     <i class="fa-solid fa-receipt text-lg w-6"></i> Balanço Financeiro
                 </button>
                 <button onclick="switchTab('regras-ver'); toggleMenu()" class="flex items-center gap-3 p-4 rounded-xl text-stone-300 hover:bg-emerald-500/10 hover:text-emerald-400 transition font-bold uppercase text-xs">
@@ -3297,9 +3971,9 @@
 
         // Sincroniza notificações do Firebase ao abrir o app e também em tempo real.
         window.iniciarEscutaNotificacoesRemotas = function() {
-            if (!window.dbRef) return;
+            if (!window.publicRef) return;
             if (window._escutaNotifRemota) { window.sincronizarNotificacoesRemotas?.(); return; }
-            const ref = window.dbRef.child('notificacoes_remotas');
+            const ref = window.publicRef.child('notificacoes_remotas');
             let vistas = {};
             try { vistas = JSON.parse(localStorage.getItem('baba_notificacoes_remotas_vistas') || '{}'); } catch(e) {}
             window._notificacoesRemotasVistas = vistas;
@@ -3901,8 +4575,8 @@
                     mensagem: msgNotif,
                     status: 'pendente'
                 };
-                if (window.dbRef) {
-                    window.dbRef.child('notificacoes_pendentes/' + disparoId).set(dadosDisparo);
+                if (window.privateRef && window.isAdminLogado && window.firebaseUser) {
+                    window.privateRef.child('notificacoes_pendentes/' + disparoId).set(dadosDisparo);
                 }
             }
             
@@ -3915,8 +4589,8 @@
                 detalhes: detalhes || null,
                 data: new Date().toISOString()
             };
-            if (window.dbRef) {
-                const novaRef = window.dbRef.child('notificacoes_remotas').push();
+            if (window.publicRef && window.isAdminLogado && window.firebaseUser) {
+                const novaRef = window.publicRef.child('notificacoes_remotas').push();
                 const chaveRemota = novaRef.key;
                 novaRef.set(notificacaoRemota);
                 if (chaveRemota && window._notificacoesRemotasVistas) {
