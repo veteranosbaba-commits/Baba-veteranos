@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#064e3b">
+  <title>Conta de teste — Baba Veteranos</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #11130f; color: #f5f5f4; }
+    main { width: min(100%, 460px); background: #1c211a; border: 1px solid #374136; border-radius: 20px; padding: 28px; box-shadow: 0 20px 60px #0008; }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    p { color: #c5cec1; line-height: 1.5; }
+    label { display: block; margin: 18px 0 6px; font-weight: 650; }
+    input { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid #52604e; background: #10140f; color: white; font: inherit; }
+    .buttons { display: grid; gap: 10px; margin-top: 18px; }
+    button { border: 0; border-radius: 11px; padding: 13px; background: #3c9a63; color: #07140c; font: inherit; font-weight: 750; cursor: pointer; }
+    button.secondary { background: #596353; color: white; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { min-height: 1.5em; margin-top: 16px; line-height: 1.45; }
+    #notice { margin-top: 18px; padding: 12px 14px; border-left: 3px solid #e5b85c; background: #151a14; font-size: .9rem; }
+    .success { color: #8ce0a5; } .error { color: #ffaaa3; }
+    [hidden] { display: none !important; }
+    code { color: #b8e5c3; overflow-wrap: anywhere; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Conta de teste — projeto isolado</h1>
+    <p>Crie uma conta neste projeto de teste para validar a autenticação do PWA. Ela fica separada da conta e dos dados de produção.</p>
+    <form id="auth-form" autocomplete="on">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Senha de teste</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+      <div class="buttons">
+        <button id="signup-button" type="button">Criar conta de teste</button>
+        <button id="login-button" class="secondary" type="submit">Entrar com conta de teste</button>
+      </div>
+    </form>
+    <div id="signed-in" hidden>
+      <p id="signed-in-message" class="success"></p>
+      <div class="buttons"><button id="logout" class="secondary" type="button">Sair</button></div>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <div id="notice"><strong>Importante:</strong> use uma senha própria para este ambiente, diferente da senha de qualquer conta existente. Não a envie no chat. Esta página não lê nem grava dados do banco.</div>
+  </main>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCgHDw9YYsIjwEGCpeuh8-ndEWl_eWX4Ao",
+      authDomain: "baba-veteranos---teste-auth.firebaseapp.com",
+      databaseURL: "https://baba-veteranos---teste-auth-default-rtdb.firebaseio.com",
+      projectId: "baba-veteranos---teste-auth",
+      storageBucket: "baba-veteranos---teste-auth.firebasestorage.app",
+      messagingSenderId: "693322003433",
+      appId: "1:693322003433:web:23a0bb93a914adf0f3d178"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const form = document.getElementById('auth-form');
+    const status = document.getElementById('status');
+    const signupButton = document.getElementById('signup-button');
+    const loginButton = document.getElementById('login-button');
+    const signedIn = document.getElementById('signed-in');
+    const signedInMessage = document.getElementById('signed-in-message');
+    const errorText = {
+      'auth/invalid-email': 'Confira o formato do e-mail.',
+      'auth/email-already-in-use': 'Esse e-mail já tem uma conta neste projeto de teste. Use “Entrar”.',
+      'auth/weak-password': 'Escolha uma senha de teste com pelo menos 6 caracteres.',
+      'auth/user-disabled': 'Esta conta de teste está desativada.',
+      'auth/user-not-found': 'Não encontrei essa conta de teste.',
+      'auth/wrong-password': 'A senha de teste não confere.',
+      'auth/invalid-credential': 'E-mail ou senha de teste não conferem.',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.',
+      'auth/unauthorized-domain': 'Este endereço ainda não está autorizado no projeto de teste.',
+      'auth/network-request-failed': 'Sem conexão. Confira a internet e tente novamente.'
+    };
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        form.hidden = true;
+        signedIn.hidden = false;
+        signedInMessage.innerHTML = 'Conta de teste autenticada.<br>E-mail: ' + escapeHtml(user.email || '') + '<br>UID: <code>' + escapeHtml(user.uid) + '</code>';
+        status.textContent = '';
+        status.className = '';
+      } else {
+        form.hidden = false;
+        signedIn.hidden = true;
+      }
+    });
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    async function runAuth(operation) {
+      if (!form.reportValidity()) return;
+      status.textContent = 'Verificando…';
+      status.className = '';
+      signupButton.disabled = true;
+      loginButton.disabled = true;
+      try {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        if (operation === 'signup') await auth.createUserWithEmailAndPassword(email, password);
+        else await auth.signInWithEmailAndPassword(email, password);
+        passwordInput.value = '';
+      } catch (error) {
+        status.textContent = errorText[error.code] || 'Não foi possível concluir. Confira os dados e tente novamente.';
+        status.className = 'error';
+      } finally {
+        signupButton.disabled = false;
+        loginButton.disabled = false;
+      }
+    }
+    signupButton.addEventListener('click', () => runAuth('signup'));
+    form.addEventListener('submit', event => { event.preventDefault(); runAuth('login'); });
+    document.getElementById('logout').addEventListener('click', async () => {
+      await auth.signOut();
+      status.textContent = 'Você saiu da conta de teste.';
+      status.className = '';
+    });
+  </script>
+</body>
+</html>
