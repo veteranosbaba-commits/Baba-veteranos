@@ -1158,12 +1158,9 @@
         </div>
     </div>
 
-    <div id="excluir-arquivados-modal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="excluir-arquivados-titulo">
+    <div id="excluir-arquivados-modal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-describedby="excluir-arquivados-instruction">
         <form id="excluir-arquivados-form" onsubmit="window.confirmarExclusaoArquivados(event)" class="w-full max-w-sm rounded-2xl border border-red-800 bg-stone-900 p-5 shadow-2xl space-y-4">
-            <div>
-                <h3 id="excluir-arquivados-titulo" class="font-black text-red-300 text-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> Confirme sua identidade</h3>
-                <p class="mt-2 text-xs text-stone-300">Digite a senha atual da conta de administrador para excluir os itens arquivados.</p>
-            </div>
+            <p id="excluir-arquivados-instruction" class="text-xs text-stone-300">Digite a senha atual da conta de administrador para excluir os itens arquivados.</p>
             <label for="excluir-arquivados-password" class="block text-[10px] font-bold uppercase text-stone-400">Senha do administrador</label>
             <input id="excluir-arquivados-password" type="password" autocomplete="current-password" required class="w-full rounded-lg border border-stone-600 bg-stone-800 p-3 text-sm text-white outline-none focus:border-red-500" placeholder="Sua senha">
             <p id="excluir-arquivados-error" class="hidden text-xs font-bold text-red-400" role="alert"></p>
@@ -1172,6 +1169,16 @@
                 <button id="excluir-arquivados-submit" type="submit" class="rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white">Confirmar exclusão</button>
             </div>
         </form>
+    </div>
+
+    <div id="app-confirm-modal" class="fixed inset-0 z-[140] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4" role="alertdialog" aria-modal="true" aria-describedby="app-confirm-message">
+        <div class="w-full max-w-sm rounded-2xl border border-stone-700 bg-stone-900 p-5 shadow-2xl">
+            <p id="app-confirm-message" class="text-sm font-semibold leading-relaxed text-stone-100"></p>
+            <div class="mt-5 flex justify-end gap-2">
+                <button id="app-confirm-cancel" type="button" onclick="window.resolverConfirmacaoApp(false)" class="rounded-lg border border-stone-600 px-3 py-2 text-xs font-bold text-stone-300">Cancelar</button>
+                <button id="app-confirm-accept" type="button" onclick="window.resolverConfirmacaoApp(true)" class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-black text-stone-950">Confirmar</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1224,6 +1231,50 @@
         let toastTimeout = null;
         let syncEmAndamento = false;
         let renderFinanceiroAtletasTimeout = null;
+        window.confirmacaoAppPendente = null;
+
+        window.confirmarAcao = function(mensagem, opcoes = {}) {
+            const modal = document.getElementById('app-confirm-modal');
+            const texto = document.getElementById('app-confirm-message');
+            const cancelar = document.getElementById('app-confirm-cancel');
+            const aceitar = document.getElementById('app-confirm-accept');
+            if (!modal || !texto || !cancelar || !aceitar || window.confirmacaoAppPendente) return Promise.resolve(false);
+
+            return new Promise(resolve => {
+                window.confirmacaoAppPendente = { resolve, focoAnterior: document.activeElement };
+                texto.textContent = String(mensagem || 'Deseja continuar?');
+                cancelar.textContent = opcoes.cancelText || 'Cancelar';
+                aceitar.textContent = opcoes.confirmText || 'Confirmar';
+                aceitar.className = opcoes.destructive
+                    ? 'rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white hover:bg-red-600'
+                    : 'rounded-lg bg-amber-500 px-3 py-2 text-xs font-black text-stone-950 hover:bg-amber-400';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                aceitar.focus();
+            });
+        };
+
+        window.resolverConfirmacaoApp = function(confirmada) {
+            const pendente = window.confirmacaoAppPendente;
+            if (!pendente) return;
+            window.confirmacaoAppPendente = null;
+            const modal = document.getElementById('app-confirm-modal');
+            modal?.classList.add('hidden');
+            modal?.classList.remove('flex');
+            if (pendente.focoAnterior?.isConnected) pendente.focoAnterior.focus();
+            pendente.resolve(Boolean(confirmada));
+        };
+
+        const appConfirmModal = document.getElementById('app-confirm-modal');
+        appConfirmModal?.addEventListener('click', event => {
+            if (event.target === appConfirmModal) window.resolverConfirmacaoApp(false);
+        });
+        appConfirmModal?.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                window.resolverConfirmacaoApp(false);
+            }
+        });
         
         const mesesNomes = { 
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
@@ -1997,8 +2048,8 @@
             window.mostrarToast("Placar salvo!");
         };
         
-        window.excluirRodadaHistorico = function(id) {
-            if(confirm("Apagar esta rodada?")) {
+        window.excluirRodadaHistorico = async function(id) {
+            if (await window.confirmarAcao('Apagar esta rodada?', { confirmText: 'Excluir', destructive: true })) {
                 window.historicoPlacares = window.historicoPlacares.filter(r => r.id !== id);
                 if(window.historicoPlacares.length) {
                     window.partidaEstatisticas.placarFlu = window.historicoPlacares[0].golsFlu;
@@ -2009,7 +2060,7 @@
                 }
                 recalcularClassificacaoGeral();
                 window.salvarNoStorage();
-                window.mostrarToast("Rodada removida!");
+                window.mostrarToast('Rodada removida!');
             }
         };
         
@@ -2352,12 +2403,12 @@
             window.salvarNoStorage(); 
         };
         
-        window.excluirAtleta = function(id) { 
-            if(confirm("Remover atleta?")) { 
-                window.atletasCache = window.atletasCache.filter(a => a.id !== id); 
-                window.mostrarToast("Atleta removido!"); 
-                window.salvarNoStorage(); 
-            } 
+        window.excluirAtleta = async function(id) {
+            if (await window.confirmarAcao('Remover este atleta?', { confirmText: 'Remover', destructive: true })) {
+                window.atletasCache = window.atletasCache.filter(a => a.id !== id);
+                window.mostrarToast('Atleta removido!');
+                window.salvarNoStorage();
+            }
         };
         
         function renderAdminAtletas() { 
@@ -2504,11 +2555,11 @@
             }
         };
         
-        window.cancelarMulta = function(atletaId, mes, idx) {
+        window.cancelarMulta = async function(atletaId, mes, idx) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (!a?.pagamentos?.[mes]?.multas?.[idx]) return;
-            if (!a.pagamentos[mes].multas[idx].paga) { alert("Marque como paga primeiro!"); return; }
-            if(confirm(`Arquivar multa?`)) {
+            if (!a.pagamentos[mes].multas[idx].paga) { alert('Marque como paga primeiro!'); return; }
+            if (await window.confirmarAcao('Arquivar esta multa?', { confirmText: 'Arquivar' })) {
                 if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
                 const multa = a.pagamentos[mes].multas[idx];
                 a.pagamentos[mes].multasArquivadasHistorico.push({
@@ -2516,7 +2567,7 @@
                     motivo: multa.motivo || 'Arquivado'
                 });
                 a.pagamentos[mes].multas.splice(idx, 1);
-                window.mostrarToast("Multa arquivada!");
+                window.mostrarToast('Multa arquivada!');
                 window.salvarNoStorage({ silencioso: true });
                 atualizarScoutsSemPerderPosicao();
             }
@@ -2642,12 +2693,12 @@
             window.salvarNoStorage();
         };
         
-        window.excluirReceitaExterna = function(id, tipo) {
-            if(confirm("Remover receita?")) {
+        window.excluirReceitaExterna = async function(id, tipo) {
+            if (await window.confirmarAcao('Remover esta receita?', { confirmText: 'Remover', destructive: true })) {
                 if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
                 else if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
                 window.salvarNoStorage();
-                window.mostrarToast("Receita removida!");
+                window.mostrarToast('Receita removida!');
             }
         };
         
@@ -2791,12 +2842,12 @@
             window.mostrarToast("Súmula carregada pra edição!");
         };
 
-        window.excluirSumula = function(id) {
-            if(confirm("Deseja excluir esta súmula?")) {
+        window.excluirSumula = async function(id) {
+            if (await window.confirmarAcao('Deseja excluir esta súmula?', { confirmText: 'Excluir', destructive: true })) {
                 window.sumulasCache = window.sumulasCache.filter(s => s.id !== id);
                 window.salvarNoStorage();
                 window.renderSumulasAdmin();
-                window.mostrarToast("Súmula removida!");
+                window.mostrarToast('Súmula removida!');
             }
         };
 
@@ -2969,12 +3020,12 @@
             }
         };
         
-        window.excluirGasto = function(id) { 
-            if(confirm("Excluir despesa?")) { 
-                window.gastosCache = window.gastosCache.filter(g => g.id !== id); 
-                window.mostrarToast("Despesa removida!"); 
-                window.salvarNoStorage(); 
-            } 
+        window.excluirGasto = async function(id) {
+            if (await window.confirmarAcao('Excluir esta despesa?', { confirmText: 'Excluir', destructive: true })) {
+                window.gastosCache = window.gastosCache.filter(g => g.id !== id);
+                window.mostrarToast('Despesa removida!');
+                window.salvarNoStorage();
+            }
         };
         
         function renderAdminGastosTabela() {
@@ -3077,7 +3128,7 @@
 
         window.sairContaAtleta = async function() {
             if (!window.authRef?.currentUser) return;
-            if (!window.confirm('Deseja realmente sair da sua conta?')) return;
+            if (!await window.confirmarAcao('Deseja realmente sair da sua conta?', { confirmText: 'Sair' })) return;
             try {
                 await window.authRef.signOut();
                 exibirMensagemAcessoAtleta('Você saiu da conta. Entre novamente quando quiser.');
@@ -3524,7 +3575,7 @@
         
         window.logoutAdmin = async function() {
             if (!window.authRef?.currentUser) return;
-            if (!window.confirm('Deseja realmente sair da conta administrativa?')) return;
+            if (!await window.confirmarAcao('Deseja realmente sair da sua conta?', { confirmText: 'Sair' })) return;
             try {
                 await window.authRef.signOut();
                 document.getElementById('admin-panel')?.classList.add('hidden');
@@ -3616,27 +3667,23 @@
         }
         
         
-        window.excluirCartoesHistorico = function(id, cor) {
+        window.excluirCartoesHistorico = async function(id, cor) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
 
-            if (cor === 'amarelo') {
-                if (a.histAmarelos > 0) {
-                    if (confirm("Remover 1 cartão AMARELO do histórico?")) {
-                        a.histAmarelos--;
-                        window.salvarNoStorage();
-                        window.renderArquivados();
-                        window.mostrarToast("1 Amarelo removido!");
-                    }
+            if (cor === 'amarelo' && a.histAmarelos > 0) {
+                if (await window.confirmarAcao('Remover 1 cartão amarelo do histórico?', { confirmText: 'Remover', destructive: true })) {
+                    a.histAmarelos--;
+                    window.salvarNoStorage();
+                    window.renderArquivados();
+                    window.mostrarToast('1 Amarelo removido!');
                 }
-            } else if (cor === 'vermelho') {
-                if (a.histVermelhos > 0) {
-                    if (confirm("Remover 1 cartão VERMELHO do histórico?")) {
-                        a.histVermelhos--;
-                        window.salvarNoStorage();
-                        window.renderArquivados();
-                        window.mostrarToast("1 Vermelho removido!");
-                    }
+            } else if (cor === 'vermelho' && a.histVermelhos > 0) {
+                if (await window.confirmarAcao('Remover 1 cartão vermelho do histórico?', { confirmText: 'Remover', destructive: true })) {
+                    a.histVermelhos--;
+                    window.salvarNoStorage();
+                    window.renderArquivados();
+                    window.mostrarToast('1 Vermelho removido!');
                 }
             }
         };
@@ -3707,8 +3754,8 @@
             container.innerHTML = html || '<div class="text-center py-10 text-stone-500 text-xs italic">Nenhum registro arquivado.</div>';
         };
 
-        window.excluirMultaHistorica = function(atletaId, mes, idx) {
-            if(confirm("Excluir esta multa do histórico permanentemente?")) {
+        window.excluirMultaHistorica = async function(atletaId, mes, idx) {
+            if (await window.confirmarAcao('Excluir esta multa do histórico permanentemente?', { confirmText: 'Excluir', destructive: true })) {
                 const a = window.atletasCache.find(j => j.id === atletaId);
                 if(a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
                     a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
@@ -3717,7 +3764,7 @@
                     }
                     window.salvarNoStorage();
                     window.renderArquivados();
-                    window.mostrarToast("Multa removida!");
+                    window.mostrarToast('Multa removida!');
                 }
             }
         };
@@ -3936,12 +3983,12 @@
             window.mostrarToast('PDF gerado!');
         };
 
-        window.limparHistoricoGeral = function() {
+        window.limparHistoricoGeral = async function() {
             if (!window.isAdminLogado || !window.authRef?.currentUser) {
                 window.mostrarToast('Apenas um administrador autenticado pode excluir itens arquivados.', true);
                 return;
             }
-            const confirmar = window.confirm('ATENÇÃO: esta ação excluirá permanentemente do app o histórico arquivado de cartões, multas e aportes de todos os atletas. Não excluirá cadastros nem movimentações ativas. Deseja continuar?');
+            const confirmar = await window.confirmarAcao('ATENÇÃO: esta ação excluirá permanentemente do app o histórico arquivado de cartões, multas e aportes de todos os atletas. Não excluirá cadastros nem movimentações ativas. Deseja continuar?', { confirmText: 'Prosseguir', destructive: true });
             if (!confirmar) return;
 
             const modal = document.getElementById('excluir-arquivados-modal');
@@ -4461,13 +4508,13 @@
         };
 
         // Limpa apenas o histórico local, sem apagar avisos compartilhados no Firebase.
-        window.limparNotificacoes = function() {
+        window.limparNotificacoes = async function() {
             window.carregarNotificacoes();
             if (!window.notificacoesCache.length) {
                 window.mostrarToast('Não há notificações para limpar.');
                 return;
             }
-            if (!window.confirm('Limpar todas as notificações deste aparelho? Isso não apaga avisos compartilhados com outros usuários.')) return;
+            if (!await window.confirmarAcao('Limpar todas as notificações deste aparelho? Isso não apaga avisos compartilhados com outros usuários.', { confirmText: 'Limpar', destructive: true })) return;
             try { localStorage.setItem('baba_notificacoes_limpeza_em', String(Date.now())); } catch(e) {}
             window.notificacoesCache = [];
             window.salvarNotificacoes();
