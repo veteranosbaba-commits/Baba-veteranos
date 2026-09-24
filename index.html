@@ -239,11 +239,7 @@
 
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-32 soccer-bg">
-    <!-- BOTÕES DE TEMA -->
-    <div class="fixed top-2 right-2 z-[60] flex gap-1 bg-black/60 backdrop-blur-sm p-1 rounded-full border border-white/20">
-        <button onclick="window.setAppTheme('botafogo')" class="w-8 h-8 rounded-full bg-black border border-white/40 flex items-center justify-center text-[10px] font-bold text-white shadow-lg active:scale-95 transition-transform" title="Tema Botafogo">B</button>
-        <button onclick="window.setAppTheme('fluminense')" class="w-8 h-8 rounded-full bg-gradient-to-br from-red-700 to-green-800 border border-white/40 flex items-center justify-center text-[10px] font-bold text-white shadow-lg active:scale-95 transition-transform" title="Tema Fluminense">F</button>
-    </div>
+    <!-- O tema atual pode ser alternado pelo nome do clube no cabeçalho. -->
 
 
     <!-- LOADING OVERLAY -->
@@ -267,16 +263,17 @@
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
                         <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
-                        <span id="theme-team-name" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></span>
+                        <button type="button" id="theme-team-name" onclick="window.alternarTemaApp()" aria-label="Alternar tema do clube" title="Toque para alternar o tema" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></button>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 sm:gap-2">
                     <div id="admin-badge" class="hidden bg-amber-500 text-black text-[9px] px-3 py-1 rounded-full font-black tracking-wider flex items-center gap-2 border border-amber-300 shadow-lg">
                         <i class="fa-solid fa-user-gear"></i> ADMIN 
                         <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
                     </div>
-                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded px-2 py-1">Atleta</button>
-                    <button id="member-profile-button" onclick="window.abrirMeuCadastro()" class="hidden text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded px-2 py-1">Meu cadastro</button>
+                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded px-2 py-1">Atleta</button>
+                    <button id="member-profile-button" onclick="window.abrirMeuCadastro()" aria-label="Abrir meu cadastro de atleta" class="hidden whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded px-2 py-1">Cadastro</button>
+                    <button id="member-logout-button" type="button" onclick="window.sairContaAtleta()" aria-label="Sair da conta do atleta" class="hidden whitespace-nowrap text-[9px] text-stone-300 font-bold border border-stone-700 rounded px-2 py-1">Sair</button>
                     <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                         <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
                         <span class="hidden sm:inline">Online</span>
@@ -2895,6 +2892,11 @@
                 badge.className = `inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black ${color}`;
             }
             const signedIn = Boolean(user);
+            const isAthlete = signedIn && state === 'athlete';
+            const isAdmin = signedIn && state === 'admin';
+            visible('member-auth-button', !signedIn || (!isAthlete && !isAdmin));
+            visible('member-profile-button', isAthlete);
+            visible('member-logout-button', signedIn && !isAdmin);
             visible('athlete-auth-login-fields', !signedIn);
             visible('athlete-auth-create', !signedIn);
             visible('athlete-auth-reset', !signedIn);
@@ -3907,7 +3909,13 @@
                     teamDisplay.style.backgroundColor = '#800000'; teamDisplay.style.color = 'white';
                 }
             }
+            teamDisplay?.setAttribute('aria-label', `Tema atual: ${theme === 'botafogo' ? 'Botafogo' : 'Fluminense'}. Toque para alternar.`);
+            teamDisplay?.setAttribute('title', 'Toque para alternar o tema');
             localStorage.setItem('baba_app_theme', theme);
+        };
+        window.alternarTemaApp = function() {
+            const proximoTema = document.body.classList.contains('theme-botafogo') ? 'fluminense' : 'botafogo';
+            window.setAppTheme(proximoTema);
         };
         document.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('baba_app_theme') || 'fluminense';
