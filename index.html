@@ -2023,19 +2023,19 @@
             const botaVal = document.getElementById('adm-placar-bota')?.value;
             const dataInput = document.getElementById('adm-placar-data')?.value;
             
-            if (!fluVal || !botaVal) { alert("Preencha os placares!"); return; }
-            if (!dataInput) { alert("Selecione a data da partida!"); return; }
+            if (!fluVal || !botaVal) { window.mostrarToast('Preencha os placares!', true); return; }
+            if (!dataInput) { window.mostrarToast('Selecione a data da partida!', true); return; }
             
             const placarFlu = parseInt(fluVal);
             const placarBota = parseInt(botaVal);
-            if (isNaN(placarFlu) || isNaN(placarBota)) { alert("Valores inválidos!"); return; }
+            if (isNaN(placarFlu) || isNaN(placarBota)) { window.mostrarToast('Valores inválidos!', true); return; }
             
             // Converte YYYY-MM-DD para DD/MM/YYYY
             const partes = dataInput.split('-');
             const dataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
             
             if (window.historicoPlacares?.some(r => r.data === dataStr)) {
-                alert(`Já existe resultado para esta data (${dataStr}). Remova no histórico primeiro.`);
+                window.mostrarToast(`Já existe resultado para esta data (${dataStr}). Remova no histórico primeiro.`, true);
                 return;
             }
             
@@ -2377,8 +2377,8 @@
             const camisa = parseInt(document.getElementById('cad-camisa')?.value);
             const time = document.getElementById('cad-time')?.value;
             
-            if (!nome || isNaN(camisa) || !time) { alert('Preencha todos os campos!'); return; }
-            if (camisa < 0 || camisa > 99) { alert('Número da camisa deve ser entre 0 e 99!'); return; }
+            if (!nome || isNaN(camisa) || !time) { window.mostrarToast('Preencha todos os campos!', true); return; }
+            if (camisa < 0 || camisa > 99) { window.mostrarToast('Número da camisa deve ser entre 0 e 99!', true); return; }
             
             const novoAtleta = { 
                 id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
@@ -2510,13 +2510,13 @@
             const valor = parseFloat(valorInput?.value);
             
             if (!motivo || isNaN(valor) || valor <= 0) { 
-                alert('Preencha motivo e valor corretamente!'); 
+                window.mostrarToast('Preencha motivo e valor corretamente!', true); 
                 return; 
             }
             
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) {
-                alert('Erro: Atleta não encontrado.');
+                window.mostrarToast('Erro: Atleta não encontrado.', true);
                 return;
             }
             
@@ -2558,7 +2558,7 @@
         window.cancelarMulta = async function(atletaId, mes, idx) {
             const a = window.atletasCache.find(j => j.id === atletaId);
             if (!a?.pagamentos?.[mes]?.multas?.[idx]) return;
-            if (!a.pagamentos[mes].multas[idx].paga) { alert('Marque como paga primeiro!'); return; }
+            if (!a.pagamentos[mes].multas[idx].paga) { window.mostrarToast('Marque como paga primeiro!', true); return; }
             if (await window.confirmarAcao('Arquivar esta multa?', { confirmText: 'Arquivar' })) {
                 if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
                 const multa = a.pagamentos[mes].multas[idx];
@@ -2674,7 +2674,7 @@
             const nome = document.getElementById('pat-nome')?.value?.trim();
             const destino = document.getElementById('pat-destino')?.value?.trim();
             const valor = parseFloat(document.getElementById('pat-valor')?.value);
-            if (!nome || !destino || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            if (!nome || !destino || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
             window.patrociniosCache.push({ id: 'pat_' + Date.now(), nome, destino, valor });
             document.getElementById('form-patrocinio')?.reset();
             window.mostrarToast("Patrocínio adicionado!");
@@ -2686,7 +2686,7 @@
             const nome = document.getElementById('socio-nome')?.value?.trim();
             const mes = document.getElementById('socio-mes')?.value;
             const valor = parseFloat(document.getElementById('socio-valor')?.value);
-            if (!nome || !mes || isNaN(valor) || valor <= 0) { alert('Preencha corretamente!'); return; }
+            if (!nome || !mes || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
             window.sociosCache.push({ id: 'socio_' + Date.now(), nome, mes, valor });
             document.getElementById('form-socio')?.reset();
             window.mostrarToast("Sócio lançado!");
@@ -2754,7 +2754,7 @@
             const data = document.getElementById('gasto-data')?.value;
             const descricao = document.getElementById('gasto-descricao')?.value?.trim();
             const valor = parseFloat(document.getElementById('gasto-valor')?.value);
-            if (!data || !descricao || isNaN(valor) || valor <= 0) { alert('Informe data, descrição e um valor válido!'); return; }
+            if (!data || !descricao || isNaN(valor) || valor <= 0) { window.mostrarToast('Informe data, descrição e um valor válido!', true); return; }
             const [ano, mes, dia] = data.split('-');
             window.gastosCache.push({ 
                 id: 'gasto_' + Date.now(), 
@@ -2791,7 +2791,7 @@
             const fluVer = document.getElementById('sum-flu-vermelhos').value;
             const obs = document.getElementById('sum-obs').value;
 
-            if (!data) { alert('Data é obrigatória!'); return; }
+            if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
 
             const novaSumula = {
                 id: window.editandoSumulaId || 'sum_' + Date.now(),
