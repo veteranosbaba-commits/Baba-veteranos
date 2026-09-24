@@ -3370,17 +3370,63 @@
                 line.textContent = `${label}: ${value}`;
                 content.appendChild(line);
             };
+            const pagamentos = athlete.pagamentos || {};
+            const mesAtual = window.getMesAtual();
+            const mesNome = window.mesesPtbr?.[mesAtual] || mesAtual;
+            const agora = new Date();
+            const mensalidadePaga = window.verificarPago(pagamentos, mesAtual, athlete);
+            const mensalidadeVencida = !mensalidadePaga && agora.getDate() > 15;
+
             addLine('Atleta', athlete.nome || '—', 'font-bold text-white');
+
+            const destaqueMensalidade = document.createElement('section');
+            destaqueMensalidade.setAttribute('aria-label', `Situação da mensalidade de ${mesNome} ${agora.getFullYear()}`);
+            destaqueMensalidade.setAttribute('aria-live', 'polite');
+            destaqueMensalidade.className = `mt-3 mb-2 rounded-xl border-2 p-4 shadow-lg ${mensalidadePaga
+                ? 'border-emerald-400 bg-emerald-950/60 shadow-emerald-950/40'
+                : mensalidadeVencida
+                    ? 'border-red-500 bg-red-950/70 shadow-red-950/50'
+                    : 'border-amber-400 bg-amber-950/60 shadow-amber-950/40'}`;
+
+            const linhaCabecalho = document.createElement('div');
+            linhaCabecalho.className = 'flex flex-wrap items-center justify-between gap-2';
+            const periodo = document.createElement('p');
+            periodo.className = 'text-[10px] font-black uppercase tracking-wider text-stone-200';
+            periodo.textContent = `MENSALIDADE DE ${mesNome} ${agora.getFullYear()}`;
+            const situacao = document.createElement('span');
+            situacao.className = `rounded-full px-3 py-1 text-[11px] font-black uppercase ${mensalidadePaga
+                ? 'bg-emerald-400 text-stone-950'
+                : mensalidadeVencida
+                    ? 'bg-red-500 text-white'
+                    : 'bg-amber-400 text-stone-950'}`;
+            situacao.textContent = mensalidadePaga ? 'PAGA' : mensalidadeVencida ? 'PENDENTE · VENCIDA' : 'PENDENTE';
+            linhaCabecalho.append(periodo, situacao);
+            destaqueMensalidade.appendChild(linhaCabecalho);
+
+            const valorMensalidade = document.createElement('p');
+            valorMensalidade.className = `mt-2 text-2xl font-black tracking-wide ${mensalidadePaga ? 'text-emerald-300' : mensalidadeVencida ? 'text-red-300' : 'text-amber-200'}`;
+            valorMensalidade.textContent = `R$ ${formatarValorMensalidade()}`;
+            destaqueMensalidade.appendChild(valorMensalidade);
+
+            const detalheMensalidade = document.createElement('p');
+            detalheMensalidade.className = `mt-1 text-xs font-bold ${mensalidadePaga ? 'text-emerald-200' : mensalidadeVencida ? 'text-red-200' : 'text-amber-100'}`;
+            detalheMensalidade.textContent = mensalidadePaga
+                ? 'Pagamento deste mês registrado.'
+                : mensalidadeVencida
+                    ? `Vencimento: dia 15 de ${mesNome}. O sistema registra o pagamento em aberto.`
+                    : `Pagamento em aberto. Vence dia 15 de ${mesNome}.`;
+            destaqueMensalidade.appendChild(detalheMensalidade);
+            content.appendChild(destaqueMensalidade);
+
             addLine('Time', athlete.time || '—');
             addLine('Camisa', athlete.camisa ?? '—');
             addLine('Gols', athlete.gols || 0);
             addLine('Cartões amarelos', athlete.amarelos || 0);
             addLine('Cartões vermelhos', athlete.vermelho || 0);
-            const pagamentos = athlete.pagamentos || {};
             const meses = Object.keys(pagamentos).sort().reverse();
             const heading = document.createElement('h4');
             heading.className = 'border-t border-stone-700 pt-3 mt-3 font-black text-emerald-400 uppercase text-xs';
-            heading.textContent = 'Mensalidades e multas';
+            heading.textContent = 'Histórico de mensalidades e multas';
             content.appendChild(heading);
             if (!meses.length) addLine('Pagamentos', 'Nenhum registro encontrado', 'text-stone-400');
             meses.forEach(mes => {
