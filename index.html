@@ -283,7 +283,10 @@
                     </div>
                 </div>
             </div>
-            <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-0.5">PAINEL GERAL</div>
+            <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-0.5 flex items-center justify-center gap-2">
+                <span id="page-title-text">PAINEL GERAL</span>
+                <span id="member-role-badge" role="status" aria-live="polite" class="inline-flex items-center rounded-full border border-stone-600 bg-stone-800 px-2 py-0.5 text-[8px] font-black text-stone-300">VISITANTE</span>
+            </div>
         </div>
     </nav>
 
@@ -1072,15 +1075,19 @@
                 <button type="button" onclick="window.toggleAthleteAuth(true)" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form onsubmit="window.entrarAtletaFirebase(event)" class="space-y-3">
-                <input type="email" id="athlete-auth-email" autocomplete="username" placeholder="Seu e-mail" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
-                <input type="password" id="athlete-auth-password" autocomplete="current-password" placeholder="Senha (mínimo 8 caracteres para conta nova)" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                <div id="athlete-auth-login-fields" class="space-y-3">
+                    <input type="email" id="athlete-auth-email" autocomplete="username" placeholder="Seu e-mail" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                    <input type="password" id="athlete-auth-password" autocomplete="current-password" placeholder="Sua senha" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                    <button id="athlete-auth-submit" type="submit" class="w-full bg-emerald-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest">Entrar</button>
+                </div>
                 <p id="athlete-auth-message" class="hidden text-xs font-bold" aria-live="polite"></p>
-                <button id="athlete-auth-submit" type="submit" class="w-full bg-emerald-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest">Entrar</button>
-                <button type="button" onclick="window.criarContaAtleta()" class="w-full bg-stone-800 text-emerald-300 font-bold p-2.5 rounded-lg text-xs">Criar conta e receber confirmação</button>
-                <button type="button" onclick="window.enviarConfirmacaoAtleta()" class="w-full text-stone-400 text-xs underline">Reenviar link de confirmação</button>
-                <button type="button" onclick="window.confirmarEmailAtleta()" class="w-full text-emerald-300 text-xs underline">Já confirmei meu e-mail</button>
-                <button type="button" onclick="window.solicitarVinculoAtleta()" class="w-full bg-stone-800 text-amber-300 font-bold p-2.5 rounded-lg text-xs">Solicitar vínculo ao cadastro</button>
-                <button type="button" onclick="window.redefinirSenhaAtleta()" class="w-full text-stone-400 text-xs underline">Esqueci minha senha</button>
+                <p id="athlete-auth-session-status" class="hidden rounded-lg border border-stone-700 bg-stone-950 p-3 text-xs text-stone-200" aria-live="polite"></p>
+                <button id="athlete-auth-create" type="button" onclick="window.criarContaAtleta()" class="w-full bg-stone-800 text-emerald-300 font-bold p-2.5 rounded-lg text-xs">Criar conta e receber confirmação</button>
+                <button id="athlete-auth-resend" type="button" onclick="window.enviarConfirmacaoAtleta()" class="hidden w-full text-stone-400 text-xs underline">Reenviar link de confirmação</button>
+                <button id="athlete-auth-verify" type="button" onclick="window.confirmarEmailAtleta()" class="hidden w-full text-emerald-300 text-xs underline">Já confirmei meu e-mail</button>
+                <button id="athlete-auth-request" type="button" onclick="window.solicitarVinculoAtleta()" class="hidden w-full bg-stone-800 text-amber-300 font-bold p-2.5 rounded-lg text-xs">Solicitar vínculo ao cadastro</button>
+                <button id="athlete-auth-reset" type="button" onclick="window.redefinirSenhaAtleta()" class="w-full text-stone-400 text-xs underline">Esqueci minha senha</button>
+                <button id="athlete-auth-signout" type="button" onclick="window.sairContaAtleta()" class="hidden w-full bg-stone-800 text-red-300 font-bold p-2.5 rounded-lg text-xs">Sair desta conta</button>
             </form>
             <p class="text-stone-500 text-[10px] mt-3">Cada atleta mantém a própria senha. O vínculo só libera dados privados após aprovação do administrador.</p>
         </div>
@@ -1223,17 +1230,18 @@
                     atualizarAcessoFinanceiro();
                     const botao = document.getElementById('member-auth-button');
                     if (botao) {
-                        botao.textContent = user ? 'Sair' : 'Atleta';
-                        botao.title = user ? `Conectado: ${user.email || 'conta autenticada'}` : 'Acesso do atleta: entrar ou criar conta';
+                        botao.textContent = user ? 'Conta' : 'Atleta';
+                        botao.title = user ? `Conta conectada: ${user.email || 'sessão ativa'}. Toque para ver status e vínculo.` : 'Acesso do atleta: entrar ou criar conta';
                     }
                     document.getElementById('athlete-access-prompt')?.classList.toggle('hidden', Boolean(user));
+                    window.atualizarInterfaceAcessoAtleta?.(user, user ? 'loading' : 'visitor');
                     if (!user) {
                         document.getElementById('admin-badge')?.classList.add('hidden');
                         return;
                     }
                     try {
                         if (user.uid !== window.bootstrapAdminUid && !user.emailVerified) {
-                            window.mostrarToast('Confirme seu e-mail antes de solicitar acesso aos dados privados.', true);
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'unverified');
                             return;
                         }
                         if (user.uid === window.bootstrapAdminUid) {
@@ -1243,6 +1251,7 @@
                             window.isAdminLogado = adminSnapshot.val() === true;
                         }
                         if (window.isAdminLogado) {
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'admin');
                             atualizarAcessoFinanceiro();
                             document.getElementById('admin-badge')?.classList.remove('hidden');
                             await window.carregarDadosPrivadosAdmin?.();
@@ -1257,18 +1266,20 @@
                             window.isAtletaLogado = true;
                             window.currentAthleteId = String(profile.athleteId);
                             window.currentUserProfile = profile;
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'athlete');
                             document.getElementById('member-profile-button')?.classList.remove('hidden');
                             await window.carregarDadosPrivadosAtleta?.(window.currentAthleteId);
                         } else {
                             const pendingSnapshot = await window.rolesRef.child(`pending/${user.uid}`).once('value');
                             if (pendingSnapshot.exists()) {
-                                window.mostrarToast('Sua solicitação está aguardando aprovação do administrador.');
+                                window.atualizarInterfaceAcessoAtleta?.(user, 'pending');
                             } else {
-                                window.mostrarToast('Conta conectada; confirme o e-mail e solicite o vínculo ao cadastro.', true);
+                                window.atualizarInterfaceAcessoAtleta?.(user, 'unlinked');
                             }
                         }
                     } catch (error) {
-                        console.error('Falha ao validar perfil autenticado.');
+                        console.error('Falha ao validar perfil autenticado.', error?.code || '');
+                        window.atualizarInterfaceAcessoAtleta?.(user, 'error');
                         window.mostrarToast('Não foi possível validar o perfil. Acesso privado bloqueado.', true);
                     }
                 });
@@ -2864,14 +2875,96 @@
         // AUTENTICAÇÃO
         // =====================================================
         
+        window.atualizarInterfaceAcessoAtleta = function(user, state = 'visitor') {
+            window.athleteAccessState = state;
+            const visible = (id, show) => document.getElementById(id)?.classList.toggle('hidden', !show);
+            const badge = document.getElementById('member-role-badge');
+            const roleMap = {
+                visitor: ['VISITANTE', 'border-stone-600 bg-stone-800 text-stone-300'],
+                loading: ['ATLETA · VALIDANDO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
+                unverified: ['ATLETA · CONFIRMAR E-MAIL', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
+                unlinked: ['ATLETA · SEM VÍNCULO', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
+                pending: ['ATLETA · EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
+                athlete: ['ATLETA', 'border-emerald-500/60 bg-emerald-950/60 text-emerald-200'],
+                admin: ['ADMINISTRADOR', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
+                error: ['ATLETA · ACESSO PENDENTE', 'border-red-500/60 bg-red-950/60 text-red-200']
+            };
+            const [label, color] = roleMap[state] || roleMap.error;
+            if (badge) {
+                badge.textContent = label;
+                badge.className = `inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black ${color}`;
+            }
+            const signedIn = Boolean(user);
+            visible('athlete-auth-login-fields', !signedIn);
+            visible('athlete-auth-create', !signedIn);
+            visible('athlete-auth-reset', !signedIn);
+            visible('athlete-auth-signout', signedIn);
+            visible('athlete-auth-resend', signedIn && state === 'unverified');
+            visible('athlete-auth-verify', signedIn && state === 'unverified');
+            visible('athlete-auth-request', signedIn && state === 'unlinked');
+            const session = document.getElementById('athlete-auth-session-status');
+            if (session) {
+                const messages = {
+                    loading: 'Conta conectada. Conferindo seu perfil…',
+                    unverified: 'Sua conta está conectada. Confirme o e-mail aqui mesmo; não precisa entrar de novo.',
+                    unlinked: 'E-mail confirmado. Toque em “Solicitar vínculo ao cadastro” para entrar na fila do administrador.',
+                    pending: 'Solicitação enviada. Você está como atleta aguardando aprovação; o acesso privado continua bloqueado.',
+                    athlete: 'Vínculo aprovado. Você está autenticado como atleta e acessa somente seu próprio cadastro.',
+                    admin: 'Sessão administrativa. A aprovação de vínculos fica no painel técnico.',
+                    error: 'Não foi possível validar seu perfil agora. Tente atualizar o status; o acesso privado permanece bloqueado.'
+                };
+                session.textContent = signedIn ? `${messages[state] || messages.error}${user.email ? ` (${user.email})` : ''}` : '';
+                session.classList.toggle('hidden', !signedIn);
+            }
+        };
+
         window.toggleAthleteAuth = function(forceClose = false) {
             const modal = document.getElementById('athlete-auth-modal');
             if (forceClose) { modal?.classList.add('hidden'); return; }
-            if (window.authRef?.currentUser) {
-                window.authRef.signOut().catch(() => window.mostrarToast('Não foi possível sair da conta.', true));
-                return;
-            }
+            window.atualizarInterfaceAcessoAtleta?.(window.authRef?.currentUser || null, window.athleteAccessState || (window.authRef?.currentUser ? 'loading' : 'visitor'));
             modal?.classList.remove('hidden');
+        };
+
+        window.sairContaAtleta = async function() {
+            try {
+                await window.authRef?.signOut();
+                exibirMensagemAcessoAtleta('Você saiu da conta. Entre novamente quando quiser.');
+            } catch (error) {
+                exibirMensagemAcessoAtleta('Não foi possível sair da conta. Tente novamente.', true);
+            }
+        };
+
+        window.revalidarCategoriaAtleta = async function(user = window.authRef?.currentUser) {
+            if (!user) { window.atualizarInterfaceAcessoAtleta?.(null, 'visitor'); return 'visitor'; }
+            await user.reload();
+            await user.getIdToken(true);
+            const atual = window.authRef?.currentUser || user;
+            if (atual.uid !== window.bootstrapAdminUid && !atual.emailVerified) {
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'unverified');
+                return 'unverified';
+            }
+            const [adminSnap, profileSnap, pendingSnap] = await Promise.all([
+                window.rolesRef.child(`admins/${atual.uid}`).once('value'),
+                window.rolesRef.child(`users/${atual.uid}`).once('value'),
+                window.rolesRef.child(`pending/${atual.uid}`).once('value')
+            ]);
+            if (atual.uid === window.bootstrapAdminUid || adminSnap.val() === true) {
+                window.isAdminLogado = true; window.isAtletaLogado = false;
+                document.getElementById('admin-badge')?.classList.remove('hidden');
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'admin');
+                return 'admin';
+            }
+            const profile = profileSnap.val();
+            if (profile?.role === 'athlete' && profile.athleteId) {
+                window.isAdminLogado = false; window.isAtletaLogado = true;
+                window.currentAthleteId = String(profile.athleteId); window.currentUserProfile = profile;
+                document.getElementById('member-profile-button')?.classList.remove('hidden');
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'athlete');
+                return 'athlete';
+            }
+            window.isAdminLogado = false; window.isAtletaLogado = false;
+            window.atualizarInterfaceAcessoAtleta?.(atual, pendingSnap.exists() ? 'pending' : 'unlinked');
+            return pendingSnap.exists() ? 'pending' : 'unlinked';
         };
 
         window.entrarAtletaFirebase = async function(e) {
@@ -2884,10 +2977,10 @@
             if (button) { button.disabled = true; button.textContent = 'Aguarde...'; }
             if (message) { message.classList.add('hidden'); message.textContent = ''; }
             try {
-                await window.authRef.signInWithEmailAndPassword(email, password);
+                const credential = await window.authRef.signInWithEmailAndPassword(email, password);
                 document.getElementById('athlete-auth-password').value = '';
-                document.getElementById('athlete-auth-modal')?.classList.add('hidden');
-                window.mostrarToast('Login confirmado. Aguardando vínculo seguro ao atleta.');
+                window.atualizarInterfaceAcessoAtleta?.(credential.user, 'loading');
+                window.mostrarToast('Sessão iniciada. Confira sua categoria e as próximas etapas no acesso do atleta.');
             } catch (error) {
                 const mensagens = {
                     'auth/invalid-email': 'Confira o formato do e-mail.',
@@ -2920,8 +3013,9 @@
             try {
                 const credential = await window.authRef.createUserWithEmailAndPassword(email, password);
                 document.getElementById('athlete-auth-password').value = '';
+                window.atualizarInterfaceAcessoAtleta?.(credential.user, 'unverified');
                 await credential.user.sendEmailVerification();
-                exibirMensagemAcessoAtleta('Conta criada. Enviamos um link de confirmação; confirme o e-mail e volte aqui.');
+                exibirMensagemAcessoAtleta('Conta criada e sessão mantida. Enviamos o link de confirmação; abra-o e volte aqui para solicitar o vínculo, sem entrar novamente.');
             } catch (error) {
                 const mensagens = {
                     'auth/email-already-in-use': 'Esse e-mail já tem conta. Entre e use a opção de confirmação, se necessário.',
@@ -2946,39 +3040,46 @@
 
         window.confirmarEmailAtleta = async function() {
             const user = window.authRef?.currentUser;
-            if (!user) { exibirMensagemAcessoAtleta('Entre na sua conta primeiro.', true); return; }
+            if (!user) { exibirMensagemAcessoAtleta('Sua sessão terminou. Entre novamente para continuar.', true); return; }
             try {
-                await user.reload();
-                await user.getIdToken(true);
-                if (!window.authRef.currentUser.emailVerified) {
-                    exibirMensagemAcessoAtleta('Ainda não consta como confirmado. Abra o link do e-mail e tente novamente.', true);
+                const state = await window.revalidarCategoriaAtleta(user);
+                if (state === 'unverified') {
+                    exibirMensagemAcessoAtleta('Ainda não consta como confirmado. Abra o link do e-mail e toque novamente aqui.', true);
                     return;
                 }
-                exibirMensagemAcessoAtleta('E-mail confirmado. Agora você pode solicitar o vínculo ao cadastro.');
+                if (state === 'pending') exibirMensagemAcessoAtleta('E-mail confirmado. Sua solicitação já está aguardando aprovação.');
+                else if (state === 'unlinked') exibirMensagemAcessoAtleta('E-mail confirmado. Agora toque em “Solicitar vínculo ao cadastro”.');
+                else exibirMensagemAcessoAtleta('Seu acesso foi atualizado. Confira a categoria exibida no topo.');
             } catch (error) {
-                exibirMensagemAcessoAtleta('Não foi possível confirmar o status do e-mail. Tente novamente.', true);
+                exibirMensagemAcessoAtleta('E-mail confirmado, mas não consegui atualizar seu perfil agora. Tente novamente.', true);
             }
         };
 
         window.solicitarVinculoAtleta = async function() {
             const user = window.authRef?.currentUser;
-            if (!user) { exibirMensagemAcessoAtleta('Crie sua conta ou entre antes de solicitar o vínculo.', true); return; }
+            if (!user) {
+                window.atualizarInterfaceAcessoAtleta?.(null, 'visitor');
+                exibirMensagemAcessoAtleta('Sua sessão não está ativa. Entre ou crie uma conta para continuar.');
+                return;
+            }
             try {
-                await user.reload();
-                await user.getIdToken(true);
-                const atual = window.authRef.currentUser;
-                if (!atual?.emailVerified) throw new Error('Confirme seu e-mail antes de solicitar o vínculo.');
-                const [perfil, admin, pedido] = await Promise.all([
-                    window.rolesRef.child(`users/${atual.uid}`).once('value'),
-                    window.rolesRef.child(`admins/${atual.uid}`).once('value'),
-                    window.rolesRef.child(`pending/${atual.uid}`).once('value')
-                ]);
-                if (perfil.exists() || admin.val() === true) throw new Error('Esta conta já possui um vínculo ou papel administrativo.');
-                if (pedido.exists()) { exibirMensagemAcessoAtleta('Sua solicitação já está na fila do administrador.'); return; }
+                const state = await window.revalidarCategoriaAtleta(user);
+                const atual = window.authRef?.currentUser;
+                if (!atual) throw new Error('Sua sessão terminou. Entre novamente para continuar.');
+                if (state === 'unverified') throw new Error('Confirme seu e-mail antes de solicitar o vínculo.');
+                if (state === 'pending') { exibirMensagemAcessoAtleta('Sua solicitação já está na fila do administrador.'); return; }
+                if (state === 'athlete' || state === 'admin') throw new Error('Esta conta já possui um vínculo ou papel administrativo.');
+                if (state !== 'unlinked') throw new Error('Não consegui validar seu perfil. Tente novamente.');
                 await window.rolesRef.child(`pending/${atual.uid}`).set({ email: atual.email, requestedAt: Date.now() });
-                exibirMensagemAcessoAtleta('Solicitação enviada. Seus dados privados continuam bloqueados até a aprovação.');
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'pending');
+                exibirMensagemAcessoAtleta('Solicitação enviada e registrada na fila do administrador. Seus dados privados continuam bloqueados até a aprovação.');
             } catch (error) {
-                exibirMensagemAcessoAtleta(error.message || 'Não foi possível enviar a solicitação.', true);
+                const code = String(error?.code || '').toLowerCase();
+                const detail = error?.message || '';
+                const message = code.includes('permission') || detail.toLowerCase().includes('permission')
+                    ? 'O banco recusou a solicitação. Sua conta continua sem acesso privado; tente novamente e, se persistir, avise o administrador.'
+                    : detail || 'Não foi possível enviar a solicitação. Tente novamente.';
+                exibirMensagemAcessoAtleta(message, true);
             }
         };
 
@@ -3385,7 +3486,7 @@
                 'busca-ver': 'Buscar Atleta',
                 'admin-panel': 'Administração'
             };
-            const pageTitle = document.getElementById('page-title-bar');
+            const pageTitle = document.getElementById('page-title-text');
             if (pageTitle) pageTitle.textContent = (nomes[tabId] || tabId).toUpperCase();
 
             // Atualiza de forma confiável o item ativo no rodapé.
