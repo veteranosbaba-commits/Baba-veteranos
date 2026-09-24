@@ -305,18 +305,18 @@
                         <i class="fa-solid fa-user-gear"></i> ADMIN 
                         <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
                     </div>
-                    <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded px-2 py-1">Atleta</button>
-                    <button id="member-profile-button" onclick="window.abrirMeuCadastro()" aria-label="Abrir meu cadastro de atleta" class="hidden whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded px-2 py-1">Cadastro</button>
-                    <button id="member-logout-button" type="button" onclick="window.sairContaAtleta()" aria-label="Sair da conta do atleta" class="hidden whitespace-nowrap text-[9px] text-stone-300 font-bold border border-stone-700 rounded px-2 py-1">Sair</button>
                     <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
                         <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
                         <span class="hidden sm:inline">Online</span>
                     </div>
                 </div>
             </div>
-            <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-0.5 flex items-center justify-center gap-2">
+            <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-1 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 max-w-full">
                 <span id="page-title-text">PAINEL GERAL</span>
-                <span id="member-role-badge" role="status" aria-live="polite" class="inline-flex items-center rounded-full border border-stone-600 bg-stone-800 px-2 py-0.5 text-[8px] font-black text-stone-300">VISITANTE</span>
+                <span id="member-role-badge" role="status" aria-live="polite" class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border border-stone-600 bg-stone-800 px-2 text-[8px] font-black text-stone-300">VISITANTE</span>
+                <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded">Atleta</button>
+                <button id="member-profile-button" onclick="window.abrirMeuCadastro()" aria-label="Abrir meu cadastro de atleta" class="hidden w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded">Cadastro</button>
+                <button id="member-logout-button" type="button" onclick="window.sairContaAtleta()" aria-label="Sair da conta do atleta" class="hidden w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-stone-300 font-bold border border-stone-700 rounded">Sair</button>
             </div>
         </div>
     </nav>
@@ -2989,7 +2989,7 @@
             const [label, color] = roleMap[state] || roleMap.error;
             if (badge) {
                 badge.textContent = label;
-                badge.className = `inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black ${color}`;
+                badge.className = `inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 text-[8px] font-black ${color}`;
             }
             const signedIn = Boolean(user);
             const isAthlete = signedIn && state === 'athlete';
@@ -3011,7 +3011,7 @@
                     unverified: 'Sua conta está conectada. Confirme o e-mail aqui mesmo; não precisa entrar de novo.',
                     unlinked: 'E-mail confirmado. Toque em “Solicitar vínculo ao cadastro” para entrar na fila do administrador.',
                     pending: 'Solicitação enviada. Você está como atleta aguardando aprovação; o acesso privado continua bloqueado.',
-                    athlete: 'Vínculo aprovado. Você está autenticado como atleta e acessa somente seu próprio cadastro.',
+                    athlete: 'Vínculo aprovado. Você acessa seu cadastro e consulta o balanço financeiro.',
                     admin: 'Sessão administrativa. A aprovação de vínculos fica no painel técnico.',
                     error: 'Não foi possível validar seu perfil agora. Tente atualizar o status; o acesso privado permanece bloqueado.'
                 };
@@ -3829,16 +3829,16 @@
                 });
             }
 
-            // 3. PATROCÍNIOS
-            // Patrocínio geralmente é fixo ou geral, mostramos sempre no Geral ou se for o mês atual?
-            // Para não sumir do Geral, mostramos sempre se for "TODOS"
+            // 3. PATROCÍNIOS E DOAÇÕES
+            // Sem mês cadastrado, o lançamento é geral e também aparece nos relatórios mensais.
             if (window.patrociniosCache) {
                 window.patrociniosCache.forEach(p => {
-                    // Se for mensal, precisaria de campo mes. Como não tem, mostramos no Geral ou sempre.
-                    if (mesSelecionado === "TODOS") {
-                        rowsEntradas.push([p.nome, `Patrocínio (${p.destino || 'Clube'})`, `R$ ${Number(p.valor).toFixed(2)}`]);
-                        totalEntradas += Number(p.valor);
-                    }
+                    const mesPatrocinio = p.mes ? String(p.mes).slice(-2).padStart(2, '0') : '';
+                    if (mesSelecionado !== "TODOS" && mesPatrocinio && mesPatrocinio !== mesSelecionado) return;
+                    const periodoPatrocinio = mesPatrocinio ? (mNomes[mesPatrocinio] || mesPatrocinio) : 'Geral';
+                    const valorPatrocinio = Number(p.valor) || 0;
+                    rowsEntradas.push([p.nome, `Patrocínio/Doação (${p.destino || 'Clube'} · ${periodoPatrocinio})`, `R$ ${valorPatrocinio.toFixed(2)}`]);
+                    totalEntradas += valorPatrocinio;
                 });
             }
 
