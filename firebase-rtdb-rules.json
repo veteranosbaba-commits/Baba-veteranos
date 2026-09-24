@@ -19,11 +19,19 @@
           ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
           "$athleteId": {
             ".read": "auth != null && auth.token.email_verified === true && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').val() === $athleteId))",
-            ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
+            ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+            "pagamentos": {
+              ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
+              ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
+            },
+            "abatimentos": {
+              ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
+              ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
+            }
           }
         },
         "finance": {
-          ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+          ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
           ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
         },
         "notificacoes_pendentes": {
@@ -48,11 +56,21 @@
             ".read": "auth != null && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             ".validate": "newData.hasChildren(['role', 'athleteId']) && newData.child('role').val() === 'athlete' && newData.child('athleteId').isString()",
-            "role": { ".validate": "newData.val() === 'athlete'" },
-            "athleteId": { ".validate": "newData.isString()" },
-            "linkedAt": { ".validate": "newData.isString()" },
-            "linkedBy": { ".validate": "newData.isString()" },
-            "$other": { ".validate": false }
+            "role": {
+              ".validate": "newData.val() === 'athlete'"
+            },
+            "athleteId": {
+              ".validate": "newData.isString()"
+            },
+            "linkedAt": {
+              ".validate": "newData.isString()"
+            },
+            "linkedBy": {
+              ".validate": "newData.isString()"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
         "pending": {
@@ -61,9 +79,15 @@
             ".read": "auth != null && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             ".write": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth.uid === $uid && auth.token.email_verified === true && !root.child('baba/roles/users/' + $uid).exists() && !root.child('baba/roles/admins/' + $uid).exists()))",
             ".validate": "newData.hasChildren(['email', 'requestedAt']) && auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth.uid === $uid && auth.token.email_verified === true && newData.child('email').val() === auth.token.email && newData.child('requestedAt').isNumber() && newData.child('requestedAt').val() <= now && newData.child('requestedAt').val() >= now - 300000))",
-            "email": { ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isString() && auth.uid === $uid && auth.token.email_verified === true && newData.val() === auth.token.email))" },
-            "requestedAt": { ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isNumber() && auth.uid === $uid && auth.token.email_verified === true && newData.val() <= now && newData.val() >= now - 300000))" },
-            "$other": { ".validate": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)" }
+            "email": {
+              ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isString() && auth.uid === $uid && auth.token.email_verified === true && newData.val() === auth.token.email))"
+            },
+            "requestedAt": {
+              ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isNumber() && auth.uid === $uid && auth.token.email_verified === true && newData.val() <= now && newData.val() >= now - 300000))"
+            },
+            "$other": {
+              ".validate": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
+            }
           }
         }
       }
