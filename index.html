@@ -903,41 +903,56 @@
 
             <div id="adm-arquivos" class="adm-sub-content hidden space-y-6">
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4 pb-2 border-b border-stone-800">
-                        <h4 class="font-bold text-amber-500 text-xs uppercase">
-                            <i class="fa-solid fa-folder-open mr-1"></i> Arquivos (Histórico)
-                        </h4>
-                        <div class="flex flex-wrap items-center gap-2 relative z-[100]">
-                             <select id="pdf-categoria-filtro" aria-label="Categoria do relatório PDF" class="max-w-[48vw] sm:max-w-none text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none">
-                                <option value="TODOS">Todos os itens</option>
-                                <option value="MENSALIDADES">Mensalidades</option>
-                                <option value="SOCIOS">Pagamentos de sócios</option>
-                                <option value="PATROCINIOS">Patrocínios/Doações</option>
-                                <option value="MULTAS">Multas</option>
-                                <option value="APORTES">Aportes extras</option>
-                                <option value="GASTOS">Gastos</option>
-                             </select>
-                             <select id="pdf-mes-filtro" aria-label="Período do relatório PDF" class="text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none">
-                                <option value="01">Janeiro</option>
-                                <option value="02">Fevereiro</option>
-                                <option value="03">Março</option>
-                                <option value="04">Abril</option>
-                                <option value="05">Maio</option>
-                                <option value="06">Junho</option>
-                                <option value="07">Julho</option>
-                                <option value="08">Agosto</option>
-                                <option value="09">Setembro</option>
-                                <option value="10">Outubro</option>
-                                <option value="11">Novembro</option>
-                                <option value="12">Dezembro</option>
-                                <option value="TODOS">GERAL (Tudo)</option>
-                             </select>
-                             <button onclick="window.gerarPDFRelatorio()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-lg active:scale-95 transition-transform"><i class="fa-solid fa-file-pdf mr-1"></i> PDF</button>
-                             <button onclick="window.limparHistoricoGeral()" class="bg-red-900/30 text-red-400 border border-red-900/50 px-2 py-1 rounded text-[9px] font-black uppercase">Limpar Tudo</button>
-                        </div>
+                    <div class="mb-3 pb-2 border-b border-stone-800">
+                        <h4 class="font-bold text-amber-500 text-xs uppercase"><i class="fa-solid fa-file-pdf mr-1"></i> Gerar relatórios PDF</h4>
+                        <p class="text-[10px] text-stone-500 mt-1">Escolha uma categoria e um mês ou o histórico geral.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 relative z-[100]">
+                        <select id="pdf-categoria-filtro" aria-label="Categoria do relatório PDF" class="max-w-[48vw] sm:max-w-none text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none">
+                            <option value="TODOS">Todos os itens</option>
+                            <option value="MENSALIDADES">Mensalidades</option>
+                            <option value="SOCIOS">Pagamentos de sócios</option>
+                            <option value="PATROCINIOS">Patrocínios/Doações</option>
+                            <option value="MULTAS">Multas</option>
+                            <option value="APORTES">Aportes extras</option>
+                            <option value="GASTOS">Gastos</option>
+                        </select>
+                        <select id="pdf-mes-filtro" aria-label="Período do relatório PDF" class="text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none">
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                            <option value="TODOS">GERAL (Tudo)</option>
+                        </select>
+                        <button type="button" onclick="window.gerarPDFRelatorio()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase shadow-lg active:scale-95 transition-transform"><i class="fa-solid fa-file-pdf mr-1"></i> Gerar PDF</button>
+                    </div>
+                </div>
+
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <div class="mb-3 pb-2 border-b border-stone-800">
+                        <h4 class="font-bold text-emerald-300 text-xs uppercase"><i class="fa-solid fa-box-archive mr-1"></i> Itens arquivados</h4>
+                        <p class="text-[10px] text-stone-500 mt-1">Histórico arquivado de todos os atletas.</p>
                     </div>
                     <div class="space-y-4" id="lista-arquivados-container">
                         <div class="text-center py-10 text-stone-500 text-xs italic">Carregando histórico...</div>
+                    </div>
+                </div>
+
+                <div class="bg-red-950/20 rounded-2xl p-5 border border-red-900/60 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-red-300 text-xs uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Excluir itens arquivados</h4>
+                            <p class="text-[10px] text-stone-400 mt-1">Apaga o histórico arquivado de todos os atletas; não exclui cadastros nem movimentações financeiras ativas.</p>
+                        </div>
+                        <button type="button" onclick="window.limparHistoricoGeral()" class="self-start sm:self-auto bg-red-700 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase">Excluir todos os itens</button>
                     </div>
                 </div>
             </div>
@@ -1141,6 +1156,22 @@
             </div>
             <div id="athlete-profile-content" class="space-y-2 text-sm"></div>
         </div>
+    </div>
+
+    <div id="excluir-arquivados-modal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="excluir-arquivados-titulo">
+        <form id="excluir-arquivados-form" onsubmit="window.confirmarExclusaoArquivados(event)" class="w-full max-w-sm rounded-2xl border border-red-800 bg-stone-900 p-5 shadow-2xl space-y-4">
+            <div>
+                <h3 id="excluir-arquivados-titulo" class="font-black text-red-300 text-sm uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> Confirme sua identidade</h3>
+                <p class="mt-2 text-xs text-stone-300">Digite a senha atual da conta de administrador para excluir os itens arquivados.</p>
+            </div>
+            <label for="excluir-arquivados-password" class="block text-[10px] font-bold uppercase text-stone-400">Senha do administrador</label>
+            <input id="excluir-arquivados-password" type="password" autocomplete="current-password" required class="w-full rounded-lg border border-stone-600 bg-stone-800 p-3 text-sm text-white outline-none focus:border-red-500" placeholder="Sua senha">
+            <p id="excluir-arquivados-error" class="hidden text-xs font-bold text-red-400" role="alert"></p>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="window.cancelarExclusaoArquivados()" class="rounded-lg border border-stone-600 px-3 py-2 text-xs font-bold text-stone-300">Cancelar</button>
+                <button id="excluir-arquivados-submit" type="submit" class="rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white">Confirmar exclusão</button>
+            </div>
+        </form>
     </div>
 
     <script>
@@ -3045,8 +3076,10 @@
         };
 
         window.sairContaAtleta = async function() {
+            if (!window.authRef?.currentUser) return;
+            if (!window.confirm('Deseja realmente sair da sua conta?')) return;
             try {
-                await window.authRef?.signOut();
+                await window.authRef.signOut();
                 exibirMensagemAcessoAtleta('Você saiu da conta. Entre novamente quando quiser.');
             } catch (error) {
                 exibirMensagemAcessoAtleta('Não foi possível sair da conta. Tente novamente.', true);
@@ -3415,11 +3448,17 @@
             }
         };
         
-        window.logoutAdmin = function() { 
-            window.authRef?.signOut();
-            document.getElementById('admin-panel')?.classList.add('hidden');
-            document.getElementById('admin-badge')?.classList.add('hidden');
-            switchTab('dashboard'); 
+        window.logoutAdmin = async function() {
+            if (!window.authRef?.currentUser) return;
+            if (!window.confirm('Deseja realmente sair da conta administrativa?')) return;
+            try {
+                await window.authRef.signOut();
+                document.getElementById('admin-panel')?.classList.add('hidden');
+                document.getElementById('admin-badge')?.classList.add('hidden');
+                switchTab('dashboard');
+            } catch (error) {
+                window.mostrarToast('Não foi possível sair da conta. Tente novamente.', true);
+            }
         }; 
         
         // =====================================================
@@ -3824,20 +3863,97 @@
         };
 
         window.limparHistoricoGeral = function() {
-            if(confirm("ATENÇÃO: Deseja apagar o histórico de TODOS os atletas? Esta ação é irreversível.")) {
-                window.atletasCache.forEach(a => {
-                    a.histAmarelos = 0;
-                    a.histVermelhos = 0;
-                    if(a.pagamentos) {
-                        Object.keys(a.pagamentos).forEach(m => {
-                            delete a.pagamentos[m].multasArquivadasHistorico;
-                            delete a.pagamentos[m].aportesArquivadosHistorico;
+            if (!window.isAdminLogado || !window.authRef?.currentUser) {
+                window.mostrarToast('Apenas um administrador autenticado pode excluir itens arquivados.', true);
+                return;
+            }
+            const confirmar = window.confirm('ATENÇÃO: esta ação excluirá permanentemente do app o histórico arquivado de cartões, multas e aportes de todos os atletas. Não excluirá cadastros nem movimentações ativas. Deseja continuar?');
+            if (!confirmar) return;
+
+            const modal = document.getElementById('excluir-arquivados-modal');
+            const input = document.getElementById('excluir-arquivados-password');
+            const erro = document.getElementById('excluir-arquivados-error');
+            if (!modal || !input || !erro) {
+                window.mostrarToast('Não foi possível abrir a confirmação de segurança.', true);
+                return;
+            }
+            input.value = '';
+            erro.textContent = '';
+            erro.classList.add('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            input.focus();
+        };
+
+        window.cancelarExclusaoArquivados = function() {
+            const modal = document.getElementById('excluir-arquivados-modal');
+            const input = document.getElementById('excluir-arquivados-password');
+            const erro = document.getElementById('excluir-arquivados-error');
+            const botao = document.getElementById('excluir-arquivados-submit');
+            if (input) input.value = '';
+            if (erro) { erro.textContent = ''; erro.classList.add('hidden'); }
+            if (botao) { botao.disabled = false; botao.textContent = 'Confirmar exclusão'; }
+            modal?.classList.add('hidden');
+            modal?.classList.remove('flex');
+        };
+
+        window.confirmarExclusaoArquivados = async function(event) {
+            event?.preventDefault();
+            const input = document.getElementById('excluir-arquivados-password');
+            const erro = document.getElementById('excluir-arquivados-error');
+            const botao = document.getElementById('excluir-arquivados-submit');
+            const user = window.authRef?.currentUser;
+            const password = input?.value || '';
+            const exibirErro = mensagem => {
+                if (erro) { erro.textContent = mensagem; erro.classList.remove('hidden'); }
+                if (input) { input.value = ''; input.focus(); }
+            };
+
+            if (!window.isAdminLogado || !user || !user.email) {
+                exibirErro('Sua sessão administrativa não está válida. Entre novamente; nada foi excluído.');
+                return;
+            }
+            if (!password) {
+                exibirErro('Digite a senha atual da sua conta; nada foi excluído.');
+                return;
+            }
+            if (syncEmAndamento) {
+                exibirErro('Há um salvamento em andamento. Aguarde e tente novamente; nada foi excluído.');
+                return;
+            }
+            if (!window.firebaseInicializado || !window.publicRef || !window.privateRef || !Array.isArray(window.atletasCache)) {
+                exibirErro('Os dados ainda não estão prontos para exclusão. Atualize a tela e tente novamente; nada foi excluído.');
+                return;
+            }
+
+            if (botao) { botao.disabled = true; botao.textContent = 'Verificando senha…'; }
+            try {
+                const credencial = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                await user.reauthenticateWithCredential(credencial);
+                if (!window.isAdminLogado || window.authRef?.currentUser?.uid !== user.uid) {
+                    throw new Error('session-changed');
+                }
+
+                window.atletasCache.forEach(atleta => {
+                    atleta.histAmarelos = 0;
+                    atleta.histVermelhos = 0;
+                    if (atleta.pagamentos) {
+                        Object.keys(atleta.pagamentos).forEach(mes => {
+                            delete atleta.pagamentos[mes].multasArquivadasHistorico;
+                            delete atleta.pagamentos[mes].aportesArquivadosHistorico;
                         });
                     }
                 });
-                window.salvarNoStorage();
+                window.cancelarExclusaoArquivados();
                 window.renderArquivados();
-                window.mostrarToast("Base histórica resetada!");
+                window.salvarNoStorage();
+                window.mostrarToast('Histórico arquivado excluído.');
+            } catch (error) {
+                const senhaIncorreta = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error?.code);
+                exibirErro(senhaIncorreta
+                    ? 'Senha incorreta. Nenhum item foi excluído.'
+                    : 'Não foi possível confirmar a senha. Nenhum item foi excluído.');
+                if (botao) { botao.disabled = false; botao.textContent = 'Confirmar exclusão'; }
             }
         };
 
