@@ -3070,7 +3070,7 @@
                 if (state === 'pending') { exibirMensagemAcessoAtleta('Sua solicitação já está na fila do administrador.'); return; }
                 if (state === 'athlete' || state === 'admin') throw new Error('Esta conta já possui um vínculo ou papel administrativo.');
                 if (state !== 'unlinked') throw new Error('Não consegui validar seu perfil. Tente novamente.');
-                await window.rolesRef.child(`pending/${atual.uid}`).set({ email: atual.email, requestedAt: Date.now() });
+                await window.rolesRef.child(`pending/${atual.uid}`).set({ email: atual.email, requestedAt: firebase.database.ServerValue.TIMESTAMP });
                 window.atualizarInterfaceAcessoAtleta?.(atual, 'pending');
                 exibirMensagemAcessoAtleta('Solicitação enviada e registrada na fila do administrador. Seus dados privados continuam bloqueados até a aprovação.');
             } catch (error) {
