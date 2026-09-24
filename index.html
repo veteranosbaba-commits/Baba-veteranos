@@ -661,13 +661,18 @@
         <!-- 🔔 CENTRAL DE NOTIFICAÇÕES (público) -->
         <div id="notificacoes-ver" class="tab-content hidden space-y-6 pt-4">
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl">
-                <div class="flex items-center justify-between mb-4 border-b border-stone-800 pb-2">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-stone-800 pb-2">
                     <h4 class="font-black text-emerald-400 text-xs uppercase tracking-wider">
                         <i class="fa-solid fa-bell mr-1"></i> Central de Notificações
                     </h4>
-                    <button onclick="window.marcarTodasLidas()" class="text-[9px] text-stone-500 hover:text-emerald-400 uppercase font-bold transition" id="btn-marcar-lidas">
-                        <i class="fa-solid fa-check-double mr-1"></i>Marcar todas como lidas
-                    </button>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button onclick="window.marcarTodasLidas()" class="text-[9px] text-stone-500 hover:text-emerald-400 uppercase font-bold transition" id="btn-marcar-lidas">
+                            <i class="fa-solid fa-check-double mr-1"></i>Marcar todas como lidas
+                        </button>
+                        <button onclick="window.limparNotificacoes()" class="text-[9px] text-red-400 hover:text-red-300 uppercase font-bold transition" id="btn-limpar-notificacoes" title="Limpa o histórico somente deste aparelho">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Limpar notificações
+                        </button>
+                    </div>
                 </div>
                 <div id="notificacoes-lista" class="space-y-2 max-h-[70vh] overflow-y-auto">
                     <div class="text-center text-stone-600 text-xs italic py-8">Nenhuma notificação.</div>
@@ -4210,9 +4215,13 @@
             };
             const entregar = (key, n) => {
                 if (!n || vistas[key]) return;
-                const data = n.data ? new Date(n.data).getTime() : Date.now();
+                const data = n.data ? new Date(n.data).getTime() : 0;
+                let limpezaEm = 0;
+                try { limpezaEm = Number(localStorage.getItem('baba_notificacoes_limpeza_em') || 0); } catch(e) {}
+                // Uma limpeza local não deve reimportar avisos remotos antigos.
+                if (!Number.isFinite(data) || data <= limpezaEm) { vistas[key] = Date.now(); salvarVistas(); return; }
                 // Mantém uma janela de 30 dias para não despejar avisos muito antigos.
-                if (data < Date.now() - 30 * 24 * 60 * 60 * 1000) { vistas[key] = Date.now(); return; }
+                if (data < Date.now() - 30 * 24 * 60 * 60 * 1000) { vistas[key] = Date.now(); salvarVistas(); return; }
                 vistas[key] = Date.now();
                 window.adicionarNotificacao(n.titulo, n.mensagem, n.tipo, n.link || '', n.detalhes || null, true);
                 salvarVistas();
@@ -4366,6 +4375,22 @@
             window.atualizarBadgeNotificacoes();
             window.renderizarNotificacoes();
             window.mostrarToast('Todas notificações marcadas como lidas!');
+        };
+
+        // Limpa apenas o histórico local, sem apagar avisos compartilhados no Firebase.
+        window.limparNotificacoes = function() {
+            window.carregarNotificacoes();
+            if (!window.notificacoesCache.length) {
+                window.mostrarToast('Não há notificações para limpar.');
+                return;
+            }
+            if (!window.confirm('Limpar todas as notificações deste aparelho? Isso não apaga avisos compartilhados com outros usuários.')) return;
+            try { localStorage.setItem('baba_notificacoes_limpeza_em', String(Date.now())); } catch(e) {}
+            window.notificacoesCache = [];
+            window.salvarNotificacoes();
+            window.atualizarBadgeNotificacoes();
+            window.renderizarNotificacoes();
+            window.mostrarToast('Histórico limpo neste aparelho.');
         };
         
         // Abre modal de detalhes da notificação
