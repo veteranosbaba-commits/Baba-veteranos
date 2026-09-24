@@ -1,5 +1,5 @@
 // Service Worker - BABA VETERANOS v3 - alerta sonoro/vibração atualizado
-const CACHE_NAME = 'baba-veteranos-v8';
+const CACHE_NAME = 'baba-veteranos-v9';
 const urlsToCache = [
   '/Baba-veteranos/',
   '/Baba-veteranos/index.html',
