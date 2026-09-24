@@ -1026,6 +1026,7 @@
                         <div class="bg-black/40 p-3 rounded-xl border border-stone-800">
                             <label class="block font-bold text-amber-400 uppercase mb-1 text-center text-[10px]">Data da Partida</label>
                             <input type="date" id="adm-placar-data" class="w-full bg-stone-800 rounded-lg p-2 text-center text-white font-bold focus:ring-1 focus:ring-amber-500 outline-none">
+                            <p class="mt-1 text-center text-[9px] text-stone-500">Registre partidas de hoje ou anteriores; datas futuras não são aceitas.</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
@@ -1188,6 +1189,12 @@
         
         const VALOR_MENSALIDADE = 40;
         const formatarValorMensalidade = () => VALOR_MENSALIDADE.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const obterDataLocalISO = () => {
+            const hoje = new Date();
+            return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+        };
+        const campoDataPlacar = document.getElementById('adm-placar-data');
+        if (campoDataPlacar) campoDataPlacar.max = obterDataLocalISO();
 
         // Abre o filtro do PDF já no mês atual.
         const pdfMesFiltro = document.getElementById('pdf-mes-filtro');
@@ -2025,6 +2032,13 @@
             
             if (!fluVal || !botaVal) { window.mostrarToast('Preencha os placares!', true); return; }
             if (!dataInput) { window.mostrarToast('Selecione a data da partida!', true); return; }
+            const hojeISO = obterDataLocalISO();
+            const campoData = document.getElementById('adm-placar-data');
+            if (campoData) campoData.max = hojeISO;
+            if (dataInput > hojeISO) {
+                window.mostrarToast('Não é possível registrar um placar para uma data futura.', true);
+                return;
+            }
             
             const placarFlu = parseInt(fluVal);
             const placarBota = parseInt(botaVal);
