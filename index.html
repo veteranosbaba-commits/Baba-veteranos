@@ -29,6 +29,40 @@
         * {
             -webkit-tap-highlight-color: transparent;
         }
+
+        /* Evita que elementos largos desloquem a página horizontalmente;
+           as tabelas mantêm seus próprios contêineres de rolagem. */
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        #bottom-navigation {
+            position: fixed !important;
+            left: 0;
+            right: 0;
+            bottom: 0 !important;
+            width: 100%;
+            max-width: 100%;
+            z-index: 50;
+        }
+
+        #bottom-navigation .bottom-nav-items {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+        }
+        #bottom-navigation .bottom-nav-items::-webkit-scrollbar { display: none; }
+        #bottom-navigation .bottom-nav-button { flex: 0 0 auto; }
+
+        @media (max-width: 640px) {
+            #bottom-navigation .bottom-nav-button { width: 36px !important; flex-basis: 36px; }
+        }
+        @media (max-width: 360px) {
+            #bottom-navigation .bottom-nav-button { width: 32px !important; flex-basis: 32px; }
+        }
         
         input, select, textarea {
             -webkit-user-select: text;
@@ -404,6 +438,7 @@
 
         <!-- BALANÇO -->
         <div id="financeiro-ver" class="tab-content space-y-6 pt-4">
+            <div id="finance-readonly-notice" class="hidden rounded-xl border border-sky-800 bg-sky-950/50 p-3 text-xs text-sky-200">Consulta somente leitura: atletas aprovados podem ver todas as movimentações. Somente administradores podem editar.</div>
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                 <h4 class="font-black text-amber-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                     <i class="fa-solid fa-handshake-angle mr-2"></i>Patrocínios e Doações
@@ -1000,34 +1035,34 @@
     </div>
 
     <!-- RODAPÉ FIXO - NAVEGAÇÃO + ANÚNCIOS -->
-    <div class="fixed bottom-0 left-0 right-0 z-50">
+    <div id="bottom-navigation" class="fixed bottom-0 left-0 right-0 z-50">
         <!-- Nav minimalista: só ícones -->
-        <div class="flex items-center justify-around bg-black/95 backdrop-blur-md border-t border-stone-800 px-1 py-2">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-12 text-emerald-400 font-black transition">
+        <div class="bottom-nav-items flex items-center justify-around bg-black/95 backdrop-blur-md border-t border-stone-800 px-1 py-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="bottom-nav-button flex flex-col items-center justify-center w-12 text-emerald-400 font-black transition">
                 <i class="fa-solid fa-chart-line text-lg"></i>
             </button>
-            <button onclick="switchTab('jogadores')" id="nav-jogadores" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('jogadores')" id="nav-jogadores" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-shirt text-lg"></i>
             </button>
-            <button onclick="switchTab('artilharia-ver')" id="nav-artilharia-ver" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500" title="Gols e Artilharia">
+            <button onclick="switchTab('artilharia-ver')" id="nav-artilharia-ver" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500" title="Gols e Artilharia">
                 <i class="fa-solid fa-soccer-ball text-lg"></i>
             </button>
-            <button onclick="switchTab('alertas-ver')" id="nav-alertas" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('alertas-ver')" id="nav-alertas" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
             </button>
-            <button onclick="switchTab('busca-ver')" id="nav-busca-ver" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('busca-ver')" id="nav-busca-ver" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-search text-lg"></i>
             </button>
-            <button onclick="switchTab('historico-sumulas')" id="nav-historico" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('historico-sumulas')" id="nav-historico" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-file-contract text-lg"></i>
             </button>
-            <button onclick="switchTab('financeiro-ver')" id="nav-financeiro" class="hidden flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('financeiro-ver')" id="nav-financeiro" class="bottom-nav-button hidden flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-receipt text-lg"></i>
             </button>
-            <button onclick="switchTab('regras-ver')" id="nav-regras" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('regras-ver')" id="nav-regras" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-book text-lg"></i>
             </button>
-            <button onclick="openAdminModal()" id="nav-admin" class="flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="openAdminModal()" id="nav-admin" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-user-gear text-lg"></i>
             </button>
         </div>
@@ -1132,12 +1167,15 @@
         window.publicAthletesCache = [];
         window.privateAthletesCache = {};
         window.privateFinanceCache = {};
+        window.financialAthleteCache = {};
+        window.financialAthleteListeners = {};
         window.privateListeners = [];
         window.firebaseInicializado = false;
         window.publicAccess = true;
         
         let toastTimeout = null;
         let syncEmAndamento = false;
+        let renderFinanceiroAtletasTimeout = null;
         
         const mesesNomes = { 
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
@@ -1183,18 +1221,20 @@
         // =====================================================
         
         function atualizarAcessoFinanceiro() {
-            const permitido = Boolean(window.isAdminLogado && window.firebaseUser);
+            const permitido = Boolean(window.firebaseUser && (window.isAdminLogado || (window.isAtletaLogado && window.firebaseUser.emailVerified)));
+            const somenteLeitura = permitido && !window.isAdminLogado;
             ['nav-financeiro', 'sidebar-financeiro-link', 'financeiro-ver', 'dashboard-finance-summary', 'alertas-inadimplentes'].forEach(id => {
                 document.getElementById(id)?.classList.toggle('hidden', !permitido);
             });
+            document.getElementById('finance-readonly-notice')?.classList.toggle('hidden', !somenteLeitura);
             if (!permitido) {
                 const saldo = document.getElementById('dash-saldo-total');
                 const gastos = document.getElementById('dash-saldo-gastos');
                 const pendentes = document.getElementById('dash-pendentes');
                 if (saldo) saldo.textContent = '—';
                 if (gastos) gastos.textContent = '—';
-                if (pendentes) pendentes.textContent = 'Informação disponível apenas para administradores.';
-                if (document.getElementById('admin-panel')?.classList.contains('active')) switchTab('dashboard');
+                if (pendentes) pendentes.textContent = 'Informação disponível para atletas aprovados e administradores.';
+                if (document.getElementById('admin-panel')?.classList.contains('active') || document.getElementById('financeiro-ver')?.classList.contains('active')) switchTab('dashboard');
             }
         }
 
@@ -1265,6 +1305,7 @@
                             window.currentUserProfile = profile;
                             window.atualizarInterfaceAcessoAtleta?.(user, 'athlete');
                             document.getElementById('member-profile-button')?.classList.remove('hidden');
+                            atualizarAcessoFinanceiro();
                             await window.carregarDadosPrivadosAtleta?.(window.currentAthleteId);
                         } else {
                             const pendingSnapshot = await window.rolesRef.child(`pending/${user.uid}`).once('value');
@@ -1295,6 +1336,9 @@
         function removerEscutasPrivadas() {
             (window.privateListeners || []).forEach(({ref, callback}) => ref.off('value', callback));
             window.privateListeners = [];
+            window.financialAthleteListeners = {};
+            window.financialAthleteCache = {};
+            if (renderFinanceiroAtletasTimeout) { clearTimeout(renderFinanceiroAtletasTimeout); renderFinanceiroAtletasTimeout = null; }
         }
 
         function aplicarCachePrivado() {
@@ -1303,6 +1347,11 @@
                 const dadosPrivados = window.privateAthletesCache?.[String(atleta.id)];
                 if (dadosPrivados && (window.isAdminLogado || String(atleta.id) === String(window.currentAthleteId))) {
                     Object.assign(atleta, JSON.parse(JSON.stringify(dadosPrivados)));
+                }
+                const movimentos = window.financialAthleteCache?.[String(atleta.id)];
+                if (window.isAtletaLogado && movimentos) {
+                    if (movimentos.pagamentos !== undefined) atleta.pagamentos = JSON.parse(JSON.stringify(movimentos.pagamentos));
+                    if (movimentos.abatimentos !== undefined) atleta.abatimentos = JSON.parse(JSON.stringify(movimentos.abatimentos));
                 }
                 return atleta;
             });
@@ -1329,18 +1378,68 @@
             window.privateListeners.push({ref: athletesRef, callback: onAthletes}, {ref: financeRef, callback: onFinance});
         };
 
+        window.carregarMovimentacoesFinanceirasAtletas = function() {
+            if (!window.isAtletaLogado || !window.firebaseUser?.emailVerified || !window.privateRef) return;
+            const athleteIds = new Set((window.publicAthletesCache || []).map(a => String(a?.id || '')).filter(Boolean));
+            for (const [id, listeners] of Object.entries(window.financialAthleteListeners || {})) {
+                if (athleteIds.has(id)) continue;
+                listeners.forEach(({ref, callback}) => ref.off('value', callback));
+                window.privateListeners = window.privateListeners.filter(listener => !listeners.includes(listener));
+                delete window.financialAthleteListeners[id];
+                delete window.financialAthleteCache[id];
+            }
+            for (const id of athleteIds) {
+                if (id === String(window.currentAthleteId) || window.financialAthleteListeners[id]) continue;
+                const listeners = [];
+                for (const field of ['pagamentos', 'abatimentos']) {
+                    const ref = window.privateRef.child(`athletes/${id}/${field}`);
+                    const callback = snapshot => {
+                        const movimentos = window.financialAthleteCache[id] || {};
+                        if (snapshot.exists()) movimentos[field] = snapshot.val();
+                        else delete movimentos[field];
+                        if (Object.keys(movimentos).length) window.financialAthleteCache[id] = movimentos;
+                        else delete window.financialAthleteCache[id];
+                        aplicarCachePrivado();
+                        if (renderFinanceiroAtletasTimeout) clearTimeout(renderFinanceiroAtletasTimeout);
+                        renderFinanceiroAtletasTimeout = setTimeout(() => {
+                            renderFinanceiroAtletasTimeout = null;
+                            if (!syncEmAndamento) window.renderizarTudo();
+                        }, 120);
+                    };
+                    const onError = error => console.error('Falha ao ler campo financeiro do atleta.', error?.code || '');
+                    ref.on('value', callback, onError);
+                    const listener = {ref, callback};
+                    listeners.push(listener);
+                    window.privateListeners.push(listener);
+                }
+                window.financialAthleteListeners[id] = listeners;
+            }
+        };
+
         window.carregarDadosPrivadosAtleta = async function(athleteId) {
             removerEscutasPrivadas();
             window.privateAthletesCache = {};
+            window.privateFinanceCache = {};
+            window.gastosCache = []; window.sociosCache = []; window.patrociniosCache = [];
             const athleteRef = window.privateRef.child(`athletes/${athleteId}`);
+            const financeRef = window.privateRef.child('finance');
             const onAthlete = snapshot => {
                 window.privateAthletesCache = snapshot.val() ? {[String(athleteId)]: snapshot.val()} : {};
                 aplicarCachePrivado();
                 window.renderMeuCadastro?.();
                 if (!syncEmAndamento) window.renderizarTudo();
             };
+            const onFinance = snapshot => {
+                window.privateFinanceCache = snapshot.val() || {};
+                window.gastosCache = window.privateFinanceCache.gastos || [];
+                window.sociosCache = window.privateFinanceCache.socios || [];
+                window.patrociniosCache = window.privateFinanceCache.patrocinios || [];
+                if (!syncEmAndamento) window.renderizarTudo();
+            };
             athleteRef.on('value', onAthlete);
-            window.privateListeners.push({ref: athleteRef, callback: onAthlete});
+            financeRef.on('value', onFinance, error => console.error('Falha ao ler movimentação financeira.', error?.code || ''));
+            window.privateListeners.push({ref: athleteRef, callback: onAthlete}, {ref: financeRef, callback: onFinance});
+            window.carregarMovimentacoesFinanceirasAtletas();
         };
 
         window.salvarNoStorage = function(opcoes = {}) {
@@ -1433,7 +1532,8 @@
                 window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
                 window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
                 aplicarCachePrivado();
-                if (!window.isAdminLogado) {
+                if (window.isAtletaLogado) window.carregarMovimentacoesFinanceirasAtletas?.();
+                if (!window.isAdminLogado && !window.isAtletaLogado) {
                     window.gastosCache = [];
                     window.sociosCache = [];
                     window.patrociniosCache = [];
@@ -3458,8 +3558,13 @@
         // =====================================================
         
         function switchTab(tabId) {
-            if ((tabId === 'financeiro-ver' || tabId === 'admin-panel') && !(window.isAdminLogado && window.firebaseUser)) {
+            const adminCanOpen = Boolean(window.isAdminLogado && window.firebaseUser);
+            const athleteCanReadFinance = Boolean(window.isAtletaLogado && window.firebaseUser?.emailVerified);
+            if (tabId === 'admin-panel' && !adminCanOpen) {
                 window.mostrarToast('Acesso restrito a administradores.', true);
+                tabId = 'dashboard';
+            } else if (tabId === 'financeiro-ver' && !(adminCanOpen || athleteCanReadFinance)) {
+                window.mostrarToast('O balanço financeiro é disponível para atletas aprovados e administradores.', true);
                 tabId = 'dashboard';
             }
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
