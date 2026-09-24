@@ -730,12 +730,6 @@
                         <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-black font-black p-2 rounded-lg text-xs uppercase transition">Cadastrar</button>
                     </form>
                 </div>
-                <div class="bg-stone-900/95 rounded-xl p-4 border border-amber-700/60">
-                    <h4 class="font-bold text-amber-300 text-xs uppercase mb-2">Migração inicial dos dados existentes</h4>
-                    <p class="text-stone-400 text-[10px] mb-3">Copie os dados antigos para as áreas pública e privada sem apagar a origem. Faça uma vez, depois de conferir o backup.</p>
-                    <button type="button" onclick="window.migrarDadosLegados()" class="bg-amber-500 text-stone-950 font-bold p-2 rounded-lg text-xs">Migrar dados existentes</button>
-                    <p id="migration-status" class="text-stone-400 text-[10px] mt-2" aria-live="polite"></p>
-                </div>
                 <div class="bg-stone-900/95 rounded-xl p-4 border border-emerald-800/60">
                     <div class="flex justify-between items-center gap-2 mb-2">
                         <h4 class="font-bold text-emerald-300 text-xs uppercase">Solicitações de vínculo</h4>
@@ -1147,6 +1141,12 @@
         
         const VALOR_MENSALIDADE = 40;
         const formatarValorMensalidade = () => VALOR_MENSALIDADE.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Abre o filtro do PDF já no mês atual.
+        const pdfMesFiltro = document.getElementById('pdf-mes-filtro');
+        if (pdfMesFiltro && typeof window.getMesAtual === 'function') {
+            pdfMesFiltro.value = window.getMesAtual();
+        }
 
         window.atletasCache = [];
         window.gastosCache = [];
@@ -3190,154 +3190,6 @@
                     ? 'O banco recusou a solicitação. Sua conta continua sem acesso privado; tente novamente e, se persistir, avise o administrador.'
                     : detail || 'Não foi possível enviar a solicitação. Tente novamente.';
                 exibirMensagemAcessoAtleta(message, true);
-            }
-        };
-
-        window.migrarDadosLegados = async function() {
-            const status = document.getElementById('migration-status');
-            if (!window.isAdminLogado || !window.firebaseUser) {
-                if (status) status.textContent = 'Somente o administrador autenticado pode executar esta migração.';
-                return;
-            }
-            if (!window.dbRef || !window.publicRef || !window.privateRef) {
-                if (status) status.textContent = 'O banco ainda não está pronto. Atualize a tela e tente novamente.';
-                return;
-            }
-            if (status) status.textContent = 'Validando e copiando atomicamente os dados antigos…';
-            const normalizarParaComparacao = valor => Array.isArray(valor)
-                ? valor.map(normalizarParaComparacao)
-                : valor && typeof valor === 'object'
-                    ? Object.fromEntries(Object.keys(valor).sort().map(chave => [chave, normalizarParaComparacao(valor[chave])]))
-                    : valor;
-            const iguais = (a, b) => JSON.stringify(normalizarParaComparacao(a)) === JSON.stringify(normalizarParaComparacao(b));
-            const clonar = valor => valor === undefined ? undefined : JSON.parse(JSON.stringify(valor));
-            let erroDeValidacao = null;
-            let dadosEsperados = null;
-            let raizEsperada = null;
-            let transacaoIniciada = false;
-            let transacaoConfirmada = false;
-            let abortadaSemGravar = false;
-            try {
-                // Seed the RTDB cache with the complete node before a root transaction.
-                // Admin UI listeners only subscribe to selected child branches; without this
-                // read, the transaction callback could start from a partial cached snapshot.
-                const preflightSnapshot = await window.dbRef.once('value');
-                const preflightData = preflightSnapshot.val();
-                if (!preflightData || typeof preflightData !== 'object' || Array.isArray(preflightData)) {
-                    throw new Error('Não consegui ler um conjunto completo de dados legados para migrar.');
-                }
-                transacaoIniciada = true;
-                const resultado = await window.dbRef.transaction(dadosAtuais => {
-                    erroDeValidacao = null;
-                    dadosEsperados = null;
-                    raizEsperada = null;
-                    if (!dadosAtuais || typeof dadosAtuais !== 'object' || Array.isArray(dadosAtuais)) {
-                        erroDeValidacao = 'Não encontrei dados legados válidos para migrar.';
-                        return;
-                    }
-                    const legacy = dadosAtuais;
-                    for (const [caminho, valor] of [['public', legacy.public], ['private', legacy.private]]) {
-                        if (valor !== undefined && valor !== null && (typeof valor !== 'object' || Array.isArray(valor))) {
-                            erroDeValidacao = `Conflito no ramo ${caminho}; interrompi para não substituir dados existentes.`;
-                            return;
-                        }
-                    }
-                    const destinosExistentes = [
-                        ['public/data', legacy.public?.data],
-                        ['private/athletes', legacy.private?.athletes],
-                        ['private/finance', legacy.private?.finance]
-                    ].filter(([, valor]) => valor !== undefined && valor !== null).map(([caminho]) => caminho);
-                    if (destinosExistentes.length) {
-                        erroDeValidacao = `Migração interrompida sem sobrescrever: já existem dados em ${destinosExistentes.join(', ')}. Revise-os antes de tentar novamente.`;
-                        return;
-                    }
-                    const rows = Array.isArray(legacy.atletas) ? legacy.atletas : Object.values(legacy.atletas || {});
-                    // Uma lista vazia é válida para iniciar o app do zero; o admin cadastrará atletas depois.
-                    const publicFields = new Set(['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos']);
-                    const atletasPublicos = [];
-                    const atletasPrivados = {};
-                    const ids = new Set();
-                    for (const atleta of rows) {
-                        if (!atleta || atleta.id === undefined || atleta.id === null || String(atleta.id) === '') {
-                            erroDeValidacao = 'Há atleta sem ID estável; interrompi sem apagar dados.';
-                            return;
-                        }
-                        const id = String(atleta.id);
-                        if (ids.has(id)) {
-                            erroDeValidacao = 'Há IDs de atleta repetidos; interrompi sem apagar dados.';
-                            return;
-                        }
-                        ids.add(id);
-                        atletasPublicos.push(Object.fromEntries(Object.entries(atleta).filter(([key]) => publicFields.has(key))));
-                        const privado = Object.fromEntries(Object.entries(atleta).filter(([key]) => !publicFields.has(key)));
-                        if (Object.keys(privado).length) atletasPrivados[id] = privado;
-                    }
-                    const dataPublica = {
-                        atletas: atletasPublicos,
-                        sumulas: legacy.sumulas || [],
-                        partidaEstatisticas: legacy.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 },
-                        historicoPlacares: legacy.historicoPlacares || [],
-                        ultimaAtualizacao: new Date().toISOString(),
-                        public_access: typeof legacy.public_access === 'boolean' ? legacy.public_access : true
-                    };
-                    const dadosFinanceirosPrivados = {
-                        gastos: legacy.gastos || [],
-                        socios: legacy.socios || [],
-                        patrocinios: legacy.patrocinios || []
-                    };
-                    const novaRaiz = clonar(legacy);
-                    novaRaiz.public = novaRaiz.public || {};
-                    novaRaiz.private = novaRaiz.private || {};
-                    novaRaiz.public.data = dataPublica;
-                    novaRaiz.private.athletes = atletasPrivados;
-                    novaRaiz.private.finance = dadosFinanceirosPrivados;
-                    dadosEsperados = { dataPublica, atletasPrivados, dadosFinanceirosPrivados };
-                    raizEsperada = clonar(novaRaiz);
-                    return novaRaiz;
-                }, undefined, false);
-                if (!resultado.committed) {
-                    abortadaSemGravar = true;
-                    throw new Error(erroDeValidacao || 'Os dados mudaram em paralelo; a transação foi cancelada sem gravar. Atualize a tela e revise o banco antes de tentar novamente.');
-                }
-                transacaoConfirmada = true;
-                if (!dadosEsperados || !raizEsperada) throw new Error('A transação terminou, mas não consegui preparar a conferência. Revise os destinos antes de qualquer nova tentativa.');
-                const [publicCheck, athletesCheck, financeCheck] = await Promise.all([
-                    window.publicRef.child('data').once('value'),
-                    window.privateRef.child('athletes').once('value'),
-                    window.privateRef.child('finance').once('value')
-                ]);
-                const migratedPublic = publicCheck.val() || {};
-                const migratedAthletes = athletesCheck.val() || {};
-                const migratedFinance = financeCheck.val() || {};
-                const raizDepois = (await window.dbRef.once('value')).val() || {};
-                const raizPreservada = iguais(raizEsperada, raizDepois);
-                if (!iguais(dadosEsperados.dataPublica, migratedPublic) || !iguais(dadosEsperados.atletasPrivados, migratedAthletes) || !iguais(dadosEsperados.dadosFinanceirosPrivados, migratedFinance) || !raizPreservada) {
-                    throw new Error('A conferência integral divergiu; os dados antigos não foram apagados. Não tente novamente até revisar os destinos.');
-                }
-                window.publicAthletesCache = migratedPublic.atletas || [];
-                window.privateAthletesCache = migratedAthletes;
-                window.privateFinanceCache = migratedFinance;
-                window.gastosCache = migratedFinance.gastos || [];
-                window.sociosCache = migratedFinance.socios || [];
-                window.patrociniosCache = migratedFinance.patrocinios || [];
-                window.aplicarCachePrivado();
-                window.renderizarTudo();
-                if (status) status.textContent = 'Migração transacional conferida. A estrutura antiga foi preservada; confira a tela pública e a área do administrador.';
-                window.mostrarToast('Cópia transacional conferida.');
-            } catch (error) {
-                if (transacaoIniciada && !transacaoConfirmada && !abortadaSemGravar && raizEsperada) {
-                    try {
-                        const atual = (await window.dbRef.once('value')).val() || {};
-                        if (iguais(raizEsperada, atual)) transacaoConfirmada = true;
-                    } catch (_) {}
-                }
-                if (status) status.textContent = transacaoConfirmada
-                    ? `${error.message || 'A conferência da migração falhou.'} A transação pode ter gravado a nova cópia; os dados antigos não foram apagados. Não repita até revisar os destinos.`
-                    : (abortadaSemGravar
-                        ? (error.message || 'Migração cancelada sem gravações.')
-                        : (transacaoIniciada
-                            ? `${error.message || 'Não foi possível confirmar a transação.'} O resultado é inconclusivo; confira os destinos antes de tentar novamente. Os dados antigos não são removidos.`
-                            : (error.message || 'Falha na migração. Os dados antigos não são removidos.')));
             }
         };
 
