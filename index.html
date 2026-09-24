@@ -314,7 +314,7 @@
             <div id="page-title-bar" class="text-[10px] text-stone-500 font-bold uppercase tracking-wider text-center mt-1 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 max-w-full">
                 <span id="page-title-text">PAINEL GERAL</span>
                 <span id="member-role-badge" role="status" aria-live="polite" class="inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border border-stone-600 bg-stone-800 px-2 text-[8px] font-black text-stone-300">VISITANTE</span>
-                <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded">Atleta</button>
+                <button id="member-auth-button" onclick="window.toggleAthleteAuth()" aria-label="Acesso do atleta: entrar ou criar conta" title="Acesso do atleta: entrar ou criar conta" class="hidden w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-700 rounded">Atleta</button>
                 <button id="member-profile-button" onclick="window.abrirMeuCadastro()" aria-label="Abrir meu cadastro de atleta" class="hidden w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-emerald-300 font-bold border border-emerald-800 rounded">Cadastro</button>
                 <button id="member-logout-button" type="button" onclick="window.sairContaAtleta()" aria-label="Sair da conta do atleta" class="hidden w-20 h-7 leading-7 px-0 text-center whitespace-nowrap text-[9px] text-stone-300 font-bold border border-stone-700 rounded">Sair</button>
             </div>
@@ -335,7 +335,7 @@
             <section id="athlete-access-prompt" class="bg-emerald-950/70 border border-emerald-600 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h2 class="text-emerald-300 font-black text-sm uppercase tracking-wide"><i class="fa-solid fa-user-lock mr-2"></i>Acesso e cadastro do atleta</h2>
-                    <p class="text-stone-300 text-xs mt-1">Este acesso é separado do painel administrativo. Crie sua conta com seu próprio e-mail e senha.</p>
+                    <p class="text-stone-300 text-xs mt-1">Crie sua conta com seu próprio e-mail e senha.</p>
                 </div>
                 <button type="button" onclick="window.toggleAthleteAuth()" class="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-black text-xs px-4 py-3 rounded-xl">Entrar ou criar conta</button>
             </section>
@@ -2999,7 +2999,7 @@
             const signedIn = Boolean(user);
             const isAthlete = signedIn && state === 'athlete';
             const isAdmin = signedIn && state === 'admin';
-            visible('member-auth-button', !signedIn || (!isAthlete && !isAdmin));
+            visible('member-auth-button', signedIn && !isAthlete && !isAdmin);
             visible('member-profile-button', isAthlete);
             visible('member-logout-button', signedIn && !isAdmin);
             visible('athlete-auth-login-fields', !signedIn);
