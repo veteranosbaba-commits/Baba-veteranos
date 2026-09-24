@@ -526,7 +526,7 @@
                         <h4 class="text-amber-500 font-bold mb-2 flex items-center gap-2">
                             <i class="fa-solid fa-calendar-check"></i> Mensalidade
                         </h4>
-                        <p>A mensalidade é <strong class="text-amber-300">obrigatória no valor de R$ 40,00</strong> e deve ser paga até o dia <strong>15 de cada mês</strong>.</p>
+                        <p>A mensalidade é <strong class="text-amber-300">obrigatória no valor de R$ 40,00</strong> e deve ser paga até o dia <strong>15 do mês seguinte</strong> à competência (ex.: janeiro até 15 de fevereiro).</p>
                     </div>
 
                     <!-- REGRA 3 -->
@@ -3372,15 +3372,34 @@
             };
             const pagamentos = athlete.pagamentos || {};
             const mesAtual = window.getMesAtual();
-            const mesNome = window.mesesPtbr?.[mesAtual] || mesAtual;
             const agora = new Date();
+            const hojeSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+            const obterCompetencia = chaveMes => {
+                const correspondencia = String(chaveMes).match(/^(?:(\d{4})[-/])?(\d{1,2})$/);
+                if (!correspondencia) return null;
+                const ano = Number(correspondencia[1] || agora.getFullYear());
+                const numeroMes = Number(correspondencia[2]);
+                if (numeroMes < 1 || numeroMes > 12) return null;
+                const nomeMes = window.mesesPtbr?.[String(numeroMes).padStart(2, '0')] || String(numeroMes);
+                const vencimento = new Date(ano, numeroMes, 15);
+                const mesDoVencimento = window.mesesPtbr?.[String(vencimento.getMonth() + 1).padStart(2, '0')] || '';
+                const temAnoExplicito = Boolean(correspondencia[1]);
+                return {
+                    vencimento,
+                    titulo: `${nomeMes}${temAnoExplicito ? ` ${ano}` : ''}`,
+                    prazo: `15 de ${mesDoVencimento}${temAnoExplicito ? ` de ${vencimento.getFullYear()}` : ''}`
+                };
+            };
+            const competenciaAtual = obterCompetencia(`${agora.getFullYear()}-${mesAtual}`);
             const mensalidadePaga = window.verificarPago(pagamentos, mesAtual, athlete);
-            const mensalidadeVencida = !mensalidadePaga && agora.getDate() > 15;
+            const mensalidadeVencida = !mensalidadePaga && competenciaAtual && hojeSemHora > competenciaAtual.vencimento;
+            const tituloMesAtual = competenciaAtual?.titulo || `${window.mesesPtbr?.[mesAtual] || mesAtual} ${agora.getFullYear()}`;
+            const prazoMesAtual = competenciaAtual?.prazo || 'dia 15 do mês seguinte';
 
             addLine('Atleta', athlete.nome || '—', 'font-bold text-white');
 
             const destaqueMensalidade = document.createElement('section');
-            destaqueMensalidade.setAttribute('aria-label', `Situação da mensalidade de ${mesNome} ${agora.getFullYear()}`);
+            destaqueMensalidade.setAttribute('aria-label', `Situação da mensalidade de ${tituloMesAtual}`);
             destaqueMensalidade.setAttribute('aria-live', 'polite');
             destaqueMensalidade.className = `mt-3 mb-2 rounded-xl border-2 p-4 shadow-lg ${mensalidadePaga
                 ? 'border-emerald-400 bg-emerald-950/60 shadow-emerald-950/40'
@@ -3392,7 +3411,7 @@
             linhaCabecalho.className = 'flex flex-wrap items-center justify-between gap-2';
             const periodo = document.createElement('p');
             periodo.className = 'text-[10px] font-black uppercase tracking-wider text-stone-200';
-            periodo.textContent = `MENSALIDADE DE ${mesNome} ${agora.getFullYear()}`;
+            periodo.textContent = `MENSALIDADE DE ${tituloMesAtual}`;
             const situacao = document.createElement('span');
             situacao.className = `rounded-full px-3 py-1 text-[11px] font-black uppercase ${mensalidadePaga
                 ? 'bg-emerald-400 text-stone-950'
@@ -3411,10 +3430,10 @@
             const detalheMensalidade = document.createElement('p');
             detalheMensalidade.className = `mt-1 text-xs font-bold ${mensalidadePaga ? 'text-emerald-200' : mensalidadeVencida ? 'text-red-200' : 'text-amber-100'}`;
             detalheMensalidade.textContent = mensalidadePaga
-                ? 'Pagamento deste mês registrado.'
+                ? `Pagamento de ${tituloMesAtual} registrado.`
                 : mensalidadeVencida
-                    ? `Vencimento: dia 15 de ${mesNome}. O sistema registra o pagamento em aberto.`
-                    : `Pagamento em aberto. Vence dia 15 de ${mesNome}.`;
+                    ? `Prazo de quitação: ${prazoMesAtual}. O sistema ainda registra o pagamento em aberto.`
+                    : `Pagamento em aberto. Prazo para quitar: até ${prazoMesAtual}.`;
             destaqueMensalidade.appendChild(detalheMensalidade);
             content.appendChild(destaqueMensalidade);
 
@@ -3431,12 +3450,21 @@
             if (!meses.length) addLine('Pagamentos', 'Nenhum registro encontrado', 'text-stone-400');
             meses.forEach(mes => {
                 const info = pagamentos[mes] || {};
+                const competencia = obterCompetencia(mes);
+                const paga = Boolean(info.pago);
+                const vencida = !paga && competencia && hojeSemHora > competencia.vencimento;
                 const linha = document.createElement('div');
                 linha.className = 'rounded bg-stone-800 p-2 text-xs';
                 const titulo = document.createElement('p');
-                titulo.className = 'font-bold text-white';
-                titulo.textContent = `${mes}: mensalidade ${info.pago ? 'paga' : 'pendente'}`;
+                titulo.className = `font-bold ${paga ? 'text-emerald-300' : vencida ? 'text-red-300' : 'text-amber-200'}`;
+                titulo.textContent = `${competencia?.titulo || mes}: mensalidade ${paga ? 'paga' : vencida ? 'pendente · vencida' : 'pendente'}`;
                 linha.appendChild(titulo);
+                if (competencia) {
+                    const prazo = document.createElement('p');
+                    prazo.className = `text-[10px] font-semibold ${paga ? 'text-stone-400' : vencida ? 'text-red-200' : 'text-amber-100'}`;
+                    prazo.textContent = `Prazo de quitação: até ${competencia.prazo}.`;
+                    linha.appendChild(prazo);
+                }
                 (info.multas || []).forEach(multa => {
                     const detalhe = document.createElement('p');
                     detalhe.className = multa.paga ? 'text-emerald-300' : 'text-amber-300';
