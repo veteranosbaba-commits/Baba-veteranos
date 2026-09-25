@@ -805,15 +805,6 @@
                     </div>
                     <div id="link-request-queue" class="space-y-2 text-xs" aria-live="polite"></div>
                 </div>
-                <div class="bg-stone-900/95 rounded-xl p-4 border border-emerald-800/60">
-                    <h4 class="font-bold text-emerald-300 text-xs uppercase mb-2">Vincular conta ao atleta</h4>
-                    <p class="text-stone-400 text-[10px] mb-3">Use o UID copiado em Authentication → Usuários. Não solicite a senha do jogador.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <input id="vinculo-uid" type="text" placeholder="UID do Firebase Auth" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
-                        <select id="vinculo-atleta" class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
-                        <button type="button" onclick="window.vincularAtletaDoFormulario()" class="bg-emerald-700 text-white font-bold p-2 rounded-lg text-xs">Vincular com segurança</button>
-                    </div>
-                </div>
                 <div class="bg-white/5 rounded-2xl border border-stone-800 p-4 overflow-x-auto">
                     <table class="w-full text-left text-xs min-w-[300px]">
                         <thead><tr class="bg-stone-900 text-stone-400 border-b border-stone-800"><th class="p-3">Nome</th><th class="p-3 text-center">Nº</th><th class="p-3 text-center">Ações</th></tr></thead>
@@ -2479,13 +2470,6 @@
             }); 
             const tabela = document.getElementById('adm-atletas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="5" class="p-3 text-center text-stone-500 italic">Nenhum atleta.</td></tr>';
-            const seletor = document.getElementById('vinculo-atleta');
-            if (seletor) {
-                const valorAnterior = seletor.value;
-                seletor.replaceChildren(new Option('Selecione o atleta', ''));
-                window.atletasCache.forEach(a => seletor.add(new Option(`${a.nome} (#${a.camisa}) · ${a.id}`, String(a.id))));
-                if (window.atletasCache.some(a => String(a.id) === valorAnterior)) seletor.value = valorAnterior;
-            }
         }
         
         function atualizarResumosAposScout() {
@@ -3360,7 +3344,7 @@
                     card.appendChild(title);
                     const meta = document.createElement('p');
                     meta.className = 'text-stone-400 text-[10px]';
-                    meta.textContent = `UID: ${uid} · pedido: ${request?.requestedAt ? new Date(request.requestedAt).toLocaleString('pt-BR') : '—'}`;
+                    meta.textContent = `Solicitado em: ${request?.requestedAt ? new Date(request.requestedAt).toLocaleString('pt-BR') : '—'}`;
                     card.appendChild(meta);
                     const select = document.createElement('select');
                     select.className = 'w-full bg-stone-800 border border-stone-600 p-2 rounded text-xs text-white';
@@ -3576,32 +3560,6 @@
             if (!window.isAtletaLogado) return;
             window.renderMeuCadastro();
             document.getElementById('athlete-profile-modal')?.classList.remove('hidden');
-        };
-
-        window.vincularContaAtleta = async function(uid, athleteId) {
-            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente administrador autenticado pode vincular contas.');
-            const atletaExiste = window.atletasCache.some(a => String(a.id) === String(athleteId));
-            if (!atletaExiste) throw new Error('ID de atleta não encontrado.');
-            await window.rolesRef.child(`users/${uid}`).set({
-                role: 'athlete',
-                athleteId: String(athleteId),
-                linkedAt: new Date().toISOString(),
-                linkedBy: window.firebaseUser.uid
-            });
-            return true;
-        };
-
-        window.vincularAtletaDoFormulario = async function() {
-            const uid = document.getElementById('vinculo-uid')?.value?.trim();
-            const athleteId = document.getElementById('vinculo-atleta')?.value;
-            if (!uid || !athleteId) { window.mostrarToast('Informe o UID e selecione o atleta.', true); return; }
-            try {
-                await window.vincularContaAtleta(uid, athleteId);
-                document.getElementById('vinculo-uid').value = '';
-                window.mostrarToast('Conta vinculada ao ID do atleta.');
-            } catch (error) {
-                window.mostrarToast(error.message || 'Não foi possível vincular a conta.', true);
-            }
         };
 
         window.autenticarAdmin = async function(e) {
