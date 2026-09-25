@@ -217,13 +217,15 @@
             const select = document.getElementById(selectId);
             if (!select) return;
             const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const mesAtual = selectedMonth || window.getMesAtual();
+            const valorAnterior = select.value;
+            const mesAtual = selectedMonth || valorAnterior || window.getMesAtual();
             let html = "";
             meses.forEach((nome, i) => {
                 const val = (i + 1).toString().padStart(2, '0');
-                html += `<option value="${val}" ${val === mesAtual ? 'selected' : ''}>${nome}</option>`;
+                html += `<option value="${val}">${nome}</option>`;
             });
             select.innerHTML = html;
+            select.value = [...select.options].some(option => option.value === mesAtual) ? mesAtual : window.getMesAtual();
         };
 
 
@@ -233,19 +235,81 @@
             return (agora.getMonth() + 1).toString().padStart(2, '0');
         };
         
-        // Função robusta: verifica pagamento em qualquer formato (07, 7, 2026-07, etc)
-        window.verificarPago = function(pagamentos, mesAtual, atleta) {
-            if (!pagamentos || typeof pagamentos !== 'object') return false;
-            // Tenta o formato padrão MM (ex: "07")
-            if (pagamentos[mesAtual]?.pago === true) return true;
-            // Tenta sem zero à esquerda (ex: "7")
-            const semZero = String(parseInt(mesAtual));
-            if (semZero !== mesAtual && pagamentos[semZero]?.pago === true) return true;
-            // Tenta com ano (ex: "2026-07")
-            const ano = new Date().getFullYear();
-            if (pagamentos[`${ano}-${mesAtual}`]?.pago === true) return true;
-            if (pagamentos[`${ano}-${semZero}`]?.pago === true) return true;
-            return false;
+        window.ANO_LEGADO_FINANCEIRO = 2026;
+        window.getAnoAtual = () => new Date().getFullYear();
+        window.chavePagamentoAnual = (ano, mes) => `${Number(ano)}-${String(parseInt(mes, 10)).padStart(2, '0')}`;
+        window.detalharChavePagamento = chave => {
+            const texto = String(chave || '');
+            const comAno = texto.match(/^(\d{4})[-/](\d{1,2})$/);
+            if (comAno) return {ano: Number(comAno[1]), mes: String(Number(comAno[2])).padStart(2, '0')};
+            const soMes = texto.match(/^(\d{1,2})$/);
+            if (soMes && Number(soMes[1]) >= 1 && Number(soMes[1]) <= 12) return {ano: window.ANO_LEGADO_FINANCEIRO, mes: String(Number(soMes[1])).padStart(2, '0')};
+            return null;
+        };
+        window.rotuloPeriodoPagamento = chave => {
+            const periodo = window.detalharChavePagamento(chave);
+            return periodo ? `${periodo.mes}/${periodo.ano}` : String(chave || '');
+        };
+        window.obterPagamentosDoAno = (pagamentos, ano) => {
+            const porMes = new Map();
+            Object.entries(pagamentos || {}).forEach(([chave, dados]) => {
+                const periodo = window.detalharChavePagamento(chave);
+                if (!periodo || periodo.ano !== Number(ano)) return;
+                const anterior = porMes.get(periodo.mes);
+                const chaveAnual = String(chave).startsWith(`${ano}-`);
+                if (!anterior || (chaveAnual && !anterior.chaveAnual)) porMes.set(periodo.mes, {chave, dados, chaveAnual});
+            });
+            return [...porMes.entries()].map(([mes, item]) => ({mes, chave: item.chave, dados: item.dados}));
+        };
+        window.obterDadosPagamento = (pagamentos, ano, mes) => {
+            const mesFmt = String(parseInt(mes, 10)).padStart(2, '0');
+            const chaveAnual = window.chavePagamentoAnual(ano, mesFmt);
+            if (pagamentos?.[chaveAnual]) return {chave: chaveAnual, dados: pagamentos[chaveAnual]};
+            if (Number(ano) === window.ANO_LEGADO_FINANCEIRO) {
+                const semZero = String(Number(mesFmt));
+                const chaveLegada = pagamentos?.[mesFmt] ? mesFmt : semZero;
+                if (pagamentos?.[chaveLegada]) return {chave: chaveLegada, dados: pagamentos[chaveLegada]};
+            }
+            return {chave: chaveAnual, dados: null};
+        };
+        window.obterAnoFinanceiroRegistro = registro => {
+            if (Number.isInteger(Number(registro?.ano)) && Number(registro?.ano) >= 2000) return Number(registro.ano);
+            const valores = [registro?.mes, registro?.data, registro?.dataStr];
+            for (const valor of valores) {
+                const texto = String(valor || '');
+                const ano = texto.match(/(?:^|[/-])(20\d{2})(?:$|[/-])/);
+                if (ano) return Number(ano[1]);
+            }
+            return window.ANO_LEGADO_FINANCEIRO;
+        };
+        window.anoFinanceiroSelecionado = id => Number(document.getElementById(id)?.value || window.getAnoAtual());
+        window.gerarOpcoesAnos = function(selectId) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const anterior = select.value;
+            const anos = new Set([window.ANO_LEGADO_FINANCEIRO, window.getAnoAtual()]);
+            (window.sociosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
+            (window.patrociniosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
+            (window.gastosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
+            (window.atletasCache || []).forEach(atleta => Object.keys(atleta.pagamentos || {}).forEach(chave => {
+                const periodo = window.detalharChavePagamento(chave);
+                if (periodo) anos.add(periodo.ano);
+            }));
+            const ordenados = [...anos].filter(ano => ano >= 2000).sort((a, b) => b - a);
+            select.innerHTML = ordenados.map(ano => `<option value="${ano}">${ano}${ano < window.getAnoAtual() ? ' · Arquivo' : ''}</option>`).join('');
+            const preferido = ordenados.includes(Number(anterior)) ? String(anterior) : String(window.getAnoAtual());
+            select.value = preferido;
+        };
+        window.aoAlterarAnoFinanceiro = function(ano) {
+            document.querySelectorAll('[data-ano-financeiro-admin]').forEach(select => { select.value = String(ano); });
+            window.renderizarTudo?.();
+        };
+        window.anoFinanceiroParaRegistro = () => window.anoFinanceiroSelecionado('adm-ano-filtro');
+
+        // Situação de pagamento é anual; o formato antigo MM pertence a 2026.
+        window.verificarPago = function(pagamentos, mesAtual, atleta, ano = window.getAnoAtual()) {
+            const entrada = window.obterDadosPagamento(pagamentos, ano, mesAtual);
+            return entrada.dados?.pago === true;
         };
         
         window.mesesPtbr = {
@@ -344,14 +408,14 @@
                 <div class="bg-black/90 rounded-2xl border-2 border-emerald-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-emerald-500 text-black font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Disponível</div>
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
-                        <i class="fa-solid fa-vault mr-1"></i> Saldo Geral da Liga
+                        <i class="fa-solid fa-vault mr-1"></i> <span id="dash-saldo-titulo">Saldo Geral da Liga</span>
                     </p>
                     <h3 id="dash-saldo-total" class="text-3xl sm:text-4xl font-mono font-bold text-emerald-400 tracking-tight">R$ 0,00</h3>
                 </div>
                 <div class="bg-black/90 rounded-2xl border-2 border-red-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-red-500 text-white font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Despesas</div>
                     <p class="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">
-                        <i class="fa-solid fa-money-bill-wave mr-1"></i> Total de Gastos
+                        <i class="fa-solid fa-money-bill-wave mr-1"></i> <span id="dash-gastos-titulo">Total de Gastos</span>
                     </p>
                     <h3 id="dash-saldo-gastos" class="text-3xl sm:text-4xl font-mono font-bold text-red-500 tracking-tight">R$ 0,00</h3>
                 </div>
@@ -438,6 +502,10 @@
 
         <!-- BALANÇO -->
         <div id="financeiro-ver" class="tab-content space-y-6 pt-4">
+            <div class="flex items-center justify-between gap-2 rounded-xl border border-stone-800 bg-stone-900/95 p-3">
+                <span class="text-[10px] font-black uppercase text-amber-300">Arquivo financeiro por ano</span>
+                <select id="financeiro-ano-filtro" aria-label="Ano do arquivo financeiro" onchange="window.renderFinanceiroPublico()" class="text-[11px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none"></select>
+            </div>
             <div id="finance-readonly-notice" class="hidden rounded-xl border border-sky-800 bg-sky-950/50 p-3 text-xs text-sky-200">Consulta somente leitura: atletas aprovados podem ver todas as movimentações. Somente administradores podem editar.</div>
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                 <h4 class="font-black text-amber-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
@@ -764,7 +832,12 @@
                         <h4 class="font-bold text-emerald-400 text-xs uppercase">
                             <i class="fa-solid fa-money-bill mr-1"></i> Mensalidades
                         </h4>
-                        <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
+                        <label class="text-[10px] text-stone-400">Ano
+                            <select id="adm-ano-filtro" data-ano-financeiro-admin onchange="window.aoAlterarAnoFinanceiro(this.value)" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
+                        </label>
+                        <label class="text-[10px] text-stone-400">Mês
+                            <select id="adm-mes-filtro" onchange="window.loadAdmFinancas()" class="text-[11px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none"></select>
+                        </label>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse min-w-[260px]">
@@ -781,6 +854,10 @@
             </div>
 
             <div id="adm-socios" class="adm-sub-content hidden space-y-6">
+                <div class="flex items-center justify-between gap-2 rounded-xl border border-stone-800 bg-stone-900/95 p-3">
+                    <span class="text-[10px] font-black uppercase text-amber-300">Ano dos lançamentos financeiros</span>
+                    <select id="adm-ano-receitas" data-ano-financeiro-admin onchange="window.aoAlterarAnoFinanceiro(this.value)" class="text-[11px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none"></select>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-stone-900/95 p-4 border border-stone-700 rounded-xl shadow-xl">
                         <h4 class="font-bold text-teal-400 text-xs uppercase mb-3">Sócio</h4>
@@ -908,6 +985,7 @@
                         <p class="text-[10px] text-stone-500 mt-1">Escolha uma categoria e um mês ou o histórico geral.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 relative z-[100]">
+                        <select id="pdf-ano-filtro" aria-label="Ano do relatório PDF" class="text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none"></select>
                         <select id="pdf-categoria-filtro" aria-label="Categoria do relatório PDF" class="max-w-[48vw] sm:max-w-none text-[10px] bg-stone-800 border border-stone-700 p-1.5 rounded font-bold text-white outline-none">
                             <option value="TODOS">Todos os itens</option>
                             <option value="MENSALIDADES">Mensalidades</option>
@@ -1663,6 +1741,7 @@
         window.renderizarTudo = function() {
             window.gerarOpcoesMeses("adm-mes-filtro");
             window.gerarOpcoesMeses("socio-mes");
+            ['adm-ano-filtro', 'adm-ano-receitas', 'financeiro-ano-filtro', 'pdf-ano-filtro'].forEach(id => window.gerarOpcoesAnos(id));
             try {
                 recalcularClassificacaoGeral();
                 loadDashboard();
@@ -1728,29 +1807,24 @@
             }
             
             let totalArrecadado = 0, totalGastos = 0;
-            
+            const anoOperacional = window.getAnoAtual();
             window.atletasCache.forEach(a => {
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(mes => {
-                        if (a.pagamentos[mes].pago) totalArrecadado += VALOR_MENSALIDADE;
-                        if (a.pagamentos[mes].multas) {
-                            a.pagamentos[mes].multas.forEach(m => { 
-                                if(m.paga) totalArrecadado += Number(m.valor); 
-                            });
-                        }
-                        if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
-                        }
-                    });
-                }
+                window.obterPagamentosDoAno(a.pagamentos, anoOperacional).forEach(({dados}) => {
+                    if (dados?.pago) totalArrecadado += VALOR_MENSALIDADE;
+                    (dados?.multas || []).forEach(m => { if (m.paga) totalArrecadado += Number(m.valor || 0); });
+                    (dados?.multasArquivadasHistorico || []).forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
+                });
             });
-            
-            window.sociosCache.forEach(s => totalArrecadado += Number(s.valor || 0));
-            window.patrociniosCache.forEach(p => totalArrecadado += Number(p.valor || 0));
-            window.gastosCache.forEach(g => totalGastos += Number(g.valor || 0));
+            window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === anoOperacional).forEach(s => totalArrecadado += Number(s.valor || 0));
+            window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === anoOperacional).forEach(p => totalArrecadado += Number(p.valor || 0));
+            window.gastosCache.filter(g => window.obterAnoFinanceiroRegistro(g) === anoOperacional).forEach(g => totalGastos += Number(g.valor || 0));
             
             const saldoLiquido = totalArrecadado - totalGastos;
             
+            const saldoTitulo = document.getElementById('dash-saldo-titulo');
+            const gastosTitulo = document.getElementById('dash-gastos-titulo');
+            if (saldoTitulo) saldoTitulo.textContent = `Saldo de ${anoOperacional}`;
+            if (gastosTitulo) gastosTitulo.textContent = `Despesas de ${anoOperacional}`;
             const saldoEl = document.getElementById('dash-saldo-total');
             const gastosEl = document.getElementById('dash-saldo-gastos');
             if (saldoEl) saldoEl.innerText = `R$ ${saldoLiquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -1929,7 +2003,7 @@
                                 const status = ml.paga ? 'PAGA' : 'ABERTO';
                                 if (!ml.paga) totalMultasAberto += Number(ml.valor);
                                 multasHtml += `<div class="flex justify-between ${cor} font-mono mt-0.5">
-                                    <span>• ${ml.motivo} (${m})</span>
+                                    <span>• ${ml.motivo} (${window.rotuloPeriodoPagamento(m)})</span>
                                     <span>${status} R$ ${Number(ml.valor).toFixed(2)}</span>
                                 </div>`;
                             });
@@ -1938,7 +2012,7 @@
                                 const valor = Number(typeof arq === 'object' ? arq.valor : arq);
                                 const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
                                 multasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
-                                    <span>• ${motivo} (${m})</span>
+                                    <span>• ${motivo} (${window.rotuloPeriodoPagamento(m)})</span>
                                     <span>ARQUIVADA R$ ${valor.toFixed(2)}</span>
                                 </div>`;
                             });
@@ -1961,7 +2035,7 @@
                                     const valor = Number(typeof arq === 'object' ? arq.valor : arq);
                                     const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
                                     extrasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
-                                        <span>• ${motivo} (${m})</span>
+                                        <span>• ${motivo} (${window.rotuloPeriodoPagamento(m)})</span>
                                         <span class="font-black">ARQUIVADO + R$ ${valor.toFixed(2)}</span>
                                     </div>`;
                                 });
@@ -2174,30 +2248,19 @@
                     </div>`;
             }
             
+            const anoSelecionado = window.anoFinanceiroSelecionado('financeiro-ano-filtro');
             let mensalMap = {};
             Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, aportes: 0, multas: 0 });
-            
             window.atletasCache.forEach(a => {
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(mes => {
-                        if (mensalMap[mes]) {
-                            const abatida = (a.abatimentos || []).some(ab => ab.mes === mes && ab.motivo === 'Mensalidade ' + mes);
-                            if (a.pagamentos[mes].pago && !abatida) mensalMap[mes].fixo += VALOR_MENSALIDADE;
-                            if (a.pagamentos[mes].aportes) {
-                                a.pagamentos[mes].aportes.forEach(ap => { if(ap.paga) mensalMap[mes].aportes += Number(ap.valor); });
-                            }
-                            if (a.pagamentos[mes].aportesArquivadosHistorico) {
-                                a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => mensalMap[mes].aportes += Number(typeof arq === 'object' ? arq.valor : arq));
-                            }
-                            if (a.pagamentos[mes].multas) {
-                                a.pagamentos[mes].multas.forEach(ml => { if(ml.paga) mensalMap[mes].multas += Number(ml.valor); });
-                            }
-                            if (a.pagamentos[mes].multasArquivadasHistorico) {
-                                a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => mensalMap[mes].multas += Number(typeof arq === 'object' ? arq.valor : arq));
-                            }
-                        }
-                    });
-                }
+                window.obterPagamentosDoAno(a.pagamentos, anoSelecionado).forEach(({mes, chave, dados}) => {
+                    if (!mensalMap[mes]) return;
+                    const abatida = (a.abatimentos || []).some(ab => (ab.mes === chave || ab.mes === mes) && Number(ab.ano || window.ANO_LEGADO_FINANCEIRO) === anoSelecionado && ab.motivo === 'Mensalidade ' + (ab.mes || mes));
+                    if (dados?.pago && !abatida) mensalMap[mes].fixo += VALOR_MENSALIDADE;
+                    (dados?.aportes || []).forEach(ap => { if (ap.paga) mensalMap[mes].aportes += Number(ap.valor || 0); });
+                    (dados?.aportesArquivadosHistorico || []).forEach(arq => mensalMap[mes].aportes += Number(typeof arq === 'object' ? arq.valor : arq));
+                    (dados?.multas || []).forEach(ml => { if (ml.paga) mensalMap[mes].multas += Number(ml.valor || 0); });
+                    (dados?.multasArquivadasHistorico || []).forEach(arq => mensalMap[mes].multas += Number(typeof arq === 'object' ? arq.valor : arq));
+                });
             });
             
             let mensalHtml = '';
@@ -2214,7 +2277,7 @@
             if (financeiroEl) financeiroEl.innerHTML = mensalHtml || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Sem registros.</td></tr>';
             
             let patHtml = '';
-            window.patrociniosCache.forEach(p => {
+            window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === anoSelecionado).forEach(p => {
                 patHtml += `<tr><td class="p-3 font-bold"><i class="fa-solid fa-handshake text-amber-400 mr-2"></i>${p.nome}</td>
                     <td class="p-3 text-center text-stone-400">${p.destino}</td>
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
@@ -2224,8 +2287,8 @@
             
             // Acordeão: Sócios por mês
             let sociosPorMes = {};
-            window.sociosCache.forEach(s => {
-                const mes = s.mes?.padStart(2, '0');
+            window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === anoSelecionado).forEach(s => {
+                const mes = String(s.mes || '').padStart(2, '0');
                 if (!mes) return;
                 if (!sociosPorMes[mes]) sociosPorMes[mes] = [];
                 sociosPorMes[mes].push({ nome: s.nome, valor: Number(s.valor || 0) });
@@ -2254,7 +2317,7 @@
             
             // Acordeão: Gastos por mês
             let gastosPorMes = {};
-            [...window.gastosCache].sort((a, b) => {
+            [...window.gastosCache].filter(g => window.obterAnoFinanceiroRegistro(g) === anoSelecionado).sort((a, b) => {
                 const da = a.data ? new Date(a.data + 'T00:00:00').getTime() : 0;
                 const db = b.data ? new Date(b.data + 'T00:00:00').getTime() : 0;
                 return db - da;
@@ -2290,27 +2353,17 @@
             // Acordeão: Aportes Extras por mês
             let aportesPorMes = {};
             window.atletasCache.forEach(a => {
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(mes => {
-                        if (!aportesPorMes[mes]) aportesPorMes[mes] = [];
-                        if (a.pagamentos[mes].aportes) {
-                            a.pagamentos[mes].aportes.forEach(ap => {
-                                if (ap.paga && Number(ap.valor) > 0) {
-                                    aportesPorMes[mes].push({ nome: a.nome, motivo: ap.motivo, valor: Number(ap.valor) });
-                                }
-                            });
-                        }
-                        if (a.pagamentos[mes].aportesArquivadosHistorico) {
-                            a.pagamentos[mes].aportesArquivadosHistorico.forEach(arq => {
-                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
-                                const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
-                                if (valor > 0) {
-                                    aportesPorMes[mes].push({ nome: a.nome, motivo: motivo, valor: valor });
-                                }
-                            });
-                        }
+                window.obterPagamentosDoAno(a.pagamentos, anoSelecionado).forEach(({mes, dados}) => {
+                    if (!aportesPorMes[mes]) aportesPorMes[mes] = [];
+                    (dados?.aportes || []).forEach(ap => {
+                        if (ap.paga && Number(ap.valor) > 0) aportesPorMes[mes].push({ nome: a.nome, motivo: ap.motivo, valor: Number(ap.valor) });
                     });
-                }
+                    (dados?.aportesArquivadosHistorico || []).forEach(arq => {
+                        const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                        const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                        if (valor > 0) aportesPorMes[mes].push({ nome: a.nome, motivo, valor });
+                    });
+                });
             });
             const aportesAcordeao = document.getElementById('financeiro-aportes-acordeao');
             if (aportesAcordeao) {
@@ -2336,27 +2389,17 @@
             // Monta multas pagas agrupadas por mês (acordeão)
             let multasPorMes = {};
             window.atletasCache.forEach(a => {
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(mes => {
-                        if (!multasPorMes[mes]) multasPorMes[mes] = [];
-                        if (a.pagamentos[mes].multas) {
-                            a.pagamentos[mes].multas.forEach(ml => {
-                                if (ml.paga && Number(ml.valor) > 0) {
-                                    multasPorMes[mes].push({ nome: a.nome, motivo: ml.motivo, valor: Number(ml.valor) });
-                                }
-                            });
-                        }
-                        if (a.pagamentos[mes].multasArquivadasHistorico) {
-                            a.pagamentos[mes].multasArquivadasHistorico.forEach(arq => {
-                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
-                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
-                                if (valor > 0) {
-                                    multasPorMes[mes].push({ nome: a.nome, motivo: motivo, valor: valor });
-                                }
-                            });
-                        }
+                window.obterPagamentosDoAno(a.pagamentos, anoSelecionado).forEach(({mes, dados}) => {
+                    if (!multasPorMes[mes]) multasPorMes[mes] = [];
+                    (dados?.multas || []).forEach(ml => {
+                        if (ml.paga && Number(ml.valor) > 0) multasPorMes[mes].push({ nome: a.nome, motivo: ml.motivo, valor: Number(ml.valor) });
                     });
-                }
+                    (dados?.multasArquivadasHistorico || []).forEach(arq => {
+                        const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                        const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                        if (valor > 0) multasPorMes[mes].push({ nome: a.nome, motivo, valor });
+                    });
+                });
             });
             const multasAcordeao = document.getElementById('financeiro-multas-acordeao');
             if (multasAcordeao) {
@@ -2535,17 +2578,17 @@
             }
             
             const mesAtual = window.getMesAtual();
+            const anoAtual = window.getAnoAtual();
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[mesAtual]) {
-                a.pagamentos[mesAtual] = { pago: false, multas: [] };
+            const entradaPagamento = window.obterDadosPagamento(a.pagamentos, anoAtual, mesAtual);
+            const chavePagamento = window.chavePagamentoAnual(anoAtual, mesAtual);
+            if (!a.pagamentos[chavePagamento]) {
+                a.pagamentos[chavePagamento] = entradaPagamento.dados ? JSON.parse(JSON.stringify(entradaPagamento.dados)) : { pago: false, multas: [] };
+                if (entradaPagamento.chave !== chavePagamento && entradaPagamento.dados) delete a.pagamentos[entradaPagamento.chave];
             }
+            if (!a.pagamentos[chavePagamento].multas) a.pagamentos[chavePagamento].multas = [];
             
-            // Garantir que a lista de multas existe
-            if (!a.pagamentos[mesAtual].multas) {
-                a.pagamentos[mesAtual].multas = [];
-            }
-            
-            a.pagamentos[mesAtual].multas.push({ 
+            a.pagamentos[chavePagamento].multas.push({ 
                 motivo: motivo, 
                 valor: valor, 
                 paga: false,
@@ -2689,7 +2732,7 @@
             const destino = document.getElementById('pat-destino')?.value?.trim();
             const valor = parseFloat(document.getElementById('pat-valor')?.value);
             if (!nome || !destino || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
-            window.patrociniosCache.push({ id: 'pat_' + Date.now(), nome, destino, valor });
+            window.patrociniosCache.push({ id: 'pat_' + Date.now(), nome, destino, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas') });
             document.getElementById('form-patrocinio')?.reset();
             window.mostrarToast("Patrocínio adicionado!");
             window.salvarNoStorage();
@@ -2701,7 +2744,7 @@
             const mes = document.getElementById('socio-mes')?.value;
             const valor = parseFloat(document.getElementById('socio-valor')?.value);
             if (!nome || !mes || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
-            window.sociosCache.push({ id: 'socio_' + Date.now(), nome, mes, valor });
+            window.sociosCache.push({ id: 'socio_' + Date.now(), nome, mes, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas') });
             document.getElementById('form-socio')?.reset();
             window.mostrarToast("Sócio lançado!");
             window.salvarNoStorage();
@@ -2717,50 +2760,33 @@
         };
         
         function renderAdminSocios() {
+            const ano = window.anoFinanceiroSelecionado('adm-ano-receitas');
             let html = '';
-            // Sócios
-            window.sociosCache.forEach(s => {
+            window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === ano).forEach(s => {
                 html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(s.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
-            // Patrocínios
-            window.patrociniosCache.forEach(p => {
+            window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === ano).forEach(p => {
                 html += `<tr><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(p.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
-            // Aportes Extras dos atletas
             window.atletasCache.forEach(a => {
-                if (a.pagamentos) {
-                    Object.keys(a.pagamentos).forEach(m => {
-                        if (a.pagamentos[m].aportes) {
-                            a.pagamentos[m].aportes.forEach(ap => {
-                                if (ap.paga && Number(ap.valor) > 0) {
-                                    const mesNome = window.mesesNomes?.[m] || m;
-                                    html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-teal-400">${ap.motivo} (${mesNome})</td>
-                                        <td class="p-2 text-right text-emerald-400">R$ ${Number(ap.valor).toFixed(2)}</td>
-                                        <td class="p-2 text-center text-stone-600">—</td></tr>`;
-                                }
-                            });
-                        }
-                        if (a.pagamentos[m].aportesArquivadosHistorico) {
-                            a.pagamentos[m].aportesArquivadosHistorico.forEach(arq => {
-                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
-                                const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
-                                if (valor > 0) {
-                                    const mesNome = window.mesesNomes?.[m] || m;
-                                    html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-stone-500">${motivo} (${mesNome}) - ARQUIVADO</td>
-                                        <td class="p-2 text-right text-stone-500">R$ ${valor.toFixed(2)}</td>
-                                        <td class="p-2 text-center text-stone-600">—</td></tr>`;
-                                }
-                            });
-                        }
+                window.obterPagamentosDoAno(a.pagamentos, ano).forEach(({mes, dados}) => {
+                    const mesNome = `${window.mesesPtbr?.[mes] || mes}/${ano}`;
+                    (dados?.aportes || []).forEach(ap => {
+                        if (ap.paga && Number(ap.valor) > 0) html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-teal-400">${ap.motivo} (${mesNome})</td><td class="p-2 text-right text-emerald-400">R$ ${Number(ap.valor).toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
                     });
-                }
+                    (dados?.aportesArquivadosHistorico || []).forEach(arq => {
+                        const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                        const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                        if (valor > 0) html += `<tr><td class="p-2 font-bold">${a.nome}</td><td class="p-2 text-center text-stone-500">${motivo} (${mesNome}) - ARQUIVADO</td><td class="p-2 text-right text-stone-500">R$ ${valor.toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
+                    });
+                });
             });
             const tabela = document.getElementById('adm-receitas-tabela');
-            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita.</td></tr>';
+            if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita neste ano.</td></tr>';
         }
         
         window.processarGasto = function(e) {
@@ -3043,8 +3069,9 @@
         };
         
         function renderAdminGastosTabela() {
+            const ano = window.anoFinanceiroSelecionado('adm-ano-receitas');
             let html = '';
-            [...window.gastosCache].sort((a, b) => {
+            [...window.gastosCache].filter(g => window.obterAnoFinanceiroRegistro(g) === ano).sort((a, b) => {
                 const da = a.data ? new Date(a.data + 'T00:00:00').getTime() : 0;
                 const db = b.data ? new Date(b.data + 'T00:00:00').getTime() : 0;
                 return db - da;
@@ -3059,25 +3086,31 @@
         }
         
         window.loadAdmFinancas = function() {
-            const mes = document.getElementById('adm-mes-filtro')?.value || '05';
+            const mes = document.getElementById('adm-mes-filtro')?.value || window.getMesAtual();
+            const ano = window.anoFinanceiroSelecionado('adm-ano-filtro');
             let html = '';
             window.atletasCache.forEach(a => {
-                const dados = a.pagamentos?.[mes] || { pago: false };
+                const dados = window.obterDadosPagamento(a.pagamentos, ano, mes).dados || { pago: false };
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
-                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
+                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',${ano},this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
             if (tabela) tabela.innerHTML = html;
         };
 
-        window.toggleMensalidade = function(id, mes, isChecked) {
+        window.toggleMensalidade = function(id, mes, ano, isChecked) {
             const a = window.atletasCache.find(j => j.id === id);
             if (!a) return;
             if (!a.pagamentos) a.pagamentos = {};
-            if (!a.pagamentos[mes]) a.pagamentos[mes] = { pago: false, multas: [] };
-            a.pagamentos[mes].pago = isChecked;
+            const entrada = window.obterDadosPagamento(a.pagamentos, ano, mes);
+            const chaveAnual = window.chavePagamentoAnual(ano, mes);
+            if (!a.pagamentos[chaveAnual]) {
+                a.pagamentos[chaveAnual] = entrada.dados ? JSON.parse(JSON.stringify(entrada.dados)) : { pago: false, multas: [] };
+                if (entrada.chave !== chaveAnual && entrada.dados) delete a.pagamentos[entrada.chave];
+            }
+            a.pagamentos[chaveAnual].pago = isChecked;
             window.salvarNoStorage();
         };
         
@@ -3442,17 +3475,16 @@
             const obterCompetencia = chaveMes => {
                 const correspondencia = String(chaveMes).match(/^(?:(\d{4})[-/])?(\d{1,2})$/);
                 if (!correspondencia) return null;
-                const ano = Number(correspondencia[1] || agora.getFullYear());
+                const ano = Number(correspondencia[1] || window.ANO_LEGADO_FINANCEIRO);
                 const numeroMes = Number(correspondencia[2]);
                 if (numeroMes < 1 || numeroMes > 12) return null;
                 const nomeMes = window.mesesPtbr?.[String(numeroMes).padStart(2, '0')] || String(numeroMes);
                 const vencimento = new Date(ano, numeroMes, 15);
                 const mesDoVencimento = window.mesesPtbr?.[String(vencimento.getMonth() + 1).padStart(2, '0')] || '';
-                const temAnoExplicito = Boolean(correspondencia[1]);
                 return {
                     vencimento,
-                    titulo: `${nomeMes}${temAnoExplicito ? ` ${ano}` : ''}`,
-                    prazo: `15 de ${mesDoVencimento}${temAnoExplicito ? ` de ${vencimento.getFullYear()}` : ''}`
+                    titulo: `${nomeMes} ${ano}`,
+                    prazo: `15 de ${mesDoVencimento} de ${vencimento.getFullYear()}`
                 };
             };
             const competenciaAtual = obterCompetencia(`${agora.getFullYear()}-${mesAtual}`);
@@ -3787,6 +3819,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const anoSelecionado = window.anoFinanceiroSelecionado('pdf-ano-filtro');
             const mesSelecionado = document.getElementById('pdf-mes-filtro')?.value || window.getMesAtual();
             const categoriaSelecionada = document.getElementById('pdf-categoria-filtro')?.value || 'TODOS';
             const mNomes = {
@@ -3804,8 +3837,8 @@
             };
             const nomeCategoria = nomesCategorias[categoriaSelecionada] || nomesCategorias.TODOS;
             const nomePeriodo = mesSelecionado === 'TODOS'
-                ? 'Geral (todos os meses)'
-                : (mNomes[mesSelecionado] || 'Mês selecionado');
+                ? `Todos os meses de ${anoSelecionado}`
+                : `${mNomes[mesSelecionado] || 'Mês selecionado'} de ${anoSelecionado}`;
             const formatarMoedaPDF = valor => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             const extrairMes = valor => {
                 const texto = String(valor ?? '').trim();
@@ -3820,16 +3853,21 @@
                 const numero = Number(mes);
                 return numero >= 1 && numero <= 12 ? String(numero).padStart(2, '0') : '';
             };
-            const periodoDoRegistro = valor => {
+            const extrairAno = valor => {
+                const ano = String(valor ?? '').match(/(?:^|[-/])(20\d{2})(?:$|[-/])/);
+                return Number(ano?.[1] || window.ANO_LEGADO_FINANCEIRO);
+            };
+            const periodoDoRegistro = (valor, anoInformado = null) => {
                 const mes = extrairMes(valor);
                 if (!mes) return 'Geral';
-                const ano = String(valor ?? '').match(/(?:^|[-/])(20\d{2})(?:$|[-/])/);
-                return `${mNomes[mes]}${ano ? `/${ano[1]}` : ''}`;
+                const ano = Number(anoInformado) || extrairAno(valor);
+                return `${mNomes[mes]}/${ano}`;
             };
-            const pertenceAoPeriodo = (valor, incluirSemMes = false) => {
-                if (mesSelecionado === 'TODOS') return true;
+            const pertenceAoPeriodo = (valor, incluirSemMes = false, anoInformado = null) => {
+                const anoRegistro = Number(anoInformado) || extrairAno(valor);
+                if (anoRegistro !== anoSelecionado) return false;
                 const mes = extrairMes(valor);
-                return mes ? mes === mesSelecionado : incluirSemMes;
+                return mes ? (mesSelecionado === 'TODOS' || mes === mesSelecionado) : incluirSemMes;
             };
             const criarSecao = (nome, cor) => ({ nome, cor, linhas: [], total: 0, pendentes: 0 });
             const secoes = {
@@ -3885,14 +3923,14 @@
 
             // Pagamentos de sócios.
             (window.sociosCache || []).forEach(socio => {
-                if (!pertenceAoPeriodo(socio.mes)) return;
-                adicionarLinha('SOCIOS', socio.nome, 'Pagamento de sócio', periodoDoRegistro(socio.mes), socio.valor);
+                if (!pertenceAoPeriodo(socio.mes, false, socio.ano)) return;
+                adicionarLinha('SOCIOS', socio.nome, 'Pagamento de sócio', periodoDoRegistro(socio.mes, socio.ano), socio.valor);
             });
 
             // Patrocínios sem competência são gerais; aparecem também no PDF mensal identificados como gerais.
             (window.patrociniosCache || []).forEach(patrocinio => {
-                if (!pertenceAoPeriodo(patrocinio.mes, true)) return;
-                const periodo = patrocinio.mes ? periodoDoRegistro(patrocinio.mes) : 'Geral (sem mês)';
+                if (!pertenceAoPeriodo(patrocinio.mes, true, patrocinio.ano)) return;
+                const periodo = patrocinio.mes ? periodoDoRegistro(patrocinio.mes, patrocinio.ano) : `Geral (${patrocinio.ano || window.ANO_LEGADO_FINANCEIRO})`;
                 adicionarLinha('PATROCINIOS', patrocinio.nome, patrocinio.destino || 'Clube', periodo, patrocinio.valor);
             });
 
