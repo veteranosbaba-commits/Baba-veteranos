@@ -776,6 +776,7 @@
                 <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">Atletas</button>
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Scouts</button>
                 <button onclick="switchAdminSubTab('adm-mensalidades')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Mensalidades</button>
+                <button onclick="switchAdminSubTab('adm-punicoes')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Punições</button>
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
                 <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Partidas</button>
@@ -904,6 +905,64 @@
             </div>
 
             
+            <div id="adm-punicoes" class="adm-sub-content hidden space-y-6">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                        <h4 class="font-black text-amber-400 text-xs uppercase mb-2"><i class="fa-solid fa-gavel mr-1"></i> Registrar multa ou suspensão</h4>
+                        <p class="text-[10px] text-stone-400 mb-4">A multa, o motivo detalhado e o pagamento ficam restritos aos administradores. A suspensão entra na fila sequencial de jogos do atleta.</p>
+                        <form id="form-punicao" onsubmit="window.registrarPunicao(event)" class="space-y-3">
+                            <select id="punicao-atleta" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input type="date" id="punicao-data" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                <select id="punicao-categoria" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                    <option value="">Motivo da punição</option>
+                                    <option value="inadimplencia">Jogou inadimplente</option>
+                                    <option value="atraso">Atraso</option>
+                                    <option value="terceiro_amarelo">Terceiro cartão amarelo</option>
+                                    <option value="cartao_vermelho">Cartão vermelho</option>
+                                    <option value="falta_grave">Falta grave</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <label class="text-[10px] text-stone-400">Multa (R$; opcional)
+                                    <input type="number" id="punicao-valor" min="0" step="0.01" inputmode="decimal" placeholder="0,00" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                </label>
+                                <label class="text-[10px] text-stone-400">Jogos de suspensão (0–30)
+                                    <input type="number" id="punicao-jogos" min="0" max="30" step="1" value="0" required class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                </label>
+                            </div>
+                            <label class="block text-[10px] text-stone-400">Categoria que pode aparecer publicamente (opcional)
+                                <select id="punicao-motivo-publico" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                    <option value="">Não exibir motivo</option>
+                                    <option value="Cartão amarelo">Cartão amarelo</option>
+                                    <option value="Cartão vermelho">Cartão vermelho</option>
+                                    <option value="Conduta">Conduta</option>
+                                </select>
+                            </label>
+                            <textarea id="punicao-detalhes" rows="2" maxlength="300" placeholder="Detalhes/observação administrativa (privado)" class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-black p-3 rounded-xl text-xs uppercase">Registrar punição</button>
+                        </form>
+                    </div>
+                    <div class="bg-stone-900/95 rounded-2xl p-5 border border-emerald-900/70 shadow-xl">
+                        <h4 class="font-black text-emerald-300 text-xs uppercase mb-2"><i class="fa-solid fa-minus mr-1"></i> Reduzir suspensão</h4>
+                        <p class="text-[10px] text-stone-400 mb-4">Cada jogo abatido custa R$ 10,00. Só registre depois de conferir o recebimento no banco.</p>
+                        <form id="form-abatimento-suspensao" onsubmit="window.registrarAbatimentoSuspensao(event)" class="space-y-3">
+                            <select id="abatimento-atleta" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
+                            <label class="block text-[10px] text-stone-400">Jogos a abater
+                                <input type="number" id="abatimento-jogos" min="1" step="1" required inputmode="numeric" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                            </label>
+                            <p id="abatimento-valor-previsto" class="text-xs font-black text-emerald-300">Valor: R$ 10,00 por jogo</p>
+                            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-black p-3 rounded-xl text-xs uppercase">Confirmar recebimento e abater</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-black text-stone-200 text-xs uppercase mb-3">Histórico de multas e suspensões</h4>
+                    <div id="lista-punicoes-admin" class="space-y-2" aria-live="polite"></div>
+                </div>
+            </div>
+
             <div id="adm-sumulas" class="adm-sub-content hidden space-y-6">
                 <!-- DATALIST PARA SUGESTÃO DE ATLETAS -->
                 <datalist id="lista-atletas-sugestao"></datalist>
@@ -954,13 +1013,9 @@
                             <label class="text-[10px] text-stone-400 uppercase font-bold">Observações / Suspensos</label>
                             <textarea id="sum-obs" rows="3" placeholder="Observações gerais da partida..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
                         </div>
-                        <div class="bg-black/30 border border-amber-900/50 rounded-xl p-3 space-y-2">
-                            <div>
-                                <h5 class="text-[10px] text-amber-300 uppercase font-black">Suspensões aplicadas nesta súmula</h5>
-                                <p class="text-[9px] text-stone-400 mt-1">Registre o atleta e a quantidade de jogos. Só uma súmula publicada de domingo conta como jogo cumprido.</p>
-                            </div>
-                            <div id="sum-suspensoes-container" class="space-y-2"></div>
-                            <button type="button" onclick="window.adicionarSuspensaoSumula()" class="w-full bg-stone-800 border border-amber-800/60 text-amber-200 font-bold p-2 rounded-lg text-[10px]">+ Adicionar suspensão</button>
+                        <div class="bg-black/30 border border-amber-900/50 rounded-xl p-3">
+                            <p class="text-[10px] text-amber-200 font-bold">Multas e suspensões são lançadas no painel administrativo “Punições”.</p>
+                            <p class="text-[9px] text-stone-400 mt-1">A publicação desta súmula de domingo confirma a partida e pode cumprir um jogo das suspensões anteriores.</p>
                         </div>
 
                         <button type="submit" class="w-full bg-emerald-600 text-white font-black p-3 rounded-xl uppercase transition hover:bg-emerald-500 shadow-lg flex items-center justify-center gap-2">
@@ -1284,6 +1339,11 @@
         window.sociosCache = [];
         window.patrociniosCache = [];
         window.sumulasCache = [];
+        window.punicoesCache = [];
+        window.suspensoesPublicasCache = [];
+        window.disciplineLoaded = false;
+        window.punicoesDirty = false;
+        window.punicoesRevision = 0;
         window.historicoPlacares = [];
         window.partidaEstatisticas = { 
             placarFlu: 0, 
@@ -1441,6 +1501,9 @@
                     removerEscutasPrivadas();
                     window.privateAthletesCache = {};
                     window.privateFinanceCache = {};
+                    window.punicoesCache = [];
+                    window.disciplineLoaded = false;
+                    window.punicoesDirty = false;
                     window.gastosCache = [];
                     window.sociosCache = [];
                     window.patrociniosCache = [];
@@ -1542,8 +1605,10 @@
 
         window.carregarDadosPrivadosAdmin = async function() {
             removerEscutasPrivadas();
+            window.disciplineLoaded = false;
             const athletesRef = window.privateRef.child('athletes');
             const financeRef = window.privateRef.child('finance');
+            const disciplineRef = window.privateRef.child('discipline/records');
             const onAthletes = snapshot => {
                 window.privateAthletesCache = snapshot.val() || {};
                 aplicarCachePrivado();
@@ -1556,9 +1621,21 @@
                 window.patrociniosCache = window.privateFinanceCache.patrocinios || [];
                 if (!syncEmAndamento) window.renderizarTudo();
             };
+            const onDiscipline = snapshot => {
+                const value = snapshot.val();
+                window.punicoesCache = Array.isArray(value) ? value : Object.values(value || {});
+                window.disciplineLoaded = true;
+                if (!syncEmAndamento) window.renderizarTudo();
+            };
+            const onDisciplineError = error => {
+                window.disciplineLoaded = false;
+                console.error('Falha ao carregar punições administrativas.', error?.code || '');
+                window.mostrarToast('Não foi possível carregar o painel de punições.', true);
+            };
             athletesRef.on('value', onAthletes);
             financeRef.on('value', onFinance);
-            window.privateListeners.push({ref: athletesRef, callback: onAthletes}, {ref: financeRef, callback: onFinance});
+            disciplineRef.on('value', onDiscipline, onDisciplineError);
+            window.privateListeners.push({ref: athletesRef, callback: onAthletes}, {ref: financeRef, callback: onFinance}, {ref: disciplineRef, callback: onDiscipline});
         };
 
         window.carregarMovimentacoesFinanceirasAtletas = function() {
@@ -1601,6 +1678,9 @@
 
         window.carregarDadosPrivadosAtleta = async function(athleteId) {
             removerEscutasPrivadas();
+            window.punicoesCache = [];
+            window.disciplineLoaded = false;
+            window.punicoesDirty = false;
             window.privateAthletesCache = {};
             window.privateFinanceCache = {};
             window.gastosCache = []; window.sociosCache = []; window.patrociniosCache = [];
@@ -1657,9 +1737,25 @@
                 camposPublicos.forEach(k => delete privado[k]);
                 if (Object.keys(privado).length) atletasPrivados[String(a.id)] = privado;
             });
+            const suspensoesPublicas = window.disciplineLoaded
+                ? criarProjecaoPublicaPunicoes()
+                : (window.suspensoesPublicasCache || []).filter(item => item && item.tipo === 'suspensao').map(item => ({
+                    id: String(item.id || ''), tipo: 'suspensao', athleteId: String(item.athleteId || ''),
+                    data: String(item.data || ''), originalDate: String(item.originalDate || item.data || ''),
+                    totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
+                    publicCategory: categoriaPublicaPermitida(item.publicCategory)
+                }));
+            const sumulasPublicas = (window.sumulasCache || []).map(sumula => ({
+                ...sumula,
+                suspensoesAplicadas: (Array.isArray(sumula?.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).map(s => ({
+                    id: String(s.id || ''), athleteId: String(s.athleteId || ''), athleteName: String(s.athleteName || 'Atleta'),
+                    totalGames: Number(s.totalGames) || 0, publicCategory: categoriaPublicaPermitida(s.publicCategory)
+                }))
+            }));
             const dataPublica = {
                 atletas: atletasPublicos,
-                sumulas: window.sumulasCache,
+                sumulas: sumulasPublicas,
+                suspensoesPublicas,
                 partidaEstatisticas: window.partidaEstatisticas,
                 historicoPlacares: window.historicoPlacares,
                 ultimaAtualizacao: new Date().toISOString(),
@@ -1671,12 +1767,18 @@
                 patrocinios: window.patrociniosCache
             };
             
-            Promise.all([
+            const revisionPunicoesSalva = window.punicoesRevision || 0;
+            const salvarPunicoesPrivadas = Boolean(window.punicoesDirty && window.disciplineLoaded);
+            const gravacoes = [
                 window.publicRef.child('data').set(dataPublica),
                 window.privateRef.child('athletes').set(atletasPrivados),
                 window.privateRef.child('finance').set(dadosFinanceirosPrivados)
-            ])
+            ];
+            if (salvarPunicoesPrivadas) gravacoes.push(window.privateRef.child('discipline/records').set(window.punicoesCache || []));
+
+            Promise.all(gravacoes)
                 .then(() => {
+                    if (salvarPunicoesPrivadas && revisionPunicoesSalva === (window.punicoesRevision || 0)) window.punicoesDirty = false;
                     console.log('Dados salvos');
                     if (!opcoes.silencioso) window.renderizarTudo();
                     
@@ -1711,6 +1813,12 @@
                 const data = snapshot.val() || {};
                 window.publicAthletesCache = Array.isArray(data.atletas) ? data.atletas : Object.values(data.atletas || {});
                 window.sumulasCache = data.sumulas || [];
+                window.suspensoesPublicasCache = (Array.isArray(data.suspensoesPublicas) ? data.suspensoesPublicas : []).filter(item => item && item.tipo === 'suspensao').map(item => ({
+                    id: String(item.id || ''), tipo: 'suspensao', athleteId: String(item.athleteId || ''),
+                    data: String(item.data || ''), originalDate: String(item.originalDate || item.data || ''),
+                    totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
+                    publicCategory: categoriaPublicaPermitida(item.publicCategory)
+                }));
                 window.historicoPlacares = data.historicoPlacares || [];
                 window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
                 window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
@@ -1756,6 +1864,7 @@
                     renderAdminGastosTabela();
                     renderAdminHistoricoExclusao();
                     window.renderSumulasAdmin();
+                    window.renderAdminPunicoes?.();
                     window.loadAdmFinancas();
                 }
             } catch (error) {
@@ -1916,7 +2025,7 @@
                         const restantes = Number(s.remainingGames) || 0;
                         const verbo = restantes === 1 ? 'falta' : 'faltam';
                         const unidade = total === 1 ? 'jogo' : 'jogos';
-                        const motivo = s.reason ? `<span class="block text-[9px] text-stone-400">Motivo: ${escaparTextoHTML(s.reason)}</span>` : '';
+                        const motivo = s.publicCategory ? `<span class="block text-[9px] text-stone-400">${escaparTextoHTML(s.publicCategory)}</span>` : '';
                         return `<span class="block text-[10px] font-bold text-amber-200">Suspensão: ${verbo} ${restantes} de ${total} ${unidade}</span>${motivo}`;
                     }).join('');
                     suspensosHtml += `<li class="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_auto] gap-2 py-2 items-center">
@@ -2942,45 +3051,266 @@
             return registros;
         }
 
-        function obterSuspensoesAte(dataReferencia) {
-            const hoje = dataISOHojeLocal();
-            const referencia = String(dataReferencia || hoje);
-            const datasDeJogosConfirmados = [...new Set((window.sumulasCache || [])
-                .map(sumula => String(sumula.data || ''))
-                .filter(data => data && data <= referencia && data <= hoje && ehDomingoISO(data)))].sort();
-            const saida = [];
+        function punicoesAdminPermitido() {
+            if (!window.isAdminLogado || !window.firebaseUser || !window.disciplineLoaded) {
+                window.mostrarToast(window.disciplineLoaded ? 'Apenas administradores autenticados podem alterar punições.' : 'Aguarde o carregamento seguro dos registros de punição.', true);
+                return false;
+            }
+            return true;
+        }
+
+        function prepararSelectAtletasPunicoes(id, manterSelecionado = true) {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const anterior = manterSelecionado ? select.value : '';
+            select.replaceChildren();
+            const placeholder = document.createElement('option');
+            placeholder.value = ''; placeholder.textContent = 'Selecione o atleta'; select.appendChild(placeholder);
+            [...(window.atletasCache || [])].filter(a => a && a.id !== undefined && a.id !== null)
+                .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
+                .forEach(a => { const option = document.createElement('option'); option.value = String(a.id); option.textContent = `${a.nome || 'Atleta'} · #${a.camisa || a.numero || '—'}`; select.appendChild(option); });
+            if ([...select.options].some(option => option.value === anterior)) select.value = anterior;
+        }
+
+        function registrarAlteracaoPunicoes() {
+            window.punicoesRevision = (Number(window.punicoesRevision) || 0) + 1;
+            window.punicoesDirty = true;
+            window.salvarNoStorage({silencioso: true});
+            window.renderAdminPunicoes(); window.renderSumulasPublicas?.(); window.renderMeuCadastro?.();
+        }
+
+        window.atualizarValorAbatimento = function() {
+            const campo = document.getElementById('abatimento-jogos');
+            const texto = document.getElementById('abatimento-valor-previsto');
+            const jogos = Number(campo?.value || 0);
+            if (texto) texto.textContent = `Valor: R$ ${Number.isInteger(jogos) && jogos > 0 ? (jogos * 10).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '10,00'} · R$ 10,00 por jogo`;
+            const atletaId = document.getElementById('abatimento-atleta')?.value;
+            const pendentes = atletaId ? obterSuspensoesAte(dataISOHojeLocal()).filter(s => String(s.athleteId) === String(atletaId)).reduce((n, s) => n + Number(s.remainingGames || 0), 0) : 0;
+            if (campo) campo.max = String(pendentes || 1);
+        };
+
+        window.renderAdminPunicoes = function() {
+            const host = document.getElementById('lista-punicoes-admin'); if (!host) return;
+            prepararSelectAtletasPunicoes('punicao-atleta'); prepararSelectAtletasPunicoes('abatimento-atleta');
+            const dataInput = document.getElementById('punicao-data'); if (dataInput) dataInput.max = dataISOHojeLocal();
+            const jogosInput = document.getElementById('abatimento-jogos'); if (jogosInput) jogosInput.oninput = window.atualizarValorAbatimento;
+            const selectRed = document.getElementById('abatimento-atleta'); if (selectRed) selectRed.onchange = window.atualizarValorAbatimento;
+            window.atualizarValorAbatimento();
+            if (!window.isAdminLogado || !window.firebaseUser) { host.textContent = 'Acesso restrito a administradores.'; return; }
+            if (!window.disciplineLoaded) { host.textContent = 'Carregando registros privados com segurança…'; return; }
+            const registros = (window.punicoesCache || []).map(p => ({...p, legado: false}));
+            const ids = new Set(registros.map(p => String(p.id)));
+            (window.sumulasCache || []).forEach(sumula => (Array.isArray(sumula?.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).forEach((s, indice) => {
+                const id = String(s.id || `legacy_${sumula.id || sumula.data}_${s.athleteId}_${indice}`); if (ids.has(id)) return; ids.add(id);
+                registros.push({id, athleteId: String(s.athleteId || ''), athleteName: String(s.athleteName || ''), categoria: 'outro', data: String(sumula.data || ''), jogosSuspensao: Number(s.totalGames) || 0, detalhes: String(s.reason || ''), publicCategory: categoriaPublicaPermitida(s.publicCategory), status: 'ativa', legado: true});
+            }));
+            registros.sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')) || String(a.id).localeCompare(String(b.id)));
+            host.replaceChildren();
+            if (!registros.length) { host.textContent = 'Nenhuma multa ou suspensão registrada.'; return; }
+            registros.forEach(registro => {
+                const atleta = (window.atletasCache || []).find(a => String(a.id) === String(registro.athleteId));
+                const card = document.createElement('article'); card.className = `rounded-xl border p-3 ${registro.status === 'cancelada' ? 'border-stone-700 bg-stone-950/50 opacity-70' : 'border-stone-700 bg-stone-800/60'}`;
+                const titulo = document.createElement('div'); titulo.className = 'flex flex-wrap justify-between gap-2 items-start';
+                const descricao = document.createElement('div'); const nome = document.createElement('p'); nome.className = 'text-xs font-black text-white'; nome.textContent = atleta?.nome || registro.athleteName || 'Atleta';
+                const detalhe = document.createElement('p'); detalhe.className = 'text-[10px] text-stone-300 mt-1'; detalhe.textContent = `${formatarDataISO(registro.data)} · ${rotuloCategoriaPunicao(registro.categoria)}${registro.legado ? ' · Legado (somente leitura)' : ''}`;
+                descricao.append(nome, detalhe); const status = document.createElement('span'); status.className = 'text-[9px] font-black uppercase text-amber-200'; status.textContent = registro.status === 'cancelada' ? 'Cancelada' : (registro.legado ? 'Legado' : 'Ativa'); titulo.append(descricao, status); card.appendChild(titulo);
+                const dados = [];
+                if (Number(registro.valorMulta) > 0) dados.push(`Multa: R$ ${Number(registro.valorMulta).toLocaleString('pt-BR', {minimumFractionDigits: 2})} · ${registro.multaStatus === 'paga' ? `Paga em ${formatarDataISO(registro.pagoEm)}` : 'Pendente'}`);
+                if (Number(registro.jogosSuspensao) > 0) { const pend = obterSuspensoesAte(dataISOHojeLocal()).find(s => String(s.id) === String(registro.id)); dados.push(`Suspensão: ${pend ? `${pend.remainingGames}/${pend.totalGames} jogos restantes` : 'Cumprida'}${registro.publicCategory ? ` · Público: ${registro.publicCategory}` : ''}`); }
+                if (Number(registro.jogosAbatidos) > 0) dados.push(`Redução: ${registro.jogosAbatidos} jogo(s) · R$ ${Number(registro.valorMulta || Number(registro.jogosAbatidos) * 10).toLocaleString('pt-BR', {minimumFractionDigits: 2})} · recebimento ${registro.multaStatus === 'paga' ? 'confirmado' : 'pendente'}`);
+                if (dados.length) { const resumo = document.createElement('p'); resumo.className = 'mt-2 text-[10px] text-stone-200'; resumo.textContent = dados.join(' | '); card.appendChild(resumo); }
+                if (registro.detalhes) { const privado = document.createElement('p'); privado.className = 'mt-2 text-[10px] text-stone-400'; privado.textContent = `Detalhe administrativo: ${registro.detalhes}`; card.appendChild(privado); }
+                if (!registro.legado && registro.status !== 'cancelada') {
+                    const acoes = document.createElement('div'); acoes.className = 'flex flex-wrap gap-2 mt-3';
+                    if (Number(registro.valorMulta) > 0 && registro.multaStatus !== 'paga') { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Confirmar multa recebida'; btn.className = 'rounded-lg bg-emerald-700 px-3 py-2 text-[10px] font-black text-white'; btn.addEventListener('click', () => window.confirmarPagamentoPunicao(registro.id)); acoes.appendChild(btn); }
+                    if (Number(registro.jogosSuspensao) > 0 || Number(registro.valorMulta) > 0) { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancelar registro'; btn.className = 'rounded-lg border border-red-800 px-3 py-2 text-[10px] font-black text-red-200'; btn.addEventListener('click', () => window.revogarPunicao(registro.id)); acoes.appendChild(btn); }
+                    if (acoes.childNodes.length) card.appendChild(acoes);
+                }
+                host.appendChild(card);
+            });
+        };
+
+        window.registrarPunicao = function(event) {
+            event.preventDefault(); if (!punicoesAdminPermitido()) return;
+            const athleteId = String(document.getElementById('punicao-atleta')?.value || ''), data = String(document.getElementById('punicao-data')?.value || ''), categoria = String(document.getElementById('punicao-categoria')?.value || '');
+            const valorRaw = String(document.getElementById('punicao-valor')?.value || '').trim(), jogosRaw = String(document.getElementById('punicao-jogos')?.value ?? '0').trim();
+            const valorMulta = valorRaw ? Number(valorRaw) : 0, jogosSuspensao = Number(jogosRaw), atleta = (window.atletasCache || []).find(a => String(a.id) === athleteId);
+            if (!athleteId || !atleta || !data || data > dataISOHojeLocal() || !categoria || !Number.isFinite(valorMulta) || valorMulta < 0 || (valorRaw && valorMulta <= 0) || !Number.isInteger(jogosSuspensao) || jogosSuspensao < 0 || jogosSuspensao > 30 || (!valorMulta && !jogosSuspensao)) { window.mostrarToast('Confira o atleta, data atual/passada, multa positiva e 0–30 jogos; informe multa, suspensão ou ambas.', true); return; }
+            const agora = Date.now();
+            window.punicoesCache = [...(window.punicoesCache || []), {id:`pun_${agora}_${Math.random().toString(36).slice(2,8)}`, athleteId:String(atleta.id), athleteName:String(atleta.nome || 'Atleta'), categoria, data, valorMulta:valorMulta || 0, multaStatus:valorMulta > 0 ? 'pendente' : 'nao_aplicavel', jogosSuspensao, publicCategory:categoriaPublicaPermitida(document.getElementById('punicao-motivo-publico')?.value), detalhes:String(document.getElementById('punicao-detalhes')?.value || '').trim().slice(0,300), status:'ativa', createdAt:agora}];
+            registrarAlteracaoPunicoes(); event.target.reset(); const campo = document.getElementById('punicao-data'); if (campo) campo.max = dataISOHojeLocal(); window.mostrarToast('Punição registrada no histórico administrativo.');
+        };
+
+        window.confirmarPagamentoPunicao = async function(id) {
+            if (!punicoesAdminPermitido()) return; const p = (window.punicoesCache || []).find(reg => String(reg.id) === String(id));
+            if (!p || p.status === 'cancelada' || !(Number(p.valorMulta) > 0) || p.multaStatus === 'paga') return;
+            if (!await window.confirmarAcao(`Confirma que verificou no banco o recebimento de R$ ${Number(p.valorMulta).toLocaleString('pt-BR',{minimumFractionDigits:2})}?`,{confirmText:'Confirmar recebimento'})) return;
+            p.multaStatus='paga'; p.pagoEm=dataISOHojeLocal(); p.confirmadoPor=String(window.firebaseUser.uid || ''); registrarAlteracaoPunicoes(); window.mostrarToast('Pagamento confirmado e registrado.');
+        };
+
+        window.revogarPunicao = async function(id) {
+            if (!punicoesAdminPermitido()) return; const p = (window.punicoesCache || []).find(reg => String(reg.id) === String(id)); if (!p || p.status === 'cancelada') return;
+            if (!await window.confirmarAcao('Cancelar este registro? Ele permanecerá no histórico administrativo e deixará de afetar a suspensão pública.',{confirmText:'Cancelar registro',destructive:true})) return;
+            p.status='cancelada'; p.canceladaEm=dataISOHojeLocal(); p.canceladaPor=String(window.firebaseUser.uid || ''); registrarAlteracaoPunicoes(); window.mostrarToast('Registro cancelado; o histórico foi preservado.');
+        };
+
+        window.registrarAbatimentoSuspensao = async function(event) {
+            event.preventDefault(); if (!punicoesAdminPermitido()) return;
+            const athleteId=String(document.getElementById('abatimento-atleta')?.value || ''), jogos=Number(document.getElementById('abatimento-jogos')?.value || 0);
+            const pendentes=obterSuspensoesAte(dataISOHojeLocal()).filter(s=>String(s.athleteId)===athleteId).reduce((n,s)=>n+Number(s.remainingGames||0),0);
+            if (!athleteId || !Number.isInteger(jogos) || jogos<1 || jogos>pendentes) { window.mostrarToast(`Informe jogos inteiros de 1 até o saldo atual (${pendentes}).`,true); return; }
+            const valor=jogos*10; if (!await window.confirmarAcao(`Confirma que verificou no banco o recebimento de R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} (${jogos} jogo(s))?`,{confirmText:'Confirmar recebimento'})) return;
+            const atleta=(window.atletasCache||[]).find(a=>String(a.id)===athleteId), agora=Date.now();
+            window.punicoesCache=[...(window.punicoesCache||[]),{id:`red_${agora}_${Math.random().toString(36).slice(2,8)}`,athleteId,athleteName:String(atleta?.nome||'Atleta'),categoria:'abatimento',data:dataISOHojeLocal(),jogosAbatidos:jogos,valorMulta:valor,multaStatus:'paga',pagoEm:dataISOHojeLocal(),status:'ativa',createdAt:agora,confirmadoPor:String(window.firebaseUser.uid||'')}];
+            registrarAlteracaoPunicoes(); event.target.reset(); window.atualizarValorAbatimento(); window.mostrarToast('Recebimento confirmado; jogos abatidos da fila sequencial.');
+        };
+
+        function rotuloCategoriaPunicao(categoria) {
+            const rotulos = {
+                inadimplencia: 'Jogou inadimplente',
+                atraso: 'Atraso',
+                terceiro_amarelo: 'Terceiro cartão amarelo',
+                cartao_vermelho: 'Cartão vermelho',
+                falta_grave: 'Falta grave',
+                outro: 'Outro',
+                abatimento: 'Redução de suspensão'
+            };
+            return rotulos[categoria] || 'Punição';
+        }
+
+        function categoriaPublicaPermitida(valor) {
+            const permitidas = ['Cartão amarelo', 'Cartão vermelho', 'Conduta'];
+            return permitidas.includes(String(valor || '')) ? String(valor) : '';
+        }
+
+        function obterEventosPunicao(usarPrivado = Boolean(window.isAdminLogado && window.disciplineLoaded)) {
+            const eventos = [];
+            const ids = new Set();
+            const adicionar = evento => {
+                const id = String(evento.id || '');
+                if (!id || !evento.athleteId || !evento.data || ids.has(id)) return;
+                ids.add(id);
+                eventos.push(evento);
+            };
             (window.sumulasCache || []).forEach(sumula => {
-                const dataAplicada = String(sumula.data || '');
-                if (!dataAplicada || dataAplicada > referencia || dataAplicada > hoje) return;
-                (Array.isArray(sumula.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).forEach((suspensao, indice) => {
-                    const totalGames = Number(suspensao.totalGames);
-                    if (!Number.isInteger(totalGames) || totalGames < 1) return;
-                    const jogosCumpridos = datasDeJogosConfirmados.filter(data => data > dataAplicada).length;
-                    const restantes = Math.max(0, totalGames - jogosCumpridos);
-                    if (!restantes) return;
-                    const atleta = (window.atletasCache || []).find(a => String(a.id) === String(suspensao.athleteId));
-                    saida.push({
-                        id: suspensao.id || `${sumula.id || dataAplicada}_${suspensao.athleteId || indice}`,
-                        athleteId: String(suspensao.athleteId || ''),
-                        athleteName: String(atleta?.nome || suspensao.athleteName || 'Atleta'),
-                        reason: String(suspensao.reason || ''),
-                        totalGames,
-                        servedGames: totalGames - restantes,
-                        remainingGames: restantes,
-                        appliedDate: dataAplicada,
-                        projectedSundays: domingosSeguintes(referencia, restantes)
+                const data = String(sumula?.data || '');
+                (Array.isArray(sumula?.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).forEach((s, indice) => {
+                    const totalGames = Number(s?.totalGames);
+                    if (!Number.isInteger(totalGames) || totalGames < 1 || !s?.athleteId) return;
+                    adicionar({
+                        id: String(s.id || `legacy_${sumula.id || data}_${s.athleteId}_${indice}`),
+                        tipo: 'suspensao', athleteId: String(s.athleteId), data,
+                        totalGames, publicCategory: categoriaPublicaPermitida(s.publicCategory),
+                        reason: usarPrivado ? String(s.reason || '') : '',
+                        athleteName: String(s.athleteName || 'Atleta'), source: 'sumula', createdAt: 0
                     });
                 });
             });
-            return saida;
+            if (usarPrivado) {
+                (window.punicoesCache || []).forEach(p => {
+                    if (!p || p.status === 'cancelada' || !p.athleteId) return;
+                    if (p.categoria === 'abatimento') {
+                        const gamesReduced = Number(p.jogosAbatidos);
+                        if (p.multaStatus === 'paga' && Number.isInteger(gamesReduced) && gamesReduced > 0) {
+                            adicionar({
+                                id: `reducao_${p.id}`, tipo: 'reducao', athleteId: String(p.athleteId),
+                                data: String(p.pagoEm || p.data || ''), gamesReduced,
+                                source: 'painel', createdAt: Number(p.createdAt || 0)
+                            });
+                        }
+                        return;
+                    }
+                    const totalGames = Number(p.jogosSuspensao);
+                    if (Number.isInteger(totalGames) && totalGames > 0) {
+                        adicionar({
+                            id: String(p.id), tipo: 'suspensao', athleteId: String(p.athleteId),
+                            data: String(p.data || ''), totalGames,
+                            publicCategory: categoriaPublicaPermitida(p.publicCategory),
+                            reason: String(p.detalhes || rotuloCategoriaPunicao(p.categoria)),
+                            athleteName: String(p.athleteName || 'Atleta'), source: 'painel', createdAt: Number(p.createdAt || 0)
+                        });
+                    }
+                });
+            } else {
+                (window.suspensoesPublicasCache || []).forEach(item => {
+                    if (!item || !item.athleteId || item.tipo !== 'suspensao') return;
+                    const totalGames = Number(item.totalGames), remainingGames = Number(item.remainingGames);
+                    if (Number.isInteger(totalGames) && totalGames > 0 && Number.isInteger(remainingGames) && remainingGames > 0) adicionar({
+                        id: String(item.id), tipo: 'suspensao', athleteId: String(item.athleteId),
+                        data: String(item.data || ''), originalDate: String(item.originalDate || item.data || ''), totalGames,
+                        initialRemainingGames: remainingGames, publicCategory: categoriaPublicaPermitida(item.publicCategory),
+                        reason: '', athleteName: '', source: 'publico', createdAt: Number(item.createdAt || 0)
+                    });
+                });
+            }
+            return eventos;
+        }
+
+        function criarProjecaoPublicaPunicoes() {
+            if (!window.disciplineLoaded) return window.suspensoesPublicasCache || [];
+            const hoje = dataISOHojeLocal();
+            return obterSuspensoesAte(hoje).map(s => ({
+                id: String(s.id), tipo: 'suspensao', athleteId: String(s.athleteId),
+                data: hoje, originalDate: String(s.appliedDate || s.data || ''),
+                totalGames: Number(s.totalGames), remainingGames: Number(s.remainingGames),
+                publicCategory: categoriaPublicaPermitida(s.publicCategory)
+            }));
+        }
+
+        function obterSuspensoesAte(dataReferencia) {
+            const hoje = dataISOHojeLocal();
+            const referenciaSolicitada = String(dataReferencia || hoje);
+            const referencia = referenciaSolicitada > hoje ? hoje : referenciaSolicitada;
+            const usarPrivado = Boolean(window.isAdminLogado && window.disciplineLoaded);
+            const eventos = obterEventosPunicao(usarPrivado).filter(item => item.data && item.data <= referencia);
+            const suspensoes = eventos.filter(item => item.tipo === 'suspensao').map(item => ({
+                ...item, remainingGames: Number(item.initialRemainingGames ?? item.totalGames), reducedGames: 0,
+                servedGames: Math.max(0, Number(item.totalGames) - Number(item.initialRemainingGames ?? item.totalGames))
+            })).sort((a, b) => a.data.localeCompare(b.data) || Number(a.createdAt || 0) - Number(b.createdAt || 0) || a.id.localeCompare(b.id));
+            const reducoes = eventos.filter(item => item.tipo === 'reducao').sort((a, b) => a.data.localeCompare(b.data) || Number(a.createdAt || 0) - Number(b.createdAt || 0) || a.id.localeCompare(b.id));
+            const jogos = new Set((window.sumulasCache || []).map(s => String(s?.data || '')).filter(data => data && data <= referencia && ehDomingoISO(data)));
+            const datasEventos = [...new Set([...jogos, ...suspensoes.map(s => s.data), ...reducoes.map(r => r.data)])].sort();
+            const atletasIds = [...new Set(suspensoes.map(s => s.athleteId))];
+            atletasIds.forEach(athleteId => {
+                const fila = suspensoes.filter(s => s.athleteId === athleteId);
+                const reducoesAtleta = reducoes.filter(r => r.athleteId === athleteId);
+                datasEventos.forEach(data => {
+                    if (jogos.has(data)) {
+                        const atual = fila.find(s => s.data < data && s.remainingGames > 0);
+                        if (atual) { atual.remainingGames -= 1; atual.servedGames += 1; }
+                    }
+                    reducoesAtleta.filter(r => r.data === data).forEach(reducao => {
+                        let aAbater = reducao.gamesReduced;
+                        for (const suspensao of fila) {
+                            if (suspensao.data > data || suspensao.remainingGames < 1 || aAbater < 1) continue;
+                            const abatidos = Math.min(aAbater, suspensao.remainingGames);
+                            suspensao.remainingGames -= abatidos;
+                            suspensao.reducedGames += abatidos;
+                            aAbater -= abatidos;
+                        }
+                    });
+                });
+            });
+            return suspensoes.filter(s => s.remainingGames > 0).map(s => {
+                const totalEfetivo = Math.max(0, s.totalGames - s.reducedGames);
+                const atleta = (window.atletasCache || []).find(a => String(a.id) === String(s.athleteId));
+                return {
+                    ...s,
+                    athleteName: String(atleta?.nome || s.athleteName || 'Atleta'),
+                    totalGames: totalEfetivo,
+                    servedGames: Math.max(0, totalEfetivo - s.remainingGames),
+                    appliedDate: s.originalDate || s.data,
+                    projectedSundays: domingosSeguintes(referencia, s.remainingGames)
+                };
+            });
         }
 
         function htmlResumoSuspensoesSumula(sumula) {
             const aplicadas = Array.isArray(sumula.suspensoesAplicadas) ? sumula.suspensoesAplicadas : [];
             const pendentes = obterSuspensoesAte(sumula.data);
             if (!aplicadas.length && !pendentes.length) return '';
-            const aplicadasHtml = aplicadas.length ? `<div class="mb-2"><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões aplicadas nesta partida</p>${aplicadas.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName || 'Atleta')} — <strong>${Number(s.totalGames) || 0} jogo(s)</strong>${s.reason ? ` · ${escaparTextoHTML(s.reason)}` : ''}</p>`).join('')}</div>` : '';
-            const pendentesHtml = pendentes.length ? `<div><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões em cumprimento após esta partida</p>${pendentes.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName)} — <strong>${s.remainingGames}/${s.totalGames} jogo(s) restante(s)</strong>${s.reason ? ` · ${escaparTextoHTML(s.reason)}` : ''}<br><span class="text-stone-400 text-[9px]">Domingos previstos: ${s.projectedSundays.map(escaparTextoHTML).join(', ')}. Só contam com súmula publicada.</span></p>`).join('')}</div>` : '';
+            const aplicadasHtml = aplicadas.length ? `<div class="mb-2"><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões aplicadas nesta partida</p>${aplicadas.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName || 'Atleta')} — <strong>${Number(s.totalGames) || 0} jogo(s)</strong>${s.publicCategory ? ` · ${escaparTextoHTML(s.publicCategory)}` : ''}</p>`).join('')}</div>` : '';
+            const pendentesHtml = pendentes.length ? `<div><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões em cumprimento após esta partida</p>${pendentes.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName)} — <strong>${s.remainingGames}/${s.totalGames} jogo(s) restante(s)</strong>${s.publicCategory ? ` · ${escaparTextoHTML(s.publicCategory)}` : ''}<br><span class="text-stone-400 text-[9px]">Domingos previstos: ${s.projectedSundays.map(escaparTextoHTML).join(', ')}. Só contam com súmula publicada.</span></p>`).join('')}</div>` : '';
             return `<div class="bg-amber-950/30 p-4 rounded-xl border border-amber-800/50 text-[11px] leading-relaxed"><h5 class="text-amber-200 font-black uppercase text-[10px] mb-2 tracking-widest">Suspensões</h5>${aplicadasHtml}${pendentesHtml}</div>`;
         }
 
@@ -2999,13 +3329,9 @@
             const obs = document.getElementById('sum-obs').value;
 
             if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
-            const suspensoesLidas = lerSuspensoesDoFormulario(data);
-            if (suspensoesLidas === null) return;
             const idSumula = window.editandoSumulaId || 'sum_' + Date.now();
-            const suspensoesAplicadas = suspensoesLidas.map(suspensao => ({
-                ...suspensao,
-                id: `susp_${idSumula}_${suspensao.athleteId}`
-            }));
+            const sumulaExistente = window.editandoSumulaId ? window.sumulasCache.find(s => s.id === window.editandoSumulaId) : null;
+            const suspensoesAplicadas = Array.isArray(sumulaExistente?.suspensoesAplicadas) ? sumulaExistente.suspensoesAplicadas : [];
 
             const novaSumula = {
                 id: idSumula,
@@ -3031,7 +3357,6 @@
             }
             window.salvarNoStorage();
             e.target.reset();
-            carregarSuspensoesNoFormulario();
             window.renderSumulasAdmin();
         };
 
@@ -3049,8 +3374,6 @@
             document.getElementById('sum-flu-amarelos').value = s.flu?.am || '';
             document.getElementById('sum-flu-vermelhos').value = s.flu?.ver || '';
             document.getElementById('sum-obs').value = s.obs || '';
-            carregarSuspensoesNoFormulario(Array.isArray(s.suspensoesAplicadas) ? s.suspensoesAplicadas : []);
-
             window.editandoSumulaId = id;
             document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen"></i> Editando Súmula';
             document.querySelector('#adm-sumulas form button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar Súmula';
@@ -3821,6 +4144,9 @@
             if (!await window.confirmarAcao('Deseja realmente sair da sua conta?', { confirmText: 'Sair' })) return;
             try {
                 await window.authRef.signOut();
+                window.punicoesCache = [];
+                window.disciplineLoaded = false;
+                window.punicoesDirty = false;
                 document.getElementById('admin-panel')?.classList.add('hidden');
                 document.getElementById('admin-badge')?.classList.add('hidden');
                 switchTab('dashboard');
@@ -4334,6 +4660,7 @@
             if (subTabId === 'adm-notificacoes') window.calcularResumoNotif();
             if (subTabId === 'adm-atletas') renderAdminAtletas();
             if (subTabId === 'adm-sumulas') window.renderSumulasAdmin();
+            if (subTabId === 'adm-punicoes') window.renderAdminPunicoes?.();
             if (subTabId === 'adm-mensalidades') window.loadAdmFinancas();
             document.querySelectorAll('.adm-sub-btn').forEach(btn => {
                 if(btn.getAttribute('onclick')?.includes(subTabId)) {
