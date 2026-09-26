@@ -291,6 +291,10 @@
             (window.sociosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
             (window.patrociniosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
             (window.gastosCache || []).forEach(item => anos.add(window.obterAnoFinanceiroRegistro(item)));
+            (window.receitasPunicoesPublicasCache || []).forEach(item => anos.add(Number(item.ano)));
+            (window.punicoesCache || []).forEach(item => {
+                if (item?.multaStatus === 'paga') anos.add(Number(String(item.pagoEm || item.data || '').slice(0, 4)));
+            });
             (window.atletasCache || []).forEach(atleta => Object.keys(atleta.pagamentos || {}).forEach(chave => {
                 const periodo = window.detalharChavePagamento(chave);
                 if (periodo) anos.add(periodo.ano);
@@ -411,6 +415,7 @@
                         <i class="fa-solid fa-vault mr-1"></i> <span id="dash-saldo-titulo">Saldo Geral da Liga</span>
                     </p>
                     <h3 id="dash-saldo-total" class="text-3xl sm:text-4xl font-mono font-bold text-emerald-400 tracking-tight">R$ 0,00</h3>
+                    <p id="dash-punicoes-recebidas" class="mt-2 text-[10px] text-stone-400">Multas e abatimentos recebidos: R$ 0,00</p>
                 </div>
                 <div class="bg-black/90 rounded-2xl border-2 border-red-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-red-500 text-white font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Despesas</div>
@@ -1341,6 +1346,8 @@
         window.sumulasCache = [];
         window.punicoesCache = [];
         window.suspensoesPublicasCache = [];
+        window.receitasPunicoesPublicasCache = [];
+        window.publicDataLoaded = false;
         window.disciplineLoaded = false;
         window.punicoesDirty = false;
         window.punicoesRevision = 0;
@@ -1625,6 +1632,7 @@
                 const value = snapshot.val();
                 window.punicoesCache = Array.isArray(value) ? value : Object.values(value || {});
                 window.disciplineLoaded = true;
+                window.sincronizarProjecoesPunicoesPublicas?.();
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onDisciplineError = error => {
@@ -1745,6 +1753,9 @@
                     totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
                     publicCategory: categoriaPublicaPermitida(item.publicCategory)
                 }));
+            const receitasPunicoesPublicas = window.disciplineLoaded
+                ? criarProjecaoPublicaReceitasPunicoes()
+                : (window.receitasPunicoesPublicasCache || []);
             const sumulasPublicas = (window.sumulasCache || []).map(sumula => ({
                 ...sumula,
                 suspensoesAplicadas: (Array.isArray(sumula?.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).map(s => ({
@@ -1756,6 +1767,7 @@
                 atletas: atletasPublicos,
                 sumulas: sumulasPublicas,
                 suspensoesPublicas,
+                receitasPunicoesPublicas,
                 partidaEstatisticas: window.partidaEstatisticas,
                 historicoPlacares: window.historicoPlacares,
                 ultimaAtualizacao: new Date().toISOString(),
@@ -1819,6 +1831,10 @@
                     totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
                     publicCategory: categoriaPublicaPermitida(item.publicCategory)
                 }));
+                window.receitasPunicoesPublicasCache = (Array.isArray(data.receitasPunicoesPublicas) ? data.receitasPunicoesPublicas : [])
+                    .filter(item => item && Number.isInteger(Number(item.ano)) && Number(item.mes) >= 1 && Number(item.mes) <= 12 && Number.isFinite(Number(item.valor)) && Number(item.valor) > 0)
+                    .map(item => ({ano: Number(item.ano), mes: String(item.mes).padStart(2, '0'), valor: Math.round(Number(item.valor) * 100) / 100}));
+                window.publicDataLoaded = true;
                 window.historicoPlacares = data.historicoPlacares || [];
                 window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
                 window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
@@ -1829,6 +1845,7 @@
                     window.sociosCache = [];
                     window.patrociniosCache = [];
                 }
+                if (window.isAdminLogado && window.disciplineLoaded) window.sincronizarProjecoesPunicoesPublicas?.();
                 if (!syncEmAndamento) {
                     document.getElementById('loading-overlay')?.classList.add('hidden');
                     window.renderizarTudo();
@@ -1923,6 +1940,10 @@
                     (dados?.multasArquivadasHistorico || []).forEach(arq => totalArrecadado += Number(typeof arq === 'object' ? arq.valor : arq));
                 });
             });
+            const totalPunicoesRecebidasAno = somarReceitasPunicoesNoAno(anoOperacional);
+            totalArrecadado += totalPunicoesRecebidasAno;
+            const punicoesRecebidasEl = document.getElementById('dash-punicoes-recebidas');
+            if (punicoesRecebidasEl) punicoesRecebidasEl.textContent = `Multas e abatimentos recebidos em ${anoOperacional}: R$ ${totalPunicoesRecebidasAno.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === anoOperacional).forEach(s => totalArrecadado += Number(s.valor || 0));
             window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === anoOperacional).forEach(p => totalArrecadado += Number(p.valor || 0));
             window.gastosCache.filter(g => window.obterAnoFinanceiroRegistro(g) === anoOperacional).forEach(g => totalGastos += Number(g.valor || 0));
@@ -2524,6 +2545,16 @@
                     });
                 });
             });
+            const receitasPunicoesDoAno = window.isAdminLogado && window.disciplineLoaded
+                ? criarProjecaoPublicaReceitasPunicoes()
+                : (window.receitasPunicoesPublicasCache || []);
+            receitasPunicoesDoAno.filter(item => Number(item.ano) === anoSelecionado).forEach(item => {
+                const mes = String(item.mes).padStart(2, '0');
+                const valor = Number(item.valor || 0);
+                if (!mes || !Number.isFinite(valor) || valor <= 0) return;
+                if (!multasPorMes[mes]) multasPorMes[mes] = [];
+                multasPorMes[mes].push({ nome: 'Clube', motivo: 'Multas e abatimentos recebidos (total)', valor });
+            });
             const multasAcordeao = document.getElementById('financeiro-multas-acordeao');
             if (multasAcordeao) {
                 const mesesKeys = Object.keys(multasPorMes).filter(mes => multasPorMes[mes].length > 0).sort();
@@ -2901,6 +2932,16 @@
                     });
                 });
             });
+            (window.punicoesCache || []).forEach(registro => {
+                const valor = Number(registro?.valorMulta || 0);
+                const dataRecebimento = String(registro?.pagoEm || registro?.data || '');
+                if (registro?.multaStatus !== 'paga' || !Number.isFinite(valor) || valor <= 0 || Number(dataRecebimento.slice(0, 4)) !== ano || registro?.estornado === true) return;
+                const atleta = (window.atletasCache || []).find(a => String(a.id) === String(registro.athleteId));
+                const origem = registro.categoria === 'abatimento'
+                    ? `Abatimento de suspensão (${Number(registro.jogosAbatidos) || 0} jogo(s))`
+                    : `Multa — ${rotuloCategoriaPunicao(registro.categoria)}`;
+                html += `<tr><td class="p-2 font-bold">${atleta?.nome || registro.athleteName || 'Atleta'}</td><td class="p-2 text-center text-orange-300">${origem} (${formatarDataISO(dataRecebimento)})</td><td class="p-2 text-right text-emerald-400">R$ ${valor.toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
+            });
             const tabela = document.getElementById('adm-receitas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita neste ano.</td></tr>';
         }
@@ -3084,6 +3125,7 @@
             window.punicoesDirty = true;
             window.salvarNoStorage({silencioso: true});
             window.renderAdminPunicoes(); window.renderSumulasPublicas?.(); window.renderMeuCadastro?.();
+            loadDashboard(); renderFinanceiroPublico(); renderAdminSocios();
         }
 
         window.atualizarValorAbatimento = function() {
@@ -3263,6 +3305,43 @@
                 publicCategory: categoriaPublicaPermitida(s.publicCategory)
             }));
         }
+
+        function criarProjecaoPublicaReceitasPunicoes() {
+            const totais = new Map();
+            (window.punicoesCache || []).forEach(registro => {
+                const valor = Number(registro?.valorMulta || 0);
+                const data = String(registro?.pagoEm || registro?.data || '');
+                const partes = data.match(/^(20\d{2})-(\d{2})-\d{2}$/);
+                if (registro?.multaStatus !== 'paga' || !Number.isFinite(valor) || valor <= 0 || !partes || Number(partes[2]) < 1 || Number(partes[2]) > 12 || registro?.estornado === true) return;
+                const chave = `${partes[1]}-${partes[2]}`;
+                totais.set(chave, (totais.get(chave) || 0) + Math.round(valor * 100));
+            });
+            return [...totais.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([chave, centavos]) => ({
+                ano: Number(chave.slice(0, 4)), mes: chave.slice(5, 7), valor: centavos / 100
+            }));
+        }
+
+        function somarReceitasPunicoesNoAno(ano) {
+            if (window.isAdminLogado && window.disciplineLoaded) {
+                return (window.punicoesCache || []).reduce((total, registro) => {
+                    const data = String(registro?.pagoEm || registro?.data || '');
+                    const valor = Number(registro?.valorMulta || 0);
+                    return registro?.multaStatus === 'paga' && registro?.estornado !== true && Number(data.slice(0, 4)) === Number(ano) && Number.isFinite(valor) && valor > 0 ? total + valor : total;
+                }, 0);
+            }
+            return (window.receitasPunicoesPublicasCache || []).reduce((total, item) => Number(item?.ano) === Number(ano) ? total + Number(item?.valor || 0) : total, 0);
+        }
+
+        window.sincronizarProjecoesPunicoesPublicas = function() {
+            if (!window.isAdminLogado || !window.disciplineLoaded || !window.publicDataLoaded || !window.publicRef || syncEmAndamento) return;
+            const desejadasSuspensoes = criarProjecaoPublicaPunicoes();
+            const desejadasReceitas = criarProjecaoPublicaReceitasPunicoes();
+            const normalizar = valor => JSON.stringify(valor || []);
+            const gravacoes = [];
+            if (normalizar(desejadasSuspensoes) !== normalizar(window.suspensoesPublicasCache)) gravacoes.push(window.publicRef.child('data/suspensoesPublicas').set(desejadasSuspensoes));
+            if (normalizar(desejadasReceitas) !== normalizar(window.receitasPunicoesPublicasCache)) gravacoes.push(window.publicRef.child('data/receitasPunicoesPublicas').set(desejadasReceitas));
+            if (gravacoes.length) Promise.all(gravacoes).catch(error => console.error('Falha ao atualizar o resumo público das punições.', error?.code || ''));
+        };
 
         function obterSuspensoesAte(dataReferencia) {
             const hoje = dataISOHojeLocal();
@@ -4449,6 +4528,25 @@
                         adicionarLinha('MULTAS', atleta.nome, `Multa histórica — ${motivo || 'Sem descrição'}`, periodo, valor);
                     });
                 });
+            });
+
+            // Multas e abatimentos do painel administrativo; só recebimentos confirmados entram no saldo.
+            (window.punicoesCache || []).forEach(registro => {
+                const valor = Number(registro?.valorMulta || 0);
+                const paga = registro?.multaStatus === 'paga';
+                const dataLancamento = String(paga ? (registro.pagoEm || registro.data || '') : (registro.data || ''));
+                if (!Number.isFinite(valor) || valor <= 0 || !dataLancamento || registro?.estornado === true || (registro?.status === 'cancelada' && !paga) || !pertenceAoPeriodo(dataLancamento)) return;
+                const atleta = (window.atletasCache || []).find(item => String(item.id) === String(registro.athleteId));
+                const nome = atleta?.nome || registro.athleteName || 'Atleta';
+                const descricao = registro.categoria === 'abatimento'
+                    ? `Abatimento de suspensão — ${Number(registro.jogosAbatidos) || 0} jogo(s)${paga ? '' : ' · pendente'}`
+                    : `${paga ? 'Multa paga' : 'Multa pendente'} — ${rotuloCategoriaPunicao(registro.categoria)}`;
+                if (paga) {
+                    adicionarLinha('MULTAS', nome, descricao, periodoDoRegistro(dataLancamento), valor);
+                } else {
+                    adicionarLinha('MULTAS', nome, descricao, periodoDoRegistro(dataLancamento), valor, false);
+                    secoes.MULTAS.pendentes += valor;
+                }
             });
 
             // Pagamentos de sócios.
