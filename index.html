@@ -952,7 +952,15 @@
 
                         <div class="space-y-1">
                             <label class="text-[10px] text-stone-400 uppercase font-bold">Observações / Suspensos</label>
-                            <textarea id="sum-obs" rows="3" placeholder="Ex: Atleta 03 suspenso por 3º amarelo..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                            <textarea id="sum-obs" rows="3" placeholder="Observações gerais da partida..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div class="bg-black/30 border border-amber-900/50 rounded-xl p-3 space-y-2">
+                            <div>
+                                <h5 class="text-[10px] text-amber-300 uppercase font-black">Suspensões aplicadas nesta súmula</h5>
+                                <p class="text-[9px] text-stone-400 mt-1">Registre o atleta e a quantidade de jogos. Só uma súmula publicada de domingo conta como jogo cumprido.</p>
+                            </div>
+                            <div id="sum-suspensoes-container" class="space-y-2"></div>
+                            <button type="button" onclick="window.adicionarSuspensaoSumula()" class="w-full bg-stone-800 border border-amber-800/60 text-amber-200 font-bold p-2 rounded-lg text-[10px]">+ Adicionar suspensão</button>
                         </div>
 
                         <button type="submit" class="w-full bg-emerald-600 text-white font-black p-3 rounded-xl uppercase transition hover:bg-emerald-500 shadow-lg flex items-center justify-center gap-2">
@@ -2801,6 +2809,166 @@
             // conforme pedido pelo usuário. O campo agora aceita qualquer texto.
         };
 
+        function escaparTextoHTML(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, caractere => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[caractere]));
+        }
+
+        function dataISOHojeLocal() {
+            const hoje = new Date();
+            return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+        }
+
+        function dataLocalDeISO(dataISO) {
+            const partes = String(dataISO || '').split('-').map(Number);
+            if (partes.length !== 3 || partes.some(Number.isNaN)) return null;
+            return new Date(partes[0], partes[1] - 1, partes[2]);
+        }
+
+        function ehDomingoISO(dataISO) {
+            const data = dataLocalDeISO(dataISO);
+            return Boolean(data && data.getDay() === 0);
+        }
+
+        function formatarDataISO(dataISO) {
+            const data = dataLocalDeISO(dataISO);
+            return data ? data.toLocaleDateString('pt-BR') : '—';
+        }
+
+        function domingosSeguintes(dataBaseISO, quantidade) {
+            const base = dataLocalDeISO(dataBaseISO) || new Date();
+            const cursor = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+            const datas = [];
+            while (datas.length < quantidade) {
+                cursor.setDate(cursor.getDate() + 1);
+                if (cursor.getDay() === 0) {
+                    datas.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`);
+                }
+            }
+            return datas;
+        }
+
+        window.adicionarSuspensaoSumula = function(registro = {}) {
+            const host = document.getElementById('sum-suspensoes-container');
+            if (!host) return;
+            const row = document.createElement('div');
+            row.className = 'sum-suspensao-row grid grid-cols-1 sm:grid-cols-[1fr_90px_1fr_28px] gap-2 items-center';
+            const select = document.createElement('select');
+            select.className = 'sum-suspensao-atleta bg-stone-800 border border-stone-600 p-2 rounded-lg text-[10px] text-white outline-none';
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Selecione o atleta';
+            select.appendChild(placeholder);
+            [...(window.atletasCache || [])].sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR')).forEach(atleta => {
+                if (!atleta || atleta.id === undefined || atleta.id === null) return;
+                const option = document.createElement('option');
+                option.value = String(atleta.id);
+                option.textContent = `${atleta.nome || 'Atleta'} · #${atleta.camisa || atleta.numero || '—'}`;
+                select.appendChild(option);
+            });
+            select.value = String(registro.athleteId ?? '');
+            const jogos = document.createElement('input');
+            jogos.type = 'number'; jogos.min = '1'; jogos.max = '30'; jogos.step = '1'; jogos.inputMode = 'numeric';
+            jogos.placeholder = 'Jogos'; jogos.value = registro.totalGames ?? '';
+            jogos.className = 'sum-suspensao-jogos bg-stone-800 border border-stone-600 p-2 rounded-lg text-[10px] text-white outline-none';
+            jogos.setAttribute('aria-label', 'Quantidade de jogos de suspensão');
+            const motivo = document.createElement('input');
+            motivo.type = 'text'; motivo.maxLength = 80; motivo.placeholder = 'Motivo (opcional)'; motivo.value = registro.reason || '';
+            motivo.className = 'sum-suspensao-motivo bg-stone-800 border border-stone-600 p-2 rounded-lg text-[10px] text-white outline-none';
+            const remover = document.createElement('button');
+            remover.type = 'button'; remover.textContent = '×'; remover.title = 'Remover esta suspensão';
+            remover.className = 'bg-stone-800 text-red-300 rounded-lg h-8 font-black text-lg';
+            remover.addEventListener('click', () => row.remove());
+            row.append(select, jogos, motivo, remover);
+            host.appendChild(row);
+        };
+
+        function carregarSuspensoesNoFormulario(registros = []) {
+            const host = document.getElementById('sum-suspensoes-container');
+            if (!host) return;
+            host.replaceChildren();
+            if (registros.length) registros.forEach(registro => window.adicionarSuspensaoSumula(registro));
+            else window.adicionarSuspensaoSumula();
+        }
+
+        function lerSuspensoesDoFormulario(dataSumula) {
+            const host = document.getElementById('sum-suspensoes-container');
+            const registros = [];
+            const atletasUsados = new Set();
+            for (const row of host?.querySelectorAll('.sum-suspensao-row') || []) {
+                const athleteId = row.querySelector('.sum-suspensao-atleta')?.value || '';
+                const jogosTexto = row.querySelector('.sum-suspensao-jogos')?.value || '';
+                const reason = row.querySelector('.sum-suspensao-motivo')?.value?.trim() || '';
+                if (!athleteId && !jogosTexto && !reason) continue;
+                const totalGames = Number(jogosTexto);
+                if (!athleteId || !Number.isInteger(totalGames) || totalGames < 1 || totalGames > 30) {
+                    window.mostrarToast('Em cada suspensão, selecione o atleta e informe de 1 a 30 jogos.', true);
+                    return null;
+                }
+                if (atletasUsados.has(String(athleteId))) {
+                    window.mostrarToast('Cada atleta deve aparecer uma única vez nas suspensões desta súmula.', true);
+                    return null;
+                }
+                const atleta = (window.atletasCache || []).find(a => String(a.id) === String(athleteId));
+                if (!atleta) {
+                    window.mostrarToast('O atleta selecionado não foi encontrado. Atualize a lista e tente novamente.', true);
+                    return null;
+                }
+                atletasUsados.add(String(athleteId));
+                registros.push({ athleteId: String(atleta.id), athleteName: String(atleta.nome || 'Atleta'), totalGames, reason });
+            }
+            if (registros.length && !ehDomingoISO(dataSumula)) {
+                window.mostrarToast('Suspensões por jogos só podem ser lançadas em uma súmula de domingo.', true);
+                return null;
+            }
+            if (registros.length && dataSumula > dataISOHojeLocal()) {
+                window.mostrarToast('Não é possível aplicar suspensão em uma partida futura.', true);
+                return null;
+            }
+            return registros;
+        }
+
+        function obterSuspensoesAte(dataReferencia) {
+            const hoje = dataISOHojeLocal();
+            const referencia = String(dataReferencia || hoje);
+            const datasDeJogosConfirmados = [...new Set((window.sumulasCache || [])
+                .map(sumula => String(sumula.data || ''))
+                .filter(data => data && data <= referencia && data <= hoje && ehDomingoISO(data)))].sort();
+            const saida = [];
+            (window.sumulasCache || []).forEach(sumula => {
+                const dataAplicada = String(sumula.data || '');
+                if (!dataAplicada || dataAplicada > referencia || dataAplicada > hoje) return;
+                (Array.isArray(sumula.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).forEach((suspensao, indice) => {
+                    const totalGames = Number(suspensao.totalGames);
+                    if (!Number.isInteger(totalGames) || totalGames < 1) return;
+                    const jogosCumpridos = datasDeJogosConfirmados.filter(data => data > dataAplicada).length;
+                    const restantes = Math.max(0, totalGames - jogosCumpridos);
+                    if (!restantes) return;
+                    const atleta = (window.atletasCache || []).find(a => String(a.id) === String(suspensao.athleteId));
+                    saida.push({
+                        id: suspensao.id || `${sumula.id || dataAplicada}_${suspensao.athleteId || indice}`,
+                        athleteId: String(suspensao.athleteId || ''),
+                        athleteName: String(atleta?.nome || suspensao.athleteName || 'Atleta'),
+                        reason: String(suspensao.reason || ''),
+                        totalGames,
+                        servedGames: totalGames - restantes,
+                        remainingGames: restantes,
+                        appliedDate: dataAplicada,
+                        projectedSundays: domingosSeguintes(referencia, restantes)
+                    });
+                });
+            });
+            return saida;
+        }
+
+        function htmlResumoSuspensoesSumula(sumula) {
+            const aplicadas = Array.isArray(sumula.suspensoesAplicadas) ? sumula.suspensoesAplicadas : [];
+            const pendentes = obterSuspensoesAte(sumula.data);
+            if (!aplicadas.length && !pendentes.length) return '';
+            const aplicadasHtml = aplicadas.length ? `<div class="mb-2"><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões aplicadas nesta partida</p>${aplicadas.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName || 'Atleta')} — <strong>${Number(s.totalGames) || 0} jogo(s)</strong>${s.reason ? ` · ${escaparTextoHTML(s.reason)}` : ''}</p>`).join('')}</div>` : '';
+            const pendentesHtml = pendentes.length ? `<div><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões em cumprimento após esta partida</p>${pendentes.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName)} — <strong>${s.remainingGames}/${s.totalGames} jogo(s) restante(s)</strong>${s.reason ? ` · ${escaparTextoHTML(s.reason)}` : ''}<br><span class="text-stone-400 text-[9px]">Domingos previstos: ${s.projectedSundays.map(escaparTextoHTML).join(', ')}. Só contam com súmula publicada.</span></p>`).join('')}</div>` : '';
+            return `<div class="bg-amber-950/30 p-4 rounded-xl border border-amber-800/50 text-[11px] leading-relaxed"><h5 class="text-amber-200 font-black uppercase text-[10px] mb-2 tracking-widest">Suspensões</h5>${aplicadasHtml}${pendentesHtml}</div>`;
+        }
+
         window.salvarNovaSumula = function(e) {
             e.preventDefault();
             const data = document.getElementById('sum-data').value;
@@ -2816,10 +2984,18 @@
             const obs = document.getElementById('sum-obs').value;
 
             if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
+            const suspensoesLidas = lerSuspensoesDoFormulario(data);
+            if (suspensoesLidas === null) return;
+            const idSumula = window.editandoSumulaId || 'sum_' + Date.now();
+            const suspensoesAplicadas = suspensoesLidas.map(suspensao => ({
+                ...suspensao,
+                id: `susp_${idSumula}_${suspensao.athleteId}`
+            }));
 
             const novaSumula = {
-                id: window.editandoSumulaId || 'sum_' + Date.now(),
+                id: idSumula,
                 data,
+                suspensoesAplicadas,
                 placarBota: pb,
                 placarFlu: pf,
                 bota: { gols: botaGols, am: botaAm, ver: botaVer },
@@ -2840,6 +3016,7 @@
             }
             window.salvarNoStorage();
             e.target.reset();
+            carregarSuspensoesNoFormulario();
             window.renderSumulasAdmin();
         };
 
@@ -2857,6 +3034,7 @@
             document.getElementById('sum-flu-amarelos').value = s.flu?.am || '';
             document.getElementById('sum-flu-vermelhos').value = s.flu?.ver || '';
             document.getElementById('sum-obs').value = s.obs || '';
+            carregarSuspensoesNoFormulario(Array.isArray(s.suspensoesAplicadas) ? s.suspensoesAplicadas : []);
 
             window.editandoSumulaId = id;
             document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen"></i> Editando Súmula';
@@ -2894,6 +3072,8 @@
                 });
                 dl.innerHTML = dlHtml;
             }
+            const hostSuspensoes = document.getElementById('sum-suspensoes-container');
+            if (hostSuspensoes && !hostSuspensoes.children.length) carregarSuspensoesNoFormulario();
             
             let html = '';
             window.sumulasCache.forEach(s => {
@@ -3028,6 +3208,7 @@
                                     <p class="text-stone-300 italic">${s.obs}</p>
                                 </div>
                             ` : ''}
+                            ${htmlResumoSuspensoesSumula(s)}
                         </div>
                     </div>
                 `;
