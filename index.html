@@ -3072,6 +3072,13 @@
             if ([...select.options].some(option => option.value === anterior)) select.value = anterior;
         }
 
+        function dataDePunicaoValida(data) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data || '')) || String(data) > dataISOHojeLocal()) return false;
+            const partes = String(data).split('-').map(Number);
+            const convertido = dataLocalDeISO(data);
+            return Boolean(convertido && convertido.getFullYear() === partes[0] && convertido.getMonth() + 1 === partes[1] && convertido.getDate() === partes[2]);
+        }
+
         function registrarAlteracaoPunicoes() {
             window.punicoesRevision = (Number(window.punicoesRevision) || 0) + 1;
             window.punicoesDirty = true;
@@ -3135,7 +3142,7 @@
             const athleteId = String(document.getElementById('punicao-atleta')?.value || ''), data = String(document.getElementById('punicao-data')?.value || ''), categoria = String(document.getElementById('punicao-categoria')?.value || '');
             const valorRaw = String(document.getElementById('punicao-valor')?.value || '').trim(), jogosRaw = String(document.getElementById('punicao-jogos')?.value ?? '0').trim();
             const valorMulta = valorRaw ? Number(valorRaw) : 0, jogosSuspensao = Number(jogosRaw), atleta = (window.atletasCache || []).find(a => String(a.id) === athleteId);
-            if (!athleteId || !atleta || !data || data > dataISOHojeLocal() || !categoria || !Number.isFinite(valorMulta) || valorMulta < 0 || (valorRaw && valorMulta <= 0) || !Number.isInteger(jogosSuspensao) || jogosSuspensao < 0 || jogosSuspensao > 30 || (!valorMulta && !jogosSuspensao)) { window.mostrarToast('Confira o atleta, data atual/passada, multa positiva e 0–30 jogos; informe multa, suspensão ou ambas.', true); return; }
+            if (!athleteId || !atleta || !dataDePunicaoValida(data) || !categoria || !Number.isFinite(valorMulta) || valorMulta < 0 || (valorRaw && valorMulta <= 0) || !Number.isInteger(jogosSuspensao) || jogosSuspensao < 0 || jogosSuspensao > 30 || (!valorMulta && !jogosSuspensao)) { window.mostrarToast('Confira o atleta, data atual/passada, multa positiva e 0–30 jogos; informe multa, suspensão ou ambas.', true); return; }
             const agora = Date.now();
             window.punicoesCache = [...(window.punicoesCache || []), {id:`pun_${agora}_${Math.random().toString(36).slice(2,8)}`, athleteId:String(atleta.id), athleteName:String(atleta.nome || 'Atleta'), categoria, data, valorMulta:valorMulta || 0, multaStatus:valorMulta > 0 ? 'pendente' : 'nao_aplicavel', jogosSuspensao, publicCategory:categoriaPublicaPermitida(document.getElementById('punicao-motivo-publico')?.value), detalhes:String(document.getElementById('punicao-detalhes')?.value || '').trim().slice(0,300), status:'ativa', createdAt:agora}];
             registrarAlteracaoPunicoes(); event.target.reset(); const campo = document.getElementById('punicao-data'); if (campo) campo.max = dataISOHojeLocal(); window.mostrarToast('Punição registrada no histórico administrativo.');
