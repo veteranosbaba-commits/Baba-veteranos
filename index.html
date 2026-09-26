@@ -691,7 +691,7 @@
                         <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs">
                             <i class="fa-solid fa-gavel mr-2"></i>Suspensos da Rodada
                         </h4>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">3 amarelos ou 1 vermelho</p>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">3 amarelos, 1 vermelho ou suspensão ativa</p>
                     </div>
                     <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm"></ul>
                 </div>
@@ -1866,7 +1866,9 @@
             if (artEl) artEl.innerHTML = artilhariaHtml || '<div class="text-center py-10 opacity-30"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-xs italic">Nenhum gol registrado.</p></div>';
             
             let pendentesHtml = '', suspensosHtml = '';
+            const suspensoesEstruturadasAtivas = obterSuspensoesAte(dataISOHojeLocal());
             window.atletasCache.forEach(a => {
+                const suspensoesAtivasAtleta = suspensoesEstruturadasAtivas.filter(s => String(s.athleteId) === String(a.id));
                 let multasDebito = 0;
                 let mensalidadeDebito = 0;
                 
@@ -1904,10 +1906,21 @@
                     </li>`;
                 }
                 
-                if ((a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1) {
-                    suspensosHtml += `<li class="flex justify-between py-2 items-center">
-                        <span>${a.nome}</span>
-                        <span class="bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${(a.vermelho || 0) >= 1 ? '🟥 Vermelho' : '🟨 3 Amarelos'}</span>
+                const suspensoPorCartao = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+                if (suspensoPorCartao || suspensoesAtivasAtleta.length) {
+                    const badgeSuspensao = (a.vermelho || 0) >= 1
+                        ? '🟥 Vermelho'
+                        : (a.amarelos || 0) >= 3 ? '🟨 3 Amarelos' : '⛔ Suspensão';
+                    const descricaoSuspensoes = suspensoesAtivasAtleta.map(s => {
+                        const total = Number(s.totalGames) || 0;
+                        const restantes = Number(s.remainingGames) || 0;
+                        const motivo = s.reason ? `<span class="block text-[8px] text-stone-400">Motivo: ${escaparTextoHTML(s.reason)}</span>` : '';
+                        return `<span class="block text-[9px] font-bold text-amber-200">Suspensão: faltam ${restantes} de ${total} jogos</span>${motivo}`;
+                    }).join('');
+                    suspensosHtml += `<li class="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_auto] gap-2 py-2 items-center">
+                        <span class="min-w-0 truncate text-stone-200">${escaparTextoHTML(a.nome || 'Atleta')}</span>
+                        <span class="min-w-0 text-center leading-tight">${descricaoSuspensoes}</span>
+                        <span class="shrink-0 bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${badgeSuspensao}</span>
                     </li>`;
                 }
             });
