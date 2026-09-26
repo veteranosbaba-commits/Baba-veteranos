@@ -1914,8 +1914,10 @@
                     const descricaoSuspensoes = suspensoesAtivasAtleta.map(s => {
                         const total = Number(s.totalGames) || 0;
                         const restantes = Number(s.remainingGames) || 0;
-                        const motivo = s.reason ? `<span class="block text-[8px] text-stone-400">Motivo: ${escaparTextoHTML(s.reason)}</span>` : '';
-                        return `<span class="block text-[9px] font-bold text-amber-200">Suspensão: faltam ${restantes} de ${total} jogos</span>${motivo}`;
+                        const verbo = restantes === 1 ? 'falta' : 'faltam';
+                        const unidade = total === 1 ? 'jogo' : 'jogos';
+                        const motivo = s.reason ? `<span class="block text-[9px] text-stone-400">Motivo: ${escaparTextoHTML(s.reason)}</span>` : '';
+                        return `<span class="block text-[10px] font-bold text-amber-200">Suspensão: ${verbo} ${restantes} de ${total} ${unidade}</span>${motivo}`;
                     }).join('');
                     suspensosHtml += `<li class="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_auto] gap-2 py-2 items-center">
                         <span class="min-w-0 truncate text-stone-200">${escaparTextoHTML(a.nome || 'Atleta')}</span>
