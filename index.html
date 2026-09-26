@@ -2933,14 +2933,13 @@
                 });
             });
             (window.punicoesCache || []).forEach(registro => {
-                const valor = valorRecebidoPunicao(registro);
-                const dataRecebimento = String(registro?.pagoEm || registro?.data || '');
-                if (registro?.multaStatus !== 'paga' || !Number.isFinite(valor) || valor <= 0 || Number(dataRecebimento.slice(0, 4)) !== ano || registro?.estornado === true) return;
                 const atleta = (window.atletasCache || []).find(a => String(a.id) === String(registro.athleteId));
-                const origem = registro.categoria === 'abatimento'
-                    ? `Abatimento de suspensão (${Number(registro.jogosAbatidos) || 0} jogo(s))`
-                    : `Multa — ${rotuloCategoriaPunicao(registro.categoria)}`;
-                html += `<tr><td class="p-2 font-bold">${atleta?.nome || registro.athleteName || 'Atleta'}</td><td class="p-2 text-center text-orange-300">${origem} (${formatarDataISO(dataRecebimento)})</td><td class="p-2 text-right text-emerald-400">R$ ${valor.toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
+                eventosFinanceirosPunicao(registro).forEach(evento => {
+                    if (!Number.isFinite(evento.valor) || evento.valor === 0 || Number(String(evento.data||'').slice(0,4)) !== ano) return;
+                    const valor=Number(evento.valor), estorno=evento.tipo==='estorno';
+                    const rotulo=estorno?`${evento.motivo} (${formatarDataISO(evento.data)})`:`${evento.motivo} (${formatarDataISO(evento.data)})`;
+                    html += `<tr><td class="p-2 font-bold">${atleta?.nome || registro.athleteName || 'Atleta'}</td><td class="p-2 text-center ${estorno?'text-red-300':'text-orange-300'}">${rotulo}</td><td class="p-2 text-right ${estorno?'text-red-300':'text-emerald-400'}">${estorno?'−':''}R$ ${Math.abs(valor).toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
+                });
             });
             const tabela = document.getElementById('adm-receitas-tabela');
             if (tabela) tabela.innerHTML = html || '<tr><td colspan="4" class="p-3 text-center text-stone-500 italic">Nenhuma receita neste ano.</td></tr>';
@@ -3103,13 +3102,15 @@
         function prepararSelectAtletasPunicoes(id, manterSelecionado = true) {
             const select = document.getElementById(id);
             if (!select) return;
+            const apenasElegiveis = id === 'abatimento-atleta';
             const anterior = manterSelecionado ? select.value : '';
+            const atletas = [...(window.atletasCache || [])].filter(a => a && a.id !== undefined && a.id !== null)
+                .filter(a => !apenasElegiveis || obterLimiteAbatimento(a.id).maxJogos > 0)
+                .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
             select.replaceChildren();
             const placeholder = document.createElement('option');
-            placeholder.value = ''; placeholder.textContent = 'Selecione o atleta'; select.appendChild(placeholder);
-            [...(window.atletasCache || [])].filter(a => a && a.id !== undefined && a.id !== null)
-                .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
-                .forEach(a => { const option = document.createElement('option'); option.value = String(a.id); option.textContent = `${a.nome || 'Atleta'} · #${a.camisa || a.numero || '—'}`; select.appendChild(option); });
+            placeholder.value = ''; placeholder.textContent = apenasElegiveis && !atletas.length ? 'Sem multa e suspensão elegíveis' : 'Selecione o atleta'; select.appendChild(placeholder);
+            atletas.forEach(a => { const option = document.createElement('option'); option.value = String(a.id); option.textContent = `${a.nome || 'Atleta'} · #${a.camisa || a.numero || '—'}`; select.appendChild(option); });
             if ([...select.options].some(option => option.value === anterior)) select.value = anterior;
         }
 
@@ -3131,11 +3132,19 @@
         window.atualizarValorAbatimento = function() {
             const campo = document.getElementById('abatimento-jogos');
             const texto = document.getElementById('abatimento-valor-previsto');
+            const atletaId = document.getElementById('abatimento-atleta')?.value || '';
+            const limite = atletaId ? obterLimiteAbatimento(atletaId) : {suspensao:0, saldoMulta:0, maxJogos:0};
+            if (campo) {
+                campo.max = String(limite.maxJogos);
+                campo.disabled = limite.maxJogos < 1;
+                if (Number(campo.value || 0) > limite.maxJogos) campo.value = '';
+            }
             const jogos = Number(campo?.value || 0);
-            if (texto) texto.textContent = `Valor: R$ ${Number.isInteger(jogos) && jogos > 0 ? (jogos * 10).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '10,00'} · R$ 10,00 por jogo`;
-            const atletaId = document.getElementById('abatimento-atleta')?.value;
-            const pendentes = atletaId ? obterSuspensoesAte(dataISOHojeLocal()).filter(s => String(s.athleteId) === String(atletaId)).reduce((n, s) => n + Number(s.remainingGames || 0), 0) : 0;
-            if (campo) campo.max = String(pendentes || 1);
+            if (texto) texto.textContent = atletaId
+                ? `Multa em aberto: R$ ${limite.saldoMulta.toLocaleString('pt-BR', {minimumFractionDigits:2})} · suspensão: ${limite.suspensao} jogo(s) · máximo: ${limite.maxJogos} jogo(s) / R$ ${(limite.maxJogos * 10).toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+                : 'Selecione atleta com multa em aberto e suspensão ativa.';
+            const botao = document.querySelector('#form-abatimento-suspensao button[type="submit"]');
+            if (botao) botao.disabled = limite.maxJogos < 1 || !atletaId || !Number.isInteger(jogos) || jogos < 1;
         };
 
         function arredondarValorFinanceiro(valor) {
@@ -3143,13 +3152,46 @@
             return Number.isFinite(numero) ? Math.round((numero + Number.EPSILON) * 100) / 100 : 0;
         }
 
-        function valorRecebidoPunicao(registro) {
+        function valorRecebidoBrutoPunicao(registro) {
             if (!registro || registro.estornado === true || registro.multaStatus !== 'paga') return 0;
-            if (registro.categoria === 'abatimento') return Math.max(0, arredondarValorFinanceiro(registro.valorMulta));
-            const valor = registro.valorRecebido === undefined || registro.valorRecebido === null
+            const valor = registro.categoria === 'abatimento' || registro.valorRecebido === undefined || registro.valorRecebido === null
                 ? Number(registro.valorMulta || 0)
                 : Number(registro.valorRecebido);
             return Number.isFinite(valor) ? Math.max(0, arredondarValorFinanceiro(valor)) : 0;
+        }
+
+        function eventosEstornoPunicao(registro) {
+            if (!registro) return [];
+            const eventos = [];
+            const direto = Number(registro.estornoCancelamento?.valor || 0);
+            if (direto > 0) eventos.push({valor:arredondarValorFinanceiro(direto), data:String(registro.estornoCancelamento?.data || registro.canceladaEm || registro.data || ''), motivo:String(registro.estornoCancelamento?.motivo || 'Estorno por cancelamento')});
+            (Array.isArray(registro.estornosMultas) ? registro.estornosMultas : []).forEach(item => {
+                const valor = Number(item?.valor || 0);
+                if (valor > 0) eventos.push({valor:arredondarValorFinanceiro(valor), data:String(item.data || registro.canceladaEm || registro.data || ''), motivo:'Estorno de abatimento vinculado à multa cancelada'});
+            });
+            return eventos;
+        }
+
+        function valorEstornadoPunicao(registro) {
+            return arredondarValorFinanceiro(eventosEstornoPunicao(registro).reduce((soma, item) => soma + item.valor, 0));
+        }
+
+        function eventosFinanceirosPunicao(registro) {
+            const eventos = [];
+            const recebido = valorRecebidoBrutoPunicao(registro);
+            if (recebido > 0) eventos.push({tipo:'recebimento', valor:recebido, data:String(registro.pagoEm || registro.data || ''), motivo:registro.categoria === 'abatimento' ? `Abatimento de suspensão (${Number(registro.jogosAbatidos)||0} jogo(s))` : `Multa — ${rotuloCategoriaPunicao(registro.categoria)}`});
+            eventosEstornoPunicao(registro).forEach(item => eventos.push({tipo:'estorno', valor:-item.valor, data:item.data, motivo:item.motivo}));
+            return eventos;
+        }
+
+        function valorRecebidoPunicao(registro) {
+            return arredondarValorFinanceiro(Math.max(0, valorRecebidoBrutoPunicao(registro) - valorEstornadoPunicao(registro)));
+        }
+
+        function jogosAbatidosPunicao(registro) {
+            const original = Math.max(0, Number(registro?.jogosAbatidos || 0));
+            const estornados = (Array.isArray(registro?.estornosMultas) ? registro.estornosMultas : []).reduce((soma, item) => soma + Math.max(0, Number(item?.jogos || 0)), 0);
+            return Math.max(0, original - estornados);
         }
 
         function obterDistribuicaoMultasAtleta(athleteId, ignorarPagamentoId = '') {
@@ -3158,27 +3200,58 @@
                 .sort((a, b) => String(a.data || '').localeCompare(String(b.data || '')) || Number(a.createdAt || 0) - Number(b.createdAt || 0) || String(a.id).localeCompare(String(b.id)));
             const saldos = new Map(multas.map(p => [String(p.id), arredondarValorFinanceiro(p.valorMulta)]));
             const pagamentos = registros.filter(p => p.multaStatus === 'paga' && p.estornado !== true && String(p.id) !== String(ignorarPagamentoId || '') &&
-                (p.categoria === 'abatimento' || p.status !== 'cancelada'))
-                .map(p => ({id: p.categoria === 'abatimento' ? '' : String(p.id), valor: valorRecebidoPunicao(p), data: String(p.pagoEm || p.data || ''), createdAt: Number(p.createdAt || 0), key: String(p.id || '')}))
+                p.status !== 'cancelada')
+                .map(p => {
+                    const alocacoes = p.categoria === 'abatimento' && Array.isArray(p.alocacoesMultas) ? p.alocacoesMultas.map(a => {
+                        const multaId = String(a?.multaId || '');
+                        const estornado = (Array.isArray(p.estornosMultas) ? p.estornosMultas : []).filter(e => String(e?.multaId || '') === multaId).reduce((soma, e) => soma + Number(e?.valor || 0), 0);
+                        return {multaId, valor:arredondarValorFinanceiro(Math.max(0, Number(a?.valor || 0) - estornado))};
+                    }).filter(a => a.multaId && a.valor > 0) : null;
+                    return {id: p.categoria === 'abatimento' ? '' : String(p.id), valor:valorRecebidoPunicao(p), alocacoes, data:String(p.pagoEm || p.data || ''), createdAt:Number(p.createdAt || 0), key:String(p.id || '')};
+                })
                 .filter(p => p.valor > 0)
                 .sort((a, b) => a.data.localeCompare(b.data) || a.createdAt - b.createdAt || a.key.localeCompare(b.key));
-            const aplicarPagamento = (valor, idPreferido = '') => {
+            const alocacoesPorPagamento = new Map();
+            const aplicarPagamento = (valor, idPreferido = '', pagamentoId = '', permitirFila = true) => {
                 let centavos = Math.round(arredondarValorFinanceiro(valor) * 100);
+                if (centavos <= 0) return;
+                if (idPreferido && !saldos.has(idPreferido) && !permitirFila) return;
                 const ordem = idPreferido && saldos.has(idPreferido)
-                    ? [multas.find(p => String(p.id) === idPreferido), ...multas.filter(p => String(p.id) !== idPreferido)]
+                    ? (permitirFila ? [multas.find(p => String(p.id) === idPreferido), ...multas.filter(p => String(p.id) !== idPreferido)] : [multas.find(p => String(p.id) === idPreferido)])
                     : multas;
                 for (const multa of ordem) {
                     if (centavos <= 0) break;
                     const id = String(multa.id), saldoCentavos = Math.round(Number(saldos.get(id) || 0) * 100);
                     const aplicado = Math.min(centavos, saldoCentavos);
+                    if (aplicado > 0 && pagamentoId) {
+                        const linhas = alocacoesPorPagamento.get(pagamentoId) || [];
+                        const existente = linhas.find(item => item.multaId === id);
+                        if (existente) existente.valor = arredondarValorFinanceiro(existente.valor + aplicado / 100);
+                        else linhas.push({multaId:id, valor:aplicado / 100});
+                        alocacoesPorPagamento.set(pagamentoId, linhas);
+                    }
                     saldos.set(id, (saldoCentavos - aplicado) / 100);
                     centavos -= aplicado;
                 }
             };
-            pagamentos.forEach(p => aplicarPagamento(p.valor, p.id));
+            pagamentos.forEach(p => {
+                if (Array.isArray(p.alocacoes)) {
+                    p.alocacoes.forEach(a => aplicarPagamento(a.valor, a.multaId, p.key, false));
+                } else {
+                    aplicarPagamento(p.valor, p.id, p.key, true);
+                }
+            });
             const totalOriginal = multas.reduce((soma, p) => soma + arredondarValorFinanceiro(p.valorMulta), 0);
             const totalSaldo = [...saldos.values()].reduce((soma, valor) => soma + valor, 0);
-            return {multas, saldos, totalOriginal: arredondarValorFinanceiro(totalOriginal), totalSaldo: arredondarValorFinanceiro(totalSaldo)};
+            return {multas, saldos, alocacoesPorPagamento, totalOriginal:arredondarValorFinanceiro(totalOriginal), totalSaldo:arredondarValorFinanceiro(totalSaldo)};
+        }
+
+        function obterLimiteAbatimento(athleteId) {
+            const suspensao = obterSuspensoesAte(dataISOHojeLocal()).filter(s => String(s.athleteId) === String(athleteId)).reduce((soma, s) => soma + Math.max(0, Number(s.remainingGames || 0)), 0);
+            const resumo = obterDistribuicaoMultasAtleta(athleteId);
+            const jogosCobertosPorMultas = Math.floor((resumo.totalSaldo + 0.000001) / 10);
+            const maxJogos = temRecebimentoLegadoNaoReconciliado(athleteId) ? 0 : Math.min(suspensao, jogosCobertosPorMultas);
+            return {suspensao, saldoMulta:resumo.totalSaldo, maxJogos};
         }
 
         function sugerirValorRecebidoPunicao(id) {
@@ -3192,6 +3265,26 @@
             const registros = (window.punicoesCache || []).filter(p => String(p?.athleteId || '') === String(athleteId || ''));
             const temAbatimento = registros.some(p => p.categoria === 'abatimento' && p.multaStatus === 'paga' && Number(p.valorMulta) > 0);
             return temAbatimento && registros.some(p => p.categoria !== 'abatimento' && p.status !== 'cancelada' && p.multaStatus === 'paga' && (p.valorRecebido === undefined || p.valorRecebido === null));
+        }
+
+        function calcularEstornoCancelamentoPunicao(registro) {
+            const direto = registro.categoria === 'abatimento' ? 0 : valorRecebidoPunicao(registro);
+            const abatimentos = [];
+            let jogos = 0;
+            if (registro.categoria !== 'abatimento') {
+                const resumo = obterDistribuicaoMultasAtleta(registro.athleteId);
+                (window.punicoesCache || []).filter(p => p.categoria === 'abatimento' && p.status !== 'cancelada' && p.multaStatus === 'paga' && String(p.athleteId) === String(registro.athleteId)).forEach(p => {
+                    const alocacoes = resumo.alocacoesPorPagamento.get(String(p.id)) || [];
+                    const alocacao = alocacoes.find(a => String(a.multaId) === String(registro.id));
+                    if (!alocacao || alocacao.valor <= 0) return;
+                    const centavos = Math.round(alocacao.valor * 100);
+                    if (centavos % 1000 !== 0) { abatimentos.push({registro:p, valor:alocacao.valor, jogos:null, fracionado:true}); return; }
+                    const jogosAlocados = centavos / 1000;
+                    abatimentos.push({registro:p, valor:centavos / 100, jogos:jogosAlocados, fracionado:false, alocacoes});
+                    jogos += jogosAlocados;
+                });
+            }
+            return {direto:arredondarValorFinanceiro(direto), abatimentos, valorAbatimentos:arredondarValorFinanceiro(abatimentos.reduce((soma, item) => soma + item.valor, 0)), jogos, fracionado:abatimentos.some(item => item.fracionado)};
         }
 
         window.renderAdminPunicoes = function() {
@@ -3224,36 +3317,44 @@
                 descricao.append(nome, detalhe); const status = document.createElement('span'); status.className = 'text-[9px] font-black uppercase text-amber-200'; status.textContent = registro.status === 'cancelada' ? 'Cancelada' : (registro.legado ? 'Legado' : 'Ativa'); titulo.append(descricao, status); card.appendChild(titulo);
                 const dados = [];
                 if (Number(registro.valorMulta) > 0) {
-                    const recebido = valorRecebidoPunicao(registro);
+                    const bruto = valorRecebidoBrutoPunicao(registro), estornado = valorEstornadoPunicao(registro), liquido = valorRecebidoPunicao(registro);
                     const situacaoMulta = registro.multaStatus === 'paga'
-                        ? (registro.quitadaPorCreditos ? 'Quitada com créditos anteriores, sem novo recebimento' : `Recebido neste registro: R$ ${recebido.toLocaleString('pt-BR', {minimumFractionDigits: 2})} · ${formatarDataISO(registro.pagoEm)}`)
+                        ? (registro.quitadaPorCreditos ? 'Quitada com créditos anteriores, sem novo recebimento' : `Recebido: R$ ${bruto.toLocaleString('pt-BR', {minimumFractionDigits: 2})} · estornado: R$ ${estornado.toLocaleString('pt-BR', {minimumFractionDigits: 2})} · líquido no caixa: R$ ${liquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`)
                         : `Saldo total do atleta: R$ ${resumoMultasAtleta.totalSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})} · saldo desta multa: R$ ${saldoDestaMulta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                     dados.push(`Multa original: R$ ${Number(registro.valorMulta).toLocaleString('pt-BR', {minimumFractionDigits: 2})} · ${situacaoMulta}`);
                 }
                 if (Number(registro.jogosSuspensao) > 0) { const pend = obterSuspensoesAte(dataISOHojeLocal()).find(s => String(s.id) === String(registro.id)); dados.push(`Suspensão: ${pend ? `${pend.remainingGames}/${pend.totalGames} jogos restantes` : 'Cumprida'}${registro.publicCategory ? ` · Público: ${registro.publicCategory}` : ''}`); }
-                if (Number(registro.jogosAbatidos) > 0) dados.push(`Redução: ${registro.jogosAbatidos} jogo(s) · R$ ${Number(registro.valorMulta || Number(registro.jogosAbatidos) * 10).toLocaleString('pt-BR', {minimumFractionDigits: 2})} · recebimento ${registro.multaStatus === 'paga' ? 'confirmado e lançado como crédito' : 'pendente'}`);
+                if (Number(registro.jogosAbatidos) > 0) {
+                    const jogosAtivos = jogosAbatidosPunicao(registro), bruto = valorRecebidoBrutoPunicao(registro), estornado = valorEstornadoPunicao(registro);
+                    dados.push(`Redução: ${jogosAtivos}/${registro.jogosAbatidos} jogo(s) ativo(s) · recebido R$ ${bruto.toLocaleString('pt-BR', {minimumFractionDigits: 2})} · estornado R$ ${estornado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`);
+                }
                 if (dados.length) { const resumo = document.createElement('p'); resumo.className = 'mt-2 text-[10px] text-stone-200'; resumo.textContent = dados.join(' | '); card.appendChild(resumo); }
                 if (registro.detalhes) { const privado = document.createElement('p'); privado.className = 'mt-2 text-[10px] text-stone-400'; privado.textContent = `Detalhe administrativo: ${registro.detalhes}`; card.appendChild(privado); }
-                if (!registro.legado && registro.status !== 'cancelada') {
+                if (!registro.legado) {
                     const acoes = document.createElement('div'); acoes.className = 'flex flex-wrap gap-2 mt-3';
-                    if (Number(registro.valorMulta) > 0 && registro.multaStatus !== 'paga' && !botoesQuitacaoPorAtleta.has(String(registro.athleteId))) {
+                    if (registro.status !== 'cancelada' && Number(registro.valorMulta) > 0 && registro.multaStatus !== 'paga' && !botoesQuitacaoPorAtleta.has(String(registro.athleteId))) {
                         const precisaCorrigir = temRecebimentoLegadoNaoReconciliado(registro.athleteId);
                         const btn = document.createElement('button'); btn.type = 'button'; btn.disabled = precisaCorrigir;
                         btn.textContent = precisaCorrigir ? 'Corrija recebimento anterior primeiro' : (resumoMultasAtleta.totalSaldo > 0 ? `Confirmar saldo total · R$ ${resumoMultasAtleta.totalSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'Regularizar saldo já coberto');
                         btn.className = `rounded-lg px-3 py-2 text-[10px] font-black text-white ${precisaCorrigir ? 'bg-stone-700 opacity-60' : 'bg-emerald-700'}`;
                         if (!precisaCorrigir) btn.addEventListener('click', () => window.confirmarPagamentoPunicao(registro.id));
                         else { const aviso = document.createElement('p'); aviso.className = 'w-full text-[9px] text-amber-200/80'; aviso.textContent = 'Ajuste primeiro o valor efetivamente recebido no registro antigo; assim o saldo será calculado sem duplicidade.'; acoes.appendChild(aviso); }
-                        acoes.appendChild(btn);
-                        botoesQuitacaoPorAtleta.add(String(registro.athleteId));
+                        acoes.appendChild(btn); botoesQuitacaoPorAtleta.add(String(registro.athleteId));
                     }
                     if (Number(registro.valorMulta) > 0 && registro.multaStatus === 'paga' && registro.categoria !== 'abatimento' && (registro.valorRecebido === undefined || registro.valorRecebido === null)) {
-                        const sugestao = sugerirValorRecebidoPunicao(registro.id);
+                        const sugestao = registro.status === 'cancelada' ? Number(registro.valorMulta) : sugerirValorRecebidoPunicao(registro.id);
                         const campo = document.createElement('input'); campo.type = 'number'; campo.min = '0'; campo.max = String(Number(registro.valorMulta)); campo.step = '0.01'; campo.value = sugestao.toFixed(2); campo.inputMode = 'decimal'; campo.setAttribute('aria-label', `Valor efetivamente recebido para a multa de ${atleta?.nome || registro.athleteName || 'Atleta'}`); campo.className = 'w-28 rounded-lg border border-amber-700 bg-stone-900 px-2 py-2 text-[10px] text-white';
                         const btnCorrigir = document.createElement('button'); btnCorrigir.type = 'button'; btnCorrigir.textContent = 'Corrigir valor recebido'; btnCorrigir.className = 'rounded-lg border border-amber-700 px-3 py-2 text-[10px] font-black text-amber-200'; btnCorrigir.addEventListener('click', () => window.corrigirValorRecebidoPunicao(registro.id, campo.value));
-                        const ajuda = document.createElement('p'); ajuda.className = 'w-full text-[9px] text-amber-200/80'; ajuda.textContent = `Registro antigo: o valor sugerido considera as multas totais e os abatimentos já pagos (R$ ${sugestao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}). Confira o valor realmente recebido.`;
+                        const ajuda = document.createElement('p'); ajuda.className = 'w-full text-[9px] text-amber-200/80'; ajuda.textContent = registro.status === 'cancelada' ? 'Lançamento cancelado antigo: informe o valor que realmente entrou antes de registrar o estorno.' : `Registro antigo: o valor sugerido considera multas e abatimentos do atleta (R$ ${sugestao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}). Confira o valor realmente recebido.`;
                         acoes.append(campo, btnCorrigir, ajuda);
                     }
-                    if (Number(registro.jogosSuspensao) > 0 || Number(registro.valorMulta) > 0) { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancelar registro'; btn.className = 'rounded-lg border border-red-800 px-3 py-2 text-[10px] font-black text-red-200'; btn.addEventListener('click', () => window.revogarPunicao(registro.id)); acoes.appendChild(btn); }
+                    if (registro.status === 'cancelada' && registro.multaStatus === 'paga' && valorRecebidoPunicao(registro) > 0 && (registro.categoria === 'abatimento' || (registro.valorRecebido !== undefined && registro.valorRecebido !== null))) {
+                        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Registrar estorno no caixa'; btn.className = 'rounded-lg bg-red-900 px-3 py-2 text-[10px] font-black text-red-100'; btn.addEventListener('click', () => window.estornarRecebimentoPunicao(registro.id)); acoes.appendChild(btn);
+                    }
+                    if (registro.status !== 'cancelada' && Number(registro.valorMulta) > 0 && registro.multaStatus === 'paga' && registro.categoria === 'abatimento' && valorEstornadoPunicao(registro) < valorRecebidoBrutoPunicao(registro)) {
+                        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancelar e estornar abatimento'; btn.className = 'rounded-lg border border-red-800 px-3 py-2 text-[10px] font-black text-red-200'; btn.addEventListener('click', () => window.revogarPunicao(registro.id)); acoes.appendChild(btn);
+                    }
+                    if (registro.status !== 'cancelada' && (Number(registro.jogosSuspensao) > 0 || Number(registro.valorMulta) > 0)) { const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancelar registro'; btn.className = 'rounded-lg border border-red-800 px-3 py-2 text-[10px] font-black text-red-200'; btn.addEventListener('click', () => window.revogarPunicao(registro.id)); acoes.appendChild(btn); }
                     if (acoes.childNodes.length) card.appendChild(acoes);
                 }
                 host.appendChild(card);
@@ -3303,7 +3404,7 @@
             if (!punicoesAdminPermitido()) return;
             const registro = (window.punicoesCache || []).find(p => String(p.id) === String(id));
             const original = Number(registro?.valorMulta || 0), rawValor = String(valorInformado ?? '').trim().replace(',', '.'), entrada = Number(rawValor), valor = arredondarValorFinanceiro(entrada);
-            if (!registro || registro.status === 'cancelada' || registro.categoria === 'abatimento' || registro.multaStatus !== 'paga' || (registro.valorRecebido !== undefined && registro.valorRecebido !== null)) return;
+            if (!registro || registro.categoria === 'abatimento' || registro.multaStatus !== 'paga' || (registro.valorRecebido !== undefined && registro.valorRecebido !== null)) return;
             if (!rawValor || !Number.isFinite(entrada) || entrada < 0 || entrada > original) { window.mostrarToast('O valor efetivamente recebido deve ficar entre R$ 0,00 e o valor original da multa.', true); return; }
             const anterior = valorRecebidoPunicao(registro);
             if (!await window.confirmarAcao(`Corrigir o valor recebido desta multa de R$ ${anterior.toLocaleString('pt-BR',{minimumFractionDigits:2})} para R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}? O valor original da multa será preservado no histórico.`, {confirmText:'Corrigir valor', destructive:true})) return;
@@ -3311,25 +3412,76 @@
             registro.ajustesValorRecebido.push({de:anterior, para:valor, corrigidoEm:dataISOHojeLocal(), corrigidoPor:String(window.firebaseUser.uid || '')});
             registro.valorRecebido = valor; registro.valorCorrigidoEm = dataISOHojeLocal(); registro.valorCorrigidoPor = String(window.firebaseUser.uid || '');
             const saldoDepoisDaCorrecao = obterDistribuicaoMultasAtleta(registro.athleteId);
-            if (saldoDepoisDaCorrecao.totalSaldo <= 0) saldoDepoisDaCorrecao.multas.filter(item => item.multaStatus !== 'paga').forEach(item => { item.multaStatus='paga'; item.valorRecebido=0; item.quitadaPorCreditos=true; item.quitadaEm=dataISOHojeLocal(); item.confirmadoPor=String(window.firebaseUser.uid || ''); delete item.pagoEm; });
+            if (registro.status !== 'cancelada' && saldoDepoisDaCorrecao.totalSaldo <= 0) saldoDepoisDaCorrecao.multas.filter(item => item.multaStatus !== 'paga').forEach(item => { item.multaStatus='paga'; item.valorRecebido=0; item.quitadaPorCreditos=true; item.quitadaEm=dataISOHojeLocal(); item.confirmadoPor=String(window.firebaseUser.uid || ''); delete item.pagoEm; });
             registrarAlteracaoPunicoes(); window.mostrarToast(`Recebimento corrigido para R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}; o caixa e os relatórios foram recalculados.`);
         };
 
         window.revogarPunicao = async function(id) {
-            if (!punicoesAdminPermitido()) return; const p = (window.punicoesCache || []).find(reg => String(reg.id) === String(id)); if (!p || p.status === 'cancelada') return;
-            if (!await window.confirmarAcao('Cancelar este registro? Ele permanecerá no histórico administrativo e deixará de afetar a suspensão pública.',{confirmText:'Cancelar registro',destructive:true})) return;
-            p.status='cancelada'; p.canceladaEm=dataISOHojeLocal(); p.canceladaPor=String(window.firebaseUser.uid || ''); registrarAlteracaoPunicoes(); window.mostrarToast('Registro cancelado; o histórico foi preservado.');
+            if (!punicoesAdminPermitido()) return;
+            const p=(window.punicoesCache||[]).find(reg=>String(reg.id)===String(id)); if(!p||p.status==='cancelada') return;
+            if(p.categoria!=='abatimento'&&temRecebimentoLegadoNaoReconciliado(p.athleteId)){window.mostrarToast('Corrija primeiro o valor efetivamente recebido no registro antigo; assim o estorno não ficará errado.',true);return;}
+            const resumo=calcularEstornoCancelamentoPunicao(p);
+            if(resumo.fracionado){window.mostrarToast('Há um abatimento antigo dividido em valor que não corresponde a jogos inteiros. Faça a conferência administrativa antes de cancelar esta multa.',true);return;}
+            const distribuicaoAbatimento=p.categoria==='abatimento'?obterDistribuicaoMultasAtleta(p.athleteId):null;
+            const alocacoesAbatimento=p.categoria==='abatimento'?(distribuicaoAbatimento.alocacoesPorPagamento.get(String(p.id))||[]):[];
+            const direto=p.categoria==='abatimento'?valorRecebidoPunicao(p):resumo.direto;
+            const valorAlocadoAbatimento=arredondarValorFinanceiro(alocacoesAbatimento.reduce((soma,item)=>soma+Number(item.valor||0),0));
+            if(p.categoria==='abatimento'&&(alocacoesAbatimento.some(item=>Math.round(Number(item.valor||0)*100)%1000!==0)||valorAlocadoAbatimento>direto+0.001)){window.mostrarToast('O histórico deste abatimento não pode ser conciliado em jogos inteiros com o valor recebido. Faça a conferência administrativa antes de cancelar.',true);return;}
+            const valorEstornado=arredondarValorFinanceiro(direto+resumo.valorAbatimentos);
+            const jogosRestaurados=p.categoria==='abatimento'?jogosAbatidosPunicao(p):resumo.jogos;
+            const explicacao=valorEstornado>0?` O cancelamento também lançará estorno de R$ ${valorEstornado.toLocaleString('pt-BR',{minimumFractionDigits:2})} no caixa (R$ ${direto.toLocaleString('pt-BR',{minimumFractionDigits:2})} recebidos diretamente e R$ ${resumo.valorAbatimentos.toLocaleString('pt-BR',{minimumFractionDigits:2})} em abatimentos vinculados)${jogosRestaurados?` e devolverá ${jogosRestaurados} jogo(s) à suspensão` : ''}. Confirme somente se a devolução/estorno financeiro está autorizada.`:'';
+            if(!await window.confirmarAcao(`Cancelar este registro? Ele permanecerá no histórico administrativo e deixará de afetar a punição pública.${explicacao}`,{confirmText:valorEstornado>0?'Cancelar e estornar':'Cancelar registro',destructive:true})) return;
+            const hoje=dataISOHojeLocal(), uid=String(window.firebaseUser.uid||'');
+            if(valorEstornado>0){
+                if(p.categoria==='abatimento'){
+                    if(!Array.isArray(p.estornosMultas)) p.estornosMultas=[];
+                    alocacoesAbatimento.forEach(item=>p.estornosMultas.push({multaId:String(item.multaId),valor:arredondarValorFinanceiro(item.valor),jogos:Number(item.valor)/10,data:hoje,por:uid,motivo:'Cancelamento do abatimento'}));
+                    const saldoNaoAlocado=arredondarValorFinanceiro(direto-valorAlocadoAbatimento);
+                    if(saldoNaoAlocado>0){const anterior=Number(p.estornoCancelamento?.valor||0);p.estornoCancelamento={valor:arredondarValorFinanceiro(anterior+saldoNaoAlocado),data:hoje,por:uid,motivo:'Cancelamento do abatimento sem alocação disponível'};}
+                }else{
+                    const anterior=Number(p.estornoCancelamento?.valor||0);
+                    p.estornoCancelamento={valor:arredondarValorFinanceiro(anterior+direto),data:hoje,por:uid,motivo:'Cancelamento da multa'};
+                    resumo.abatimentos.forEach(item=>{
+                        const abatimento=item.registro;
+                        if(!Array.isArray(abatimento.alocacoesMultas)) abatimento.alocacoesMultas=item.alocacoes.map(a=>({multaId:a.multaId,valor:a.valor,jogos:a.valor/10}));
+                        if(!Array.isArray(abatimento.estornosMultas)) abatimento.estornosMultas=[];
+                        abatimento.estornosMultas.push({multaId:String(p.id),valor:item.valor,jogos:item.jogos,data:hoje,por:uid});
+                    });
+                }
+                p.cancelamentoFinanceiro={estornoDireto:direto,estornoAbatimentos:resumo.valorAbatimentos,valorTotal:valorEstornado,jogosRestaurados,data:hoje,por:uid};
+            }
+            p.status='cancelada'; p.canceladaEm=hoje; p.canceladaPor=uid; registrarAlteracaoPunicoes();
+            window.mostrarToast(valorEstornado>0?`Registro cancelado; estorno de R$ ${valorEstornado.toLocaleString('pt-BR',{minimumFractionDigits:2})} lançado e histórico preservado.`:'Registro cancelado; o histórico foi preservado.');
+        };
+
+        window.estornarRecebimentoPunicao = async function(id) {
+            if(!punicoesAdminPermitido()) return;
+            const p=(window.punicoesCache||[]).find(reg=>String(reg.id)===String(id)); if(!p||p.status!=='cancelada'||p.multaStatus!=='paga') return;
+            if(p.categoria!=='abatimento'&&(p.valorRecebido===undefined||p.valorRecebido===null)){window.mostrarToast('Informe primeiro o valor que realmente foi recebido no campo de correção.',true);return;}
+            const valor=valorRecebidoPunicao(p); if(valor<=0) return;
+            if(!await window.confirmarAcao(`Registrar estorno de R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} desta multa já cancelada? Isso reduzirá o saldo financeiro. Confirme somente se a devolução/estorno está autorizada.`,{confirmText:'Registrar estorno',destructive:true})) return;
+            const anterior=Number(p.estornoCancelamento?.valor||0);
+            p.estornoCancelamento={valor:arredondarValorFinanceiro(anterior+valor),data:dataISOHojeLocal(),por:String(window.firebaseUser.uid||''),motivo:'Estorno de multa cancelada'};
+            p.cancelamentoFinanceiro={...(p.cancelamentoFinanceiro||{}),estornoDireto:arredondarValorFinanceiro(Number(p.cancelamentoFinanceiro?.estornoDireto||0)+valor),valorTotal:arredondarValorFinanceiro(Number(p.cancelamentoFinanceiro?.valorTotal||0)+valor),data:dataISOHojeLocal(),por:String(window.firebaseUser.uid||'')};
+            registrarAlteracaoPunicoes(); window.mostrarToast(`Estorno de R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} registrado no caixa.`);
         };
 
         window.registrarAbatimentoSuspensao = async function(event) {
             event.preventDefault(); if (!punicoesAdminPermitido()) return;
             const athleteId=String(document.getElementById('abatimento-atleta')?.value || ''), jogos=Number(document.getElementById('abatimento-jogos')?.value || 0);
-            const pendentes=obterSuspensoesAte(dataISOHojeLocal()).filter(s=>String(s.athleteId)===athleteId).reduce((n,s)=>n+Number(s.remainingGames||0),0);
-            if (!athleteId || !Number.isInteger(jogos) || jogos<1 || jogos>pendentes) { window.mostrarToast(`Informe jogos inteiros de 1 até o saldo atual (${pendentes}).`,true); return; }
-            const valor=jogos*10; if (!await window.confirmarAcao(`Confirma que verificou no banco o recebimento de R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} (${jogos} jogo(s))?`,{confirmText:'Confirmar recebimento'})) return;
-            const atleta=(window.atletasCache||[]).find(a=>String(a.id)===athleteId), agora=Date.now();
-            window.punicoesCache=[...(window.punicoesCache||[]),{id:`red_${agora}_${Math.random().toString(36).slice(2,8)}`,athleteId,athleteName:String(atleta?.nome||'Atleta'),categoria:'abatimento',data:dataISOHojeLocal(),jogosAbatidos:jogos,valorMulta:valor,multaStatus:'paga',pagoEm:dataISOHojeLocal(),status:'ativa',createdAt:agora,confirmadoPor:String(window.firebaseUser.uid||'')}];
-            registrarAlteracaoPunicoes(); event.target.reset(); window.atualizarValorAbatimento(); window.mostrarToast('Recebimento confirmado; jogos abatidos da fila sequencial.');
+            const limite=obterLimiteAbatimento(athleteId);
+            if (!athleteId || !Number.isInteger(jogos) || jogos<1 || jogos>limite.maxJogos) { window.mostrarToast(`Abatimento bloqueado: o atleta precisa ter multa em aberto e suspensão ativa. Máximo atual: ${limite.maxJogos} jogo(s).`,true); return; }
+            const resumo=obterDistribuicaoMultasAtleta(athleteId), atleta=(window.atletasCache||[]).find(a=>String(a.id)===athleteId), agora=Date.now(), valor=jogos*10;
+            let centavosRestantes=jogos*1000; const alocacoes=[];
+            resumo.multas.forEach(multa=>{
+                if(centavosRestantes<=0) return;
+                const saldoCentavos=Math.round(Number(resumo.saldos.get(String(multa.id))||0)*100), aplicar=Math.min(saldoCentavos,centavosRestantes);
+                if(aplicar>0){alocacoes.push({multaId:String(multa.id),valor:aplicar/100,jogos:aplicar/1000});centavosRestantes-=aplicar;}
+            });
+            if(centavosRestantes>0){window.mostrarToast('Não foi possível vincular todo o abatimento ao saldo de multas em aberto. Atualize o painel e confira o atleta.',true);return;}
+            if (!await window.confirmarAcao(`Confirma que verificou no banco o recebimento de R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} (${jogos} jogo(s))? Esse valor será vinculado às multas pendentes do atleta.`,{confirmText:'Confirmar recebimento'})) return;
+            window.punicoesCache=[...(window.punicoesCache||[]),{id:`red_${agora}_${Math.random().toString(36).slice(2,8)}`,athleteId,athleteName:String(atleta?.nome||'Atleta'),categoria:'abatimento',data:dataISOHojeLocal(),jogosAbatidos:jogos,valorMulta:valor,alocacoesMultas:alocacoes,multaStatus:'paga',pagoEm:dataISOHojeLocal(),status:'ativa',createdAt:agora,confirmadoPor:String(window.firebaseUser.uid||'')}];
+            registrarAlteracaoPunicoes(); event.target.reset(); window.atualizarValorAbatimento(); window.mostrarToast('Recebimento vinculado às multas existentes; saldo e jogos foram recalculados.');
         };
 
         function rotuloCategoriaPunicao(categoria) {
@@ -3377,7 +3529,7 @@
                 (window.punicoesCache || []).forEach(p => {
                     if (!p || p.status === 'cancelada' || !p.athleteId) return;
                     if (p.categoria === 'abatimento') {
-                        const gamesReduced = Number(p.jogosAbatidos);
+                        const gamesReduced = jogosAbatidosPunicao(p);
                         if (p.multaStatus === 'paga' && Number.isInteger(gamesReduced) && gamesReduced > 0) {
                             adicionar({
                                 id: `reducao_${p.id}`, tipo: 'reducao', athleteId: String(p.athleteId),
@@ -3426,26 +3578,18 @@
 
         function criarProjecaoPublicaReceitasPunicoes() {
             const totais = new Map();
-            (window.punicoesCache || []).forEach(registro => {
-                const valor = valorRecebidoPunicao(registro);
-                const data = String(registro?.pagoEm || registro?.data || '');
-                const partes = data.match(/^(20\d{2})-(\d{2})-\d{2}$/);
-                if (registro?.multaStatus !== 'paga' || !Number.isFinite(valor) || valor <= 0 || !partes || Number(partes[2]) < 1 || Number(partes[2]) > 12 || registro?.estornado === true) return;
-                const chave = `${partes[1]}-${partes[2]}`;
-                totais.set(chave, (totais.get(chave) || 0) + Math.round(valor * 100));
-            });
-            return [...totais.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([chave, centavos]) => ({
-                ano: Number(chave.slice(0, 4)), mes: chave.slice(5, 7), valor: centavos / 100
+            (window.punicoesCache || []).forEach(registro => eventosFinanceirosPunicao(registro).forEach(evento => {
+                const partes=String(evento.data||'').match(/^(20\d{2})-(\d{2})-\d{2}$/);
+                if(!partes||Number(partes[2])<1||Number(partes[2])>12||!Number.isFinite(evento.valor)||evento.valor===0)return;
+                const chave=`${partes[1]}-${partes[2]}`;
+                totais.set(chave,(totais.get(chave)||0)+Math.round(evento.valor*100));
             }));
+            return [...totais.entries()].filter(([,centavos])=>centavos!==0).sort(([a],[b])=>a.localeCompare(b)).map(([chave,centavos])=>({ano:Number(chave.slice(0,4)),mes:chave.slice(5,7),valor:centavos/100}));
         }
 
         function somarReceitasPunicoesNoAno(ano) {
             if (window.isAdminLogado && window.disciplineLoaded) {
-                return (window.punicoesCache || []).reduce((total, registro) => {
-                    const data = String(registro?.pagoEm || registro?.data || '');
-                    const valor = valorRecebidoPunicao(registro);
-                    return registro?.multaStatus === 'paga' && registro?.estornado !== true && Number(data.slice(0, 4)) === Number(ano) && Number.isFinite(valor) && valor > 0 ? total + valor : total;
-                }, 0);
+                return (window.punicoesCache || []).reduce((total, registro) => total + eventosFinanceirosPunicao(registro).reduce((soma, evento) => Number(String(evento.data||'').slice(0,4))===Number(ano)?soma+Number(evento.valor||0):soma,0), 0);
             }
             return (window.receitasPunicoesPublicasCache || []).reduce((total, item) => Number(item?.ano) === Number(ano) ? total + Number(item?.valor || 0) : total, 0);
         }
@@ -4612,6 +4756,10 @@
                 secao.linhas.push([nome || '—', descricao || '—', periodo || '—', formatarMoedaPDF(quantia)]);
                 if (contabilizar) secao.total += quantia;
             };
+            const adicionarLinhaEstorno = (categoria, nome, descricao, periodo, valor) => {
+                const quantia=Number(valor); if(!Number.isFinite(quantia)||quantia<=0)return;
+                const secao=secoes[categoria]; secao.linhas.push([nome||'—',descricao||'Estorno',periodo||'—',`−${formatarMoedaPDF(quantia)}`]); secao.total-=quantia;
+            };
 
             // Mensalidades, aportes e multas vinculados ao histórico de cada atleta.
             (window.atletasCache || []).forEach(atleta => {
@@ -4648,31 +4796,22 @@
                 });
             });
 
-            // Multas e abatimentos do painel; somente o valor efetivamente recebido entra no caixa.
+            // Multas e abatimentos: recebimentos e estornos aparecem em suas datas; pendências usam saldo líquido.
             (window.punicoesCache || []).forEach(registro => {
-                const original = Number(registro?.valorMulta || 0);
-                const paga = registro?.multaStatus === 'paga';
-                const dataLancamento = String(paga ? (registro.pagoEm || registro.data || '') : (registro.data || ''));
-                if (!Number.isFinite(original) || original <= 0 || !dataLancamento || registro?.estornado === true || (registro?.status === 'cancelada' && !paga) || !pertenceAoPeriodo(dataLancamento)) return;
-                if (registro.categoria === 'abatimento' && !paga) return;
-                const atleta = (window.atletasCache || []).find(item => String(item.id) === String(registro.athleteId));
-                const nome = atleta?.nome || registro.athleteName || 'Atleta';
-                let valor, descricao;
-                if (paga) {
-                    valor = valorRecebidoPunicao(registro);
-                    descricao = registro.categoria === 'abatimento'
-                        ? `Abatimento de suspensão — ${Number(registro.jogosAbatidos) || 0} jogo(s)`
-                        : `Multa recebida — ${rotuloCategoriaPunicao(registro.categoria)} (original ${formatarMoedaPDF(original)})`;
-                    if (valor <= 0) return;
-                    adicionarLinha('MULTAS', nome, descricao, periodoDoRegistro(dataLancamento), valor);
-                } else {
-                    const resumo = obterDistribuicaoMultasAtleta(registro.athleteId);
-                    valor = Number(resumo.saldos.get(String(registro.id)) || 0);
-                    if (valor <= 0) return;
-                    descricao = `Saldo pendente — ${rotuloCategoriaPunicao(registro.categoria)} (multa original ${formatarMoedaPDF(original)})`;
-                    adicionarLinha('MULTAS', nome, descricao, periodoDoRegistro(dataLancamento), valor, false);
-                    secoes.MULTAS.pendentes += valor;
-                }
+                const atleta=(window.atletasCache||[]).find(item=>String(item.id)===String(registro.athleteId)), nome=atleta?.nome||registro.athleteName||'Atleta';
+                eventosFinanceirosPunicao(registro).forEach(evento=>{
+                    if(!Number.isFinite(evento.valor)||evento.valor===0||!pertenceAoPeriodo(evento.data))return;
+                    const periodo=periodoDoRegistro(evento.data);
+                    if(evento.valor>0) adicionarLinha('MULTAS',nome,evento.motivo,periodo,evento.valor);
+                    else adicionarLinhaEstorno('MULTAS',nome,evento.motivo,periodo,Math.abs(evento.valor));
+                });
+                if(registro.categoria==='abatimento'||registro.status==='cancelada'||registro.multaStatus==='paga')return;
+                const dataLancamento=String(registro.data||''), original=Number(registro.valorMulta||0);
+                if(original<=0||!pertenceAoPeriodo(dataLancamento))return;
+                const resumo=obterDistribuicaoMultasAtleta(registro.athleteId), saldo=Number(resumo.saldos.get(String(registro.id))||0);
+                if(saldo<=0)return;
+                adicionarLinha('MULTAS',nome,`Saldo pendente — ${rotuloCategoriaPunicao(registro.categoria)} (multa original ${formatarMoedaPDF(original)})`,periodoDoRegistro(dataLancamento),saldo,false);
+                secoes.MULTAS.pendentes+=saldo;
             });
 
             // Pagamentos de sócios.
