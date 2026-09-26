@@ -3660,6 +3660,49 @@
 
             addLine('Atleta', athlete.nome || '—', 'font-bold text-white');
 
+            const suspensoesAtivas = obterSuspensoesAte(dataISOHojeLocal())
+                .filter(suspensao => String(suspensao.athleteId) === String(athlete.id));
+            const destaqueSuspensao = document.createElement('section');
+            destaqueSuspensao.setAttribute('aria-label', 'Situação das suspensões por jogos');
+            destaqueSuspensao.className = suspensoesAtivas.length
+                ? 'mt-3 mb-2 rounded-xl border-2 border-red-500 bg-red-950/60 p-4 shadow-lg shadow-red-950/40'
+                : 'mt-3 mb-2 rounded-xl border border-stone-700 bg-stone-800/70 p-3';
+            const tituloSuspensao = document.createElement('p');
+            tituloSuspensao.className = `text-[10px] font-black uppercase tracking-wider ${suspensoesAtivas.length ? 'text-red-200' : 'text-stone-300'}`;
+            tituloSuspensao.textContent = suspensoesAtivas.length ? 'Suspensão ativa por jogos' : 'Suspensão por jogos';
+            destaqueSuspensao.appendChild(tituloSuspensao);
+            if (suspensoesAtivas.length) {
+                suspensoesAtivas.forEach(suspensao => {
+                    const item = document.createElement('div');
+                    item.className = 'mt-2 rounded-lg border border-red-900/70 bg-black/20 p-3';
+                    const progresso = document.createElement('p');
+                    progresso.className = 'text-sm font-black text-white';
+                    progresso.textContent = `${suspensao.servedGames} de ${suspensao.totalGames} cumpridos · restam ${suspensao.remainingGames}`;
+                    item.appendChild(progresso);
+                    const aplicada = document.createElement('p');
+                    aplicada.className = 'mt-1 text-[10px] text-red-100';
+                    aplicada.textContent = `Aplicada na súmula de ${formatarDataISO(suspensao.appliedDate)}.`;
+                    item.appendChild(aplicada);
+                    if (suspensao.reason) {
+                        const motivo = document.createElement('p');
+                        motivo.className = 'mt-1 text-[10px] text-stone-300';
+                        motivo.textContent = `Motivo: ${suspensao.reason}`;
+                        item.appendChild(motivo);
+                    }
+                    const previsao = document.createElement('p');
+                    previsao.className = 'mt-1 text-[10px] font-semibold text-amber-200';
+                    previsao.textContent = `Domingos previstos: ${suspensao.projectedSundays.map(formatarDataISO).join(', ')}. Só contam após publicação da súmula.`;
+                    item.appendChild(previsao);
+                    destaqueSuspensao.appendChild(item);
+                });
+            } else {
+                const semSuspensao = document.createElement('p');
+                semSuspensao.className = 'mt-1 text-[11px] text-stone-400';
+                semSuspensao.textContent = 'Nenhuma suspensão pendente.';
+                destaqueSuspensao.appendChild(semSuspensao);
+            }
+            content.appendChild(destaqueSuspensao);
+
             const destaqueMensalidade = document.createElement('section');
             destaqueMensalidade.setAttribute('aria-label', `Situação da mensalidade de ${tituloMesAtual}`);
             destaqueMensalidade.setAttribute('aria-live', 'polite');
