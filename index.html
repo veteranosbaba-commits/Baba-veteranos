@@ -1397,6 +1397,124 @@
         let toastTimeout = null;
         let syncEmAndamento = false;
         let renderFinanceiroAtletasTimeout = null;
+        let adminProjectionSyncInProgress = false;
+        // Guarda o último snapshot lido para bloquear gravações antigas entre administradores.
+        const adminSaveSnapshots = {
+            publicData: {loaded: false, value: null},
+            privateAthletes: {loaded: false, value: null},
+            privateFinance: {loaded: false, value: null},
+            privateDiscipline: {loaded: false, value: null}
+        };
+        window.latestPublicDataSnapshot = null;
+        window.hasPublicDataSnapshot = false;
+
+        function cloneAdminSaveValue(value) {
+            return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+        }
+
+        function canonicalAdminSaveValue(value) {
+            if (Array.isArray(value)) return '[' + value.map(canonicalAdminSaveValue).join(',') + ']';
+            if (value && typeof value === 'object') {
+                return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonicalAdminSaveValue(value[key])).join(',') + '}';
+            }
+            return JSON.stringify(value);
+        }
+
+        function setAdminSaveSnapshot(key, value, force = false) {
+            const entry = adminSaveSnapshots[key];
+            if (!entry || (entry.loaded && !force)) return;
+            entry.loaded = true;
+            entry.value = cloneAdminSaveValue(value);
+        }
+
+        function resetPrivateAdminSaveSnapshots() {
+            ['privateAthletes', 'privateFinance', 'privateDiscipline'].forEach(key => {
+                adminSaveSnapshots[key] = {loaded: false, value: null};
+            });
+        }
+
+        function adminSaveError(code, message) {
+            const error = new Error(message);
+            error.code = code;
+            return error;
+        }
+
+        function applyAdminSaveBaselinePath(path, value) {
+            const exact = {
+                'public/data': 'publicData',
+                'private/athletes': 'privateAthletes',
+                'private/finance': 'privateFinance',
+                'private/discipline/records': 'privateDiscipline'
+            }[path];
+            if (exact) {
+                setAdminSaveSnapshot(exact, value, true);
+                if (exact === 'publicData') {
+                    window.latestPublicDataSnapshot = cloneAdminSaveValue(value);
+                    window.hasPublicDataSnapshot = true;
+                }
+                return;
+            }
+            if (!path.startsWith('public/data/')) return;
+            const entry = adminSaveSnapshots.publicData;
+            const root = cloneAdminSaveValue(entry.value) || {};
+            const parts = path.slice('public/data/'.length).split('/');
+            let target = root;
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!target[parts[i]] || typeof target[parts[i]] !== 'object') target[parts[i]] = {};
+                target = target[parts[i]];
+            }
+            target[parts[parts.length - 1]] = cloneAdminSaveValue(value);
+            setAdminSaveSnapshot('publicData', root, true);
+            window.latestPublicDataSnapshot = cloneAdminSaveValue(root);
+            window.hasPublicDataSnapshot = true;
+        }
+
+        window.commitAdminDataWithGuard = async function(updates, requiredKeys) {
+            if (!window.dbRef || !window.isAdminLogado || !window.authRef?.currentUser) {
+                throw adminSaveError('ADMIN_NOT_READY', 'A sessão administrativa não está pronta.');
+            }
+            const user = window.authRef.currentUser;
+            const token = `${user.uid}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+            const offsetSnapshot = await firebase.database().ref('.info/serverTimeOffset').once('value');
+            const serverNow = Date.now() + (Number(offsetSnapshot.val()) || 0);
+            const lockRef = window.dbRef.child('meta/adminSaveLock');
+            const lockResult = await lockRef.transaction(current => {
+                if (current && Number(current.expiresAt) > serverNow) return;
+                return {owner: token, expiresAt: serverNow + 120000};
+            }, undefined, false);
+            if (!lockResult.committed || lockResult.snapshot.val()?.owner !== token) {
+                throw adminSaveError('ADMIN_WRITE_BUSY', 'Outro administrador está salvando agora. Aguarde e tente novamente.');
+            }
+
+            try {
+                const snapshotRefs = {
+                    publicData: window.publicRef.child('data'),
+                    privateAthletes: window.privateRef.child('athletes'),
+                    privateFinance: window.privateRef.child('finance'),
+                    privateDiscipline: window.privateRef.child('discipline/records')
+                };
+                const snapshots = await Promise.all(requiredKeys.map(key => snapshotRefs[key].once('value')));
+                for (let i = 0; i < requiredKeys.length; i++) {
+                    const key = requiredKeys[i];
+                    const baseline = adminSaveSnapshots[key];
+                    if (!baseline?.loaded) {
+                        throw adminSaveError('ADMIN_BASELINE_MISSING', 'Os dados ainda estão carregando. Atualize a página antes de salvar.');
+                    }
+                    if (canonicalAdminSaveValue(snapshots[i].val()) !== canonicalAdminSaveValue(baseline.value)) {
+                        throw adminSaveError('ADMIN_DATA_CONFLICT', 'Outro administrador atualizou os dados. Nada foi salvo; atualize a página e refaça sua alteração.');
+                    }
+                }
+                await window.dbRef.update(updates);
+                Object.entries(updates).forEach(([path, value]) => applyAdminSaveBaselinePath(path, value));
+            } finally {
+                try {
+                    await lockRef.transaction(current => current?.owner === token ? null : undefined, undefined, false);
+                } catch (releaseError) {
+                    console.error('Não foi possível liberar imediatamente a trava de salvamento.', releaseError?.code || '');
+                }
+            }
+        };
+
         window.confirmacaoAppPendente = null;
 
         window.confirmarAcao = function(mensagem, opcoes = {}) {
@@ -1619,6 +1737,7 @@
         
         function removerEscutasPrivadas() {
             (window.privateListeners || []).forEach(({ref, callback}) => ref.off('value', callback));
+            resetPrivateAdminSaveSnapshots();
             window.privateListeners = [];
             window.financialAthleteListeners = {};
             window.financialAthleteCache = {};
@@ -1642,17 +1761,20 @@
         }
 
         window.carregarDadosPrivadosAdmin = async function() {
+            if (window.hasPublicDataSnapshot) setAdminSaveSnapshot('publicData', window.latestPublicDataSnapshot, true);
             removerEscutasPrivadas();
             window.disciplineLoaded = false;
             const athletesRef = window.privateRef.child('athletes');
             const financeRef = window.privateRef.child('finance');
             const disciplineRef = window.privateRef.child('discipline/records');
             const onAthletes = snapshot => {
+                setAdminSaveSnapshot('privateAthletes', snapshot.val());
                 window.privateAthletesCache = snapshot.val() || {};
                 aplicarCachePrivado();
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onFinance = snapshot => {
+                setAdminSaveSnapshot('privateFinance', snapshot.val());
                 window.privateFinanceCache = snapshot.val() || {};
                 window.gastosCache = window.privateFinanceCache.gastos || [];
                 window.sociosCache = window.privateFinanceCache.socios || [];
@@ -1661,6 +1783,7 @@
             };
             const onDiscipline = snapshot => {
                 const value = snapshot.val();
+                setAdminSaveSnapshot('privateDiscipline', value);
                 window.punicoesCache = Array.isArray(value) ? value : Object.values(value || {});
                 window.disciplineLoaded = true;
                 window.sincronizarProjecoesPunicoesPublicas?.();
@@ -1813,19 +1936,24 @@
             
             const revisionPunicoesSalva = window.punicoesRevision || 0;
             const salvarPunicoesPrivadas = Boolean(window.punicoesDirty && window.disciplineLoaded);
-            const gravacoes = [
-                window.publicRef.child('data').set(dataPublica),
-                window.privateRef.child('athletes').set(atletasPrivados),
-                window.privateRef.child('finance').set(dadosFinanceirosPrivados)
-            ];
-            if (salvarPunicoesPrivadas) gravacoes.push(window.privateRef.child('discipline/records').set(window.punicoesCache || []));
+            const atualizacoes = {
+                'public/data': dataPublica,
+                'private/athletes': atletasPrivados,
+                'private/finance': dadosFinanceirosPrivados
+            };
+            const baselinesNecessarios = ['publicData', 'privateAthletes', 'privateFinance'];
+            if (salvarPunicoesPrivadas) {
+                atualizacoes['private/discipline/records'] = window.punicoesCache || [];
+                baselinesNecessarios.push('privateDiscipline');
+            }
 
-            Promise.all(gravacoes)
-                .then(() => {
+            (async () => {
+                try {
+                    await window.commitAdminDataWithGuard(atualizacoes, baselinesNecessarios);
                     if (salvarPunicoesPrivadas && revisionPunicoesSalva === (window.punicoesRevision || 0)) window.punicoesDirty = false;
-                    console.log('Dados salvos');
+                    console.log('Dados salvos atomicamente');
                     if (!opcoes.silencioso) window.renderizarTudo();
-                    
+
                     // Restaurar estado dos acordeões
                     if (abertoBota) {
                         document.getElementById('scouts-list-BOTAFOGO')?.classList.remove('hidden');
@@ -1835,21 +1963,25 @@
                         document.getElementById('scouts-list-FLUMINENSE')?.classList.remove('hidden');
                         document.querySelector('[onclick*="FLUMINENSE"] .chevron')?.classList.add('rotate-90');
                     }
-
-                    syncEmAndamento = false;
-                    if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
-                })
-                .catch((error) => {
-                    console.error('Erro ao salvar:', error);
-                    syncEmAndamento = false;
-                    if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
-                    if (!window.babaPodeGravarOnline?.()) {
+                } catch (error) {
+                    console.error('Erro ao salvar:', error?.code || '');
+                    if (!window.babaPodeGravarOnline?.() && !['ADMIN_DATA_CONFLICT', 'ADMIN_WRITE_BUSY', 'ADMIN_BASELINE_MISSING'].includes(error?.code)) {
                         window.babaAtualizarAvisoConexao?.();
-                        if (!opcoes.silencioso) window.mostrarToast('A conexão caiu durante o salvamento. Confira os dados após reconectar antes de tentar novamente.', true);
-                        return;
+                        if (!opcoes.silencioso) window.mostrarToast('A conexão caiu durante o salvamento. Confira os dados após reconectar; nada será repetido automaticamente.', true);
+                    } else if (error?.code === 'ADMIN_DATA_CONFLICT') {
+                        window.mostrarToast('Outro administrador atualizou os dados. Nada foi salvo; atualize a página e refaça sua alteração.', true);
+                    } else if (error?.code === 'ADMIN_WRITE_BUSY') {
+                        window.mostrarToast('Outro administrador está salvando agora. Aguarde e tente novamente.', true);
+                    } else if (error?.code === 'ADMIN_BASELINE_MISSING') {
+                        window.mostrarToast('Os dados ainda estão carregando. Atualize a página antes de salvar.', true);
+                    } else if (!opcoes.silencioso) {
+                        window.mostrarToast('Erro ao salvar. Confira a conexão e tente novamente.', true);
                     }
-                    if (!opcoes.silencioso) window.mostrarToast('Erro ao salvar. Confira a conexão e tente novamente.', true);
-                });
+                } finally {
+                    syncEmAndamento = false;
+                    if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
+                }
+            })();
         };
         
         async function carregarDadosIniciais() {
@@ -1858,7 +1990,11 @@
             if (window.publicAthletesCache.length === 0) document.getElementById('loading-overlay')?.classList.remove('hidden');
 
             window.publicRef.child('data').on('value', (snapshot) => {
-                const data = snapshot.val() || {};
+                const rawData = snapshot.val();
+                window.latestPublicDataSnapshot = cloneAdminSaveValue(rawData);
+                window.hasPublicDataSnapshot = true;
+                setAdminSaveSnapshot('publicData', rawData, !window.isAdminLogado);
+                const data = rawData || {};
                 window.publicAthletesCache = Array.isArray(data.atletas) ? data.atletas : Object.values(data.atletas || {});
                 window.sumulasCache = data.sumulas || [];
                 window.suspensoesPublicasCache = (Array.isArray(data.suspensoesPublicas) ? data.suspensoesPublicas : []).filter(item => item && item.tipo === 'suspensao').map(item => ({
@@ -3632,14 +3768,21 @@
         }
 
         window.sincronizarProjecoesPunicoesPublicas = function() {
-            if (!window.isAdminLogado || !window.disciplineLoaded || !window.publicDataLoaded || !window.publicRef || syncEmAndamento || !window.babaPodeGravarOnline?.()) return;
+            if (!window.isAdminLogado || !window.disciplineLoaded || !window.publicDataLoaded || !window.publicRef || syncEmAndamento || adminProjectionSyncInProgress || !window.babaPodeGravarOnline?.()) return;
             const desejadasSuspensoes = criarProjecaoPublicaPunicoes();
             const desejadasReceitas = criarProjecaoPublicaReceitasPunicoes();
-            const normalizar = valor => JSON.stringify(valor || []);
-            const gravacoes = [];
-            if (normalizar(desejadasSuspensoes) !== normalizar(window.suspensoesPublicasCache)) gravacoes.push(window.publicRef.child('data/suspensoesPublicas').set(desejadasSuspensoes));
-            if (normalizar(desejadasReceitas) !== normalizar(window.receitasPunicoesPublicasCache)) gravacoes.push(window.publicRef.child('data/receitasPunicoesPublicas').set(desejadasReceitas));
-            if (gravacoes.length) Promise.all(gravacoes).catch(error => console.error('Falha ao atualizar o resumo público das punições.', error?.code || ''));
+            const normalizar = valor => canonicalAdminSaveValue(valor || []);
+            const atualizacoes = {};
+            if (normalizar(desejadasSuspensoes) !== normalizar(window.suspensoesPublicasCache)) atualizacoes['public/data/suspensoesPublicas'] = desejadasSuspensoes;
+            if (normalizar(desejadasReceitas) !== normalizar(window.receitasPunicoesPublicasCache)) atualizacoes['public/data/receitasPunicoesPublicas'] = desejadasReceitas;
+            if (!Object.keys(atualizacoes).length) return;
+            adminProjectionSyncInProgress = true;
+            window.commitAdminDataWithGuard(atualizacoes, ['publicData'])
+                .catch(error => {
+                    console.error('Falha ao atualizar o resumo público das punições.', error?.code || '');
+                    if (error?.code === 'ADMIN_DATA_CONFLICT') window.mostrarToast('Outro administrador atualizou os dados. Atualize a página antes de continuar.', true);
+                })
+                .finally(() => { adminProjectionSyncInProgress = false; });
         };
 
         function obterSuspensoesAte(dataReferencia) {
