@@ -337,24 +337,25 @@
 
 </head>
 <body class="bg-stone-900 text-gray-100 font-sans pb-32 soccer-bg">
-    <div id="offline-status-banner" role="status" aria-live="polite" style="display:none;position:sticky;top:0;z-index:200;background:#7f1d1d;color:#fff;padding:.7rem 1rem;text-align:center;font:700 14px/1.4 system-ui,sans-serif;box-shadow:0 2px 10px #0006"></div>
     <script>
         window.firebaseConexaoVerificada=false;
         window.firebaseConectado=false;
-        window.babaEstavaOffline=false;
+        window.firebaseConnectionError=false;
         window.babaAtualizarAvisoConexao=function(){
-            const aviso=document.getElementById('offline-status-banner'); if(!aviso)return;
-            const offline=!navigator.onLine||(window.firebaseInicializado&&(!window.firebaseConexaoVerificada||!window.firebaseConectado));
+            const offline=!navigator.onLine||window.firebaseConnectionError||(window.firebaseInicializado&&(!window.firebaseConexaoVerificada||!window.firebaseConectado));
             const indicador=document.getElementById('sync-indicator');
-            if(indicador)indicador.innerHTML=offline?'<i class="fa-solid fa-circle text-[6px] text-red-500"></i> <span class="hidden sm:inline">Offline</span>':'<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> <span class="hidden sm:inline">Online</span>';
-            if(offline){aviso.style.display='block';aviso.style.background='#7f1d1d';aviso.textContent='Sem conexão com a internet ou com o banco. Os dados podem estar desatualizados e alterações não serão salvas.';window.babaEstavaOffline=true;if(window.firebaseConexaoVerificada)document.getElementById('loading-overlay')?.classList.add('hidden');return;}
-            if(window.babaEstavaOffline){aviso.style.display='block';aviso.style.background='#065f46';aviso.textContent='Conexão restabelecida. Atualize a página para carregar os dados atuais; alterações feitas offline não foram gravadas.';window.babaEstavaOffline=false;setTimeout(()=>{if(navigator.onLine&&window.firebaseConectado)aviso.style.display='none';},7000);return;}
-            aviso.style.display='none';
+            if(indicador){
+                indicador.innerHTML=offline?'<span aria-hidden="true" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444"></span>':'<i aria-hidden="true" class="fa-solid fa-kiwi-bird text-emerald-400 text-[11px]"></i>';
+                indicador.setAttribute('aria-label',offline?'Sem conexão':'Conectado');
+                indicador.title=offline?'Sem conexão com a internet ou com o banco':'Conectado ao banco';
+            }
+            if(offline)document.getElementById('loading-overlay')?.classList.add('hidden');
         };
-        window.babaPodeGravarOnline=function(){return Boolean(navigator.onLine&&window.firebaseInicializado&&window.firebaseConexaoVerificada&&window.firebaseConectado);};
-        window.babaExigirConexao=function(silencioso=false){if(window.babaPodeGravarOnline())return true;window.babaAtualizarAvisoConexao?.();if(!silencioso)window.mostrarToast?.('Sem conexão ativa com o banco. A alteração não foi salva; reconecte e atualize a página.',true);return false;};
+        window.babaPodeGravarOnline=function(){return Boolean(navigator.onLine&&window.firebaseInicializado&&window.firebaseConexaoVerificada&&window.firebaseConectado&&!window.firebaseConnectionError);};
+        window.babaExigirConexao=function(silencioso=false){if(window.babaPodeGravarOnline())return true;window.babaAtualizarAvisoConexao?.();if(!silencioso)window.mostrarToast?.('Sem conexão ativa com o banco. A alteração não foi salva; reconecte e tente novamente.',true);return false;};
         window.addEventListener('online',()=>window.babaAtualizarAvisoConexao());
         window.addEventListener('offline',()=>window.babaAtualizarAvisoConexao());
+        window.addEventListener('DOMContentLoaded',()=>window.babaAtualizarAvisoConexao());
         window.babaAtualizarAvisoConexao();
     </script>
     <!-- O tema atual pode ser alternado pelo nome do clube no cabeçalho. -->
@@ -389,9 +390,8 @@
                         <i class="fa-solid fa-user-gear"></i> ADMIN 
                         <button onclick="window.logoutAdmin()" class="underline font-bold text-stone-900 ml-1 hover:no-underline">SAIR</button>
                     </div>
-                    <div id="sync-indicator" class="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 
-                        <span class="hidden sm:inline">Online</span>
+                    <div id="sync-indicator" class="w-4 h-4 flex items-center justify-center text-emerald-400" role="img" aria-label="Conectado" title="Conectado ao banco">
+                        <i aria-hidden="true" class="fa-solid fa-kiwi-bird text-[11px]"></i>
                     </div>
                 </div>
             </div>
@@ -1525,6 +1525,7 @@
                     window.firebaseConnectionRef.on('value', snapshot => {
                         window.firebaseConexaoVerificada = true;
                         window.firebaseConectado = snapshot.val() === true;
+                        window.firebaseConnectionError = false;
                         window.babaAtualizarAvisoConexao?.();
                     });
                 }
@@ -1609,8 +1610,10 @@
                 return true;
             } catch (error) {
                 console.error('Erro Firebase:', error);
-                document.getElementById('sync-indicator').innerHTML = '<i class="fa-solid fa-circle text-[6px] text-red-500"></i> <span class="hidden sm:inline">Offline</span>';
-                window.mostrarToast('Erro de conexão!', true);
+                window.firebaseConnectionError = true;
+                window.firebaseConexaoVerificada = true;
+                window.firebaseConectado = false;
+                window.babaAtualizarAvisoConexao?.();
                 return false;
             }
         }
