@@ -77,13 +77,30 @@
           ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
           "$uid": {
             ".read": "auth != null && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
-            ".write": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth.uid === $uid && auth.token.email_verified === true && !root.child('baba/roles/users/' + $uid).exists() && !root.child('baba/roles/admins/' + $uid).exists()))",
+            ".write": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth.uid === $uid && auth.token.email_verified === true && !root.child('baba/roles/users/' + $uid).exists() && !root.child('baba/roles/admins/' + $uid).exists() && !root.child('baba/roles/adminPending/' + $uid).exists()))",
             ".validate": "newData.hasChildren(['email', 'requestedAt']) && auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth.uid === $uid && auth.token.email_verified === true && newData.child('email').val() === auth.token.email && newData.child('requestedAt').isNumber() && newData.child('requestedAt').val() <= now && newData.child('requestedAt').val() >= now - 300000))",
             "email": {
               ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isString() && auth.uid === $uid && auth.token.email_verified === true && newData.val() === auth.token.email))"
             },
             "requestedAt": {
               ".validate": "auth != null && ((auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (newData.isNumber() && auth.uid === $uid && auth.token.email_verified === true && newData.val() <= now && newData.val() >= now - 300000))"
+            },
+            "$other": {
+              ".validate": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
+            }
+          }
+        },
+        "adminPending": {
+          ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+            ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth != null && auth.uid === $uid && auth.token.email_verified === true && !root.child('baba/roles/users/' + $uid).exists() && !root.child('baba/roles/admins/' + $uid).exists())",
+            ".validate": "newData.hasChildren(['email', 'requestedAt']) && (auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth != null && auth.uid === $uid && auth.token.email_verified === true && !root.child('baba/roles/users/' + $uid).exists() && !root.child('baba/roles/admins/' + $uid).exists() && !root.child('baba/roles/pending/' + $uid).exists() && newData.child('email').val() === auth.token.email && newData.child('requestedAt').isNumber() && newData.child('requestedAt').val() <= now && newData.child('requestedAt').val() >= now - 300000))",
+            "email": {
+              ".validate": "(auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)) || (auth != null && auth.uid === $uid && auth.token.email_verified === true && newData.isString() && newData.val() === auth.token.email)"
+            },
+            "requestedAt": {
+              ".validate": "(auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)) || (auth != null && auth.uid === $uid && auth.token.email_verified === true && newData.isNumber() && newData.val() <= now && newData.val() >= now - 300000)"
             },
             "$other": {
               ".validate": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
