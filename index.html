@@ -431,7 +431,7 @@
                         <i class="fa-solid fa-vault mr-1"></i> <span id="dash-saldo-titulo">Saldo Geral da Liga</span>
                     </p>
                     <h3 id="dash-saldo-total" class="text-3xl sm:text-4xl font-mono font-bold text-emerald-400 tracking-tight">R$ 0,00</h3>
-                    
+                    <p id="dash-punicoes-recebidas" class="mt-2 text-[10px] text-stone-400">Multas e abatimentos recebidos: R$ 0,00</p>
                 </div>
                 <div class="bg-black/90 rounded-2xl border-2 border-red-500 p-5 relative overflow-hidden shadow-2xl">
                     <div class="absolute top-0 right-0 bg-red-500 text-white font-black text-[10px] px-3 py-0.5 rounded-bl-lg uppercase tracking-widest">Despesas</div>
@@ -512,6 +512,7 @@
                         <tr class="bg-stone-800 text-gray-400 text-[9px] uppercase tracking-widest border-b border-stone-700">
                             <th class="p-2 text-center w-12">#</th>
                             <th class="p-2">Nome</th>
+                            <th class="p-2 text-center w-20">Condição</th>
                             <th class="p-2 text-center w-20">Mês</th>
                         </tr>
                     </thead>
@@ -572,7 +573,12 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                
+                                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                    <h4 class="font-black text-orange-500 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
+                        <i class="fa-solid fa-gavel mr-2"></i>Multas Pagas
+                    </h4>
+                    <div id="financeiro-multas-acordeao" class="space-y-1"></div>
+                </div>
 <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <h4 class="font-black text-red-400 uppercase tracking-wide text-xs mb-4 pb-2 border-b border-stone-800">
                         <i class="fa-solid fa-circle-minus mr-2"></i>Gastos Realizados
@@ -645,10 +651,30 @@
                     </div>
 
                     <!-- REGRA 6 -->
-                    
+                    <div class="bg-black/40 p-4 rounded-xl border border-stone-800">
+                        <h4 class="text-amber-500 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-square"></i> Disciplina e Cartões
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center justify-between gap-3 bg-stone-800/50 p-3 rounded">
+                                <span><i class="fa-solid fa-copy text-amber-500 mr-2"></i>3º cartão amarelo</span>
+                                <span class="font-bold text-emerald-400 text-right">R$ 15,00 para jogar ou cumprir suspensão, a critério do atleta.</span>
+                            </li>
+                            <li class="bg-stone-800/50 p-3 rounded border-l-4 border-red-600">
+                                <div class="flex items-center justify-between gap-3"><span><i class="fa-solid fa-square text-red-600 mr-2"></i>Cartão vermelho</span><span class="font-bold text-red-400">Multa de R$ 20,00</span></div>
+                                <p class="text-xs text-stone-400 mt-1">Além da multa, o atleta deverá cumprir a suspensão determinada.</p>
+                            </li>
+                        </ul>
+                    </div>
 
                     <!-- REGRA 7 -->
-                    
+                    <div class="bg-black/40 p-4 rounded-xl border border-orange-900/50">
+                        <h4 class="text-orange-400 font-bold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-gavel"></i> Suspensões Disciplinares
+                        </h4>
+                        <p>O atleta suspenso poderá reduzir o período da punição pagando <strong class="text-orange-300">R$ 10,00 por cada jogo de suspensão</strong>. O valor total pode ser pago de uma só vez ou jogo a jogo. Cada pagamento corresponde a um jogo da suspensão; se pagar individualmente, o atleta fica apto para aquela partida e os jogos ainda não pagos continuam como suspensão.</p>
+                        <p class="text-xs text-stone-400 mt-2">A suspensão decorrente de cartão vermelho deve ser cumprida, conforme a regra de cartões acima.</p>
+                    </div>
 
                     <!-- REGRA 8 -->
                     <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-900/40">
@@ -681,7 +707,15 @@
 
         <div id="alertas-ver" class="tab-content space-y-6 pt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
+                <div class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
+                    <div class="mb-4 pb-2 border-b border-stone-800">
+                        <h4 class="font-black text-amber-500 uppercase tracking-wide text-xs">
+                            <i class="fa-solid fa-gavel mr-2"></i>Suspensos da Rodada
+                        </h4>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-0.5">3 amarelos, 1 vermelho ou suspensão ativa</p>
+                    </div>
+                    <ul id="dash-suspensos" class="divide-y divide-stone-800 text-sm"></ul>
+                </div>
                 <div id="alertas-inadimplentes" class="bg-stone-900/95 rounded-2xl border border-stone-700 p-5 shadow-xl">
                     <div class="mb-4 pb-2 border-b border-stone-800">
                         <h4 class="font-black text-red-500 uppercase tracking-wide text-xs">
@@ -763,7 +797,6 @@
                 <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">Atletas</button>
                 <button onclick="switchAdminSubTab('adm-scouts')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Scouts</button>
                 <button onclick="switchAdminSubTab('adm-mensalidades')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Mensalidades</button>
-                
                 <button onclick="switchAdminSubTab('adm-socios')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Receitas</button>
                 <button onclick="switchAdminSubTab('adm-financas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Caixa</button>
                 <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Partidas</button>
@@ -892,7 +925,63 @@
             </div>
 
             
-            
+            <div id="adm-punicoes" class="adm-sub-content hidden space-y-6">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                        <h4 class="font-black text-amber-400 text-xs uppercase mb-2"><i class="fa-solid fa-gavel mr-1"></i> Registrar multa ou suspensão</h4>
+                        <p class="text-[10px] text-stone-400 mb-4">A multa, o motivo detalhado e o pagamento ficam restritos aos administradores. A suspensão entra na fila sequencial de jogos do atleta.</p>
+                        <form id="form-punicao" onsubmit="window.registrarPunicao(event)" class="space-y-3">
+                            <select id="punicao-atleta" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input type="date" id="punicao-data" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                <select id="punicao-categoria" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                    <option value="">Motivo da punição</option>
+                                    <option value="inadimplencia">Jogou inadimplente</option>
+                                    <option value="atraso">Atraso</option>
+                                    <option value="terceiro_amarelo">Terceiro cartão amarelo</option>
+                                    <option value="cartao_vermelho">Cartão vermelho</option>
+                                    <option value="falta_grave">Falta grave</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <label class="text-[10px] text-stone-400">Multa (R$; opcional)
+                                    <input type="number" id="punicao-valor" min="0" step="0.01" inputmode="decimal" placeholder="0,00" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                </label>
+                                <label class="text-[10px] text-stone-400">Jogos de suspensão (0–30)
+                                    <input type="number" id="punicao-jogos" min="0" max="30" step="1" value="0" required class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                </label>
+                            </div>
+                            <label class="block text-[10px] text-stone-400">Categoria que pode aparecer publicamente (opcional)
+                                <select id="punicao-motivo-publico" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                    <option value="">Não exibir motivo</option>
+                                    <option value="Cartão amarelo">Cartão amarelo</option>
+                                    <option value="Cartão vermelho">Cartão vermelho</option>
+                                    <option value="Conduta">Conduta</option>
+                                </select>
+                            </label>
+                            <textarea id="punicao-detalhes" rows="2" maxlength="300" placeholder="Detalhes/observação administrativa (privado)" class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-black p-3 rounded-xl text-xs uppercase">Registrar punição</button>
+                        </form>
+                    </div>
+                    <div class="bg-stone-900/95 rounded-2xl p-5 border border-emerald-900/70 shadow-xl">
+                        <h4 class="font-black text-emerald-300 text-xs uppercase mb-2"><i class="fa-solid fa-minus mr-1"></i> Reduzir suspensão</h4>
+                        <p class="text-[10px] text-stone-400 mb-4">Cada jogo abatido custa R$ 10,00. Só registre depois de conferir o recebimento no banco.</p>
+                        <form id="form-abatimento-suspensao" onsubmit="window.registrarAbatimentoSuspensao(event)" class="space-y-3">
+                            <select id="abatimento-atleta" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"><option value="">Selecione o atleta</option></select>
+                            <label class="block text-[10px] text-stone-400">Jogos a abater
+                                <input type="number" id="abatimento-jogos" min="1" step="1" required inputmode="numeric" class="mt-1 w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                            </label>
+                            <p id="abatimento-valor-previsto" class="text-xs font-black text-emerald-300">Valor: R$ 10,00 por jogo</p>
+                            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-black p-3 rounded-xl text-xs uppercase">Confirmar recebimento e abater</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-black text-stone-200 text-xs uppercase mb-3">Histórico de multas e suspensões</h4>
+                    <div id="lista-punicoes-admin" class="space-y-2" aria-live="polite"></div>
+                </div>
+            </div>
 
             <div id="adm-sumulas" class="adm-sub-content hidden space-y-6">
                 <!-- DATALIST PARA SUGESTÃO DE ATLETAS -->
@@ -941,10 +1030,13 @@
                         </div>
 
                         <div class="space-y-1">
-                            <label class="text-[10px] text-stone-400 uppercase font-bold">Observações da partida</label>
-                            <textarea id="sum-obs" rows="3" placeholder="Observações gerais do jogo..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
+                            <label class="text-[10px] text-stone-400 uppercase font-bold">Observações / Suspensos</label>
+                            <textarea id="sum-obs" rows="3" placeholder="Observações gerais da partida..." class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none"></textarea>
                         </div>
-                        
+                        <div class="bg-black/30 border border-amber-900/50 rounded-xl p-3">
+                            <p class="text-[10px] text-amber-200 font-bold">Multas e suspensões são lançadas no painel administrativo “Punições”.</p>
+                            <p class="text-[9px] text-stone-400 mt-1">A publicação desta súmula de domingo confirma a partida e pode cumprir um jogo das suspensões anteriores.</p>
+                        </div>
 
                         <button type="submit" class="w-full bg-emerald-600 text-white font-black p-3 rounded-xl uppercase transition hover:bg-emerald-500 shadow-lg flex items-center justify-center gap-2">
                             <i class="fa-solid fa-floppy-disk"></i> Publicar Súmula
@@ -973,7 +1065,7 @@
                             <option value="MENSALIDADES">Mensalidades</option>
                             <option value="SOCIOS">Pagamentos de sócios</option>
                             <option value="PATROCINIOS">Patrocínios/Doações</option>
-                            
+                            <option value="MULTAS">Multas</option>
                             <option value="APORTES">Aportes extras</option>
                             <option value="GASTOS">Gastos</option>
                         </select>
@@ -1029,8 +1121,14 @@
                             <div class="font-black text-red-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-circle-exclamation mr-1"></i> Cobrar Pendentes</div>
                             <div class="text-[10px] text-stone-400" id="notif-pendentes-resumo">Calculando...</div>
                         </button>
-                        
-                        
+                        <button onclick="window.prepararDisparo('multas')" class="bg-orange-900/30 hover:bg-orange-900/50 border border-orange-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-orange-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-coins mr-1"></i> Cobrar Multas</div>
+                            <div class="text-[10px] text-stone-400" id="notif-multas-resumo">Calculando...</div>
+                        </button>
+                        <button onclick="window.prepararDisparo('suspensos')" class="bg-yellow-900/30 hover:bg-yellow-900/50 border border-yellow-800 p-4 rounded-xl text-left transition">
+                            <div class="font-black text-yellow-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-ban mr-1"></i> Avisar Suspensos</div>
+                            <div class="text-[10px] text-stone-400" id="notif-suspensos-resumo">Calculando...</div>
+                        </button>
                         <button onclick="window.prepararDisparo('geral')" class="bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-800 p-4 rounded-xl text-left transition">
                             <div class="font-black text-emerald-400 text-xs uppercase tracking-wider mb-1"><i class="fa-solid fa-megaphone mr-1"></i> Comunicado Geral</div>
                             <div class="text-[10px] text-stone-400" id="notif-geral-resumo">Calculando...</div>
@@ -1045,8 +1143,18 @@
                             </button>
                             <div id="notif-lista-inadimplentes" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
                         </div>
-                        
-                        
+                        <div class="border-t border-stone-800 pt-3">
+                            <button onclick="document.getElementById('notif-lista-multados').classList.toggle('hidden'); this.querySelector('.icone-seta').classList.toggle('rotate-180')" class="flex items-center gap-2 text-[10px] text-stone-400 hover:text-stone-200 font-bold uppercase transition w-full text-left">
+                                <i class="fa-solid fa-chevron-down icone-seta text-[8px] transition-transform"></i> Ver lista de multados
+                            </button>
+                            <div id="notif-lista-multados" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
+                        </div>
+                        <div class="border-t border-stone-800 pt-3">
+                            <button onclick="document.getElementById('notif-lista-suspensos').classList.toggle('hidden'); this.querySelector('.icone-seta').classList.toggle('rotate-180')" class="flex items-center gap-2 text-[10px] text-stone-400 hover:text-stone-200 font-bold uppercase transition w-full text-left">
+                                <i class="fa-solid fa-chevron-down icone-seta text-[8px] transition-transform"></i> Ver lista de suspensos
+                            </button>
+                            <div id="notif-lista-suspensos" class="hidden mt-2 divide-y divide-stone-800/50 max-h-60 overflow-y-auto text-[11px]"></div>
+                        </div>
                     </div>
                     
                     <div id="notificacao-preview" class="hidden mt-4 p-4 bg-stone-800/50 rounded-xl border border-stone-700">
@@ -1555,11 +1663,13 @@
                 const value = snapshot.val();
                 window.punicoesCache = Array.isArray(value) ? value : Object.values(value || {});
                 window.disciplineLoaded = true;
+                window.sincronizarProjecoesPunicoesPublicas?.();
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onDisciplineError = error => {
                 window.disciplineLoaded = false;
                 console.error('Falha ao carregar punições administrativas.', error?.code || '');
+                window.mostrarToast('Não foi possível carregar o painel de punições.', true);
             };
             athletesRef.on('value', onAthletes);
             financeRef.on('value', onFinance);
@@ -1667,14 +1777,23 @@
                 camposPublicos.forEach(k => delete privado[k]);
                 if (Object.keys(privado).length) atletasPrivados[String(a.id)] = privado;
             });
-            const suspensoesPublicas = Array.isArray(window.suspensoesPublicasCache) ? window.suspensoesPublicasCache : [];
-            const receitasPunicoesPublicas = Array.isArray(window.receitasPunicoesPublicasCache) ? window.receitasPunicoesPublicasCache : [];
-            // A súmula e seus registros históricos de punições não são editados nem removidos ao salvar outros dados.
+            const suspensoesPublicas = window.disciplineLoaded
+                ? criarProjecaoPublicaPunicoes()
+                : (window.suspensoesPublicasCache || []).filter(item => item && item.tipo === 'suspensao').map(item => ({
+                    id: String(item.id || ''), tipo: 'suspensao', athleteId: String(item.athleteId || ''),
+                    data: String(item.data || ''), originalDate: String(item.originalDate || item.data || ''),
+                    totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
+                    publicCategory: categoriaPublicaPermitida(item.publicCategory)
+                }));
+            const receitasPunicoesPublicas = window.disciplineLoaded
+                ? criarProjecaoPublicaReceitasPunicoes()
+                : (window.receitasPunicoesPublicasCache || []);
             const sumulasPublicas = (window.sumulasCache || []).map(sumula => ({
                 ...sumula,
-                suspensoesAplicadas: Array.isArray(sumula?.suspensoesAplicadas)
-                    ? sumula.suspensoesAplicadas.map(registro => ({...registro}))
-                    : []
+                suspensoesAplicadas: (Array.isArray(sumula?.suspensoesAplicadas) ? sumula.suspensoesAplicadas : []).map(s => ({
+                    id: String(s.id || ''), athleteId: String(s.athleteId || ''), athleteName: String(s.athleteName || 'Atleta'),
+                    totalGames: Number(s.totalGames) || 0, publicCategory: categoriaPublicaPermitida(s.publicCategory)
+                }))
             }));
             const dataPublica = {
                 atletas: atletasPublicos,
@@ -1693,7 +1812,7 @@
             };
             
             const revisionPunicoesSalva = window.punicoesRevision || 0;
-            const salvarPunicoesPrivadas = false; // Sistema aposentado: preservar registros sem novas gravações.
+            const salvarPunicoesPrivadas = Boolean(window.punicoesDirty && window.disciplineLoaded);
             const gravacoes = [
                 window.publicRef.child('data').set(dataPublica),
                 window.privateRef.child('athletes').set(atletasPrivados),
@@ -1742,13 +1861,15 @@
                 const data = snapshot.val() || {};
                 window.publicAthletesCache = Array.isArray(data.atletas) ? data.atletas : Object.values(data.atletas || {});
                 window.sumulasCache = data.sumulas || [];
-                // Mantenha as projeções históricas sem normalizar nem descartar campos durante saves comuns.
-                window.suspensoesPublicasCache = Array.isArray(data.suspensoesPublicas)
-                    ? data.suspensoesPublicas
-                    : Object.values(data.suspensoesPublicas || {});
-                window.receitasPunicoesPublicasCache = Array.isArray(data.receitasPunicoesPublicas)
-                    ? data.receitasPunicoesPublicas
-                    : Object.values(data.receitasPunicoesPublicas || {});
+                window.suspensoesPublicasCache = (Array.isArray(data.suspensoesPublicas) ? data.suspensoesPublicas : []).filter(item => item && item.tipo === 'suspensao').map(item => ({
+                    id: String(item.id || ''), tipo: 'suspensao', athleteId: String(item.athleteId || ''),
+                    data: String(item.data || ''), originalDate: String(item.originalDate || item.data || ''),
+                    totalGames: Number(item.totalGames) || 0, remainingGames: Number(item.remainingGames) || 0,
+                    publicCategory: categoriaPublicaPermitida(item.publicCategory)
+                }));
+                window.receitasPunicoesPublicasCache = (Array.isArray(data.receitasPunicoesPublicas) ? data.receitasPunicoesPublicas : [])
+                    .filter(item => item && Number.isInteger(Number(item.ano)) && Number(item.mes) >= 1 && Number(item.mes) <= 12 && Number.isFinite(Number(item.valor)) && Number(item.valor) > 0)
+                    .map(item => ({ano: Number(item.ano), mes: String(item.mes).padStart(2, '0'), valor: Math.round(Number(item.valor) * 100) / 100}));
                 window.publicDataLoaded = true;
                 window.historicoPlacares = data.historicoPlacares || [];
                 window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
@@ -1760,6 +1881,7 @@
                     window.sociosCache = [];
                     window.patrociniosCache = [];
                 }
+                if (window.isAdminLogado && window.disciplineLoaded) window.sincronizarProjecoesPunicoesPublicas?.();
                 if (!syncEmAndamento) {
                     document.getElementById('loading-overlay')?.classList.add('hidden');
                     window.renderizarTudo();
@@ -1857,6 +1979,7 @@
             const totalPunicoesRecebidasAno = somarReceitasPunicoesNoAno(anoOperacional);
             totalArrecadado += totalPunicoesRecebidasAno;
             const punicoesRecebidasEl = document.getElementById('dash-punicoes-recebidas');
+            if (punicoesRecebidasEl) punicoesRecebidasEl.textContent = `Multas e abatimentos recebidos em ${anoOperacional}: R$ ${totalPunicoesRecebidasAno.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === anoOperacional).forEach(s => totalArrecadado += Number(s.valor || 0));
             window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === anoOperacional).forEach(p => totalArrecadado += Number(p.valor || 0));
             window.gastosCache.filter(g => window.obterAnoFinanceiroRegistro(g) === anoOperacional).forEach(g => totalGastos += Number(g.valor || 0));
@@ -1908,20 +2031,72 @@
             const artEl = document.getElementById('dash-artilharia');
             if (artEl) artEl.innerHTML = artilhariaHtml || '<div class="text-center py-10 opacity-30"><i class="fa-solid fa-ghost text-4xl mb-2"></i><p class="text-xs italic">Nenhum gol registrado.</p></div>';
             
-            let pendentesHtml = '';
+            let pendentesHtml = '', suspensosHtml = '';
+            const suspensoesEstruturadasAtivas = obterSuspensoesAte(dataISOHojeLocal());
             window.atletasCache.forEach(a => {
+                const suspensoesAtivasAtleta = suspensoesEstruturadasAtivas.filter(s => String(s.athleteId) === String(a.id));
+                let multasDebito = 0;
+                let mensalidadeDebito = 0;
+                
+                // Mês atual é 06
                 const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
-                if (pagoMes) return;
-                pendentesHtml += `<li class="py-2 border-b border-stone-800/50">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time})</span></span>
-                        <span class="font-black text-[11px] text-stone-400 font-mono">R$ ${VALOR_MENSALIDADE.toFixed(2)}</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2 text-[9px] uppercase"><span class="text-red-500 font-black">MENSALIDADE PENDENTE</span></div>
-                </li>`;
+                if (!pagoMes) mensalidadeDebito = VALOR_MENSALIDADE;
+                
+                if (a.pagamentos) {
+                    Object.keys(a.pagamentos).forEach(m => {
+                        a.pagamentos[m].multas?.forEach(ml => { 
+                            if(!ml.paga) multasDebito += Number(ml.valor); 
+                        });
+                    });
+                }
+                
+                const totalDebito = mensalidadeDebito + multasDebito;
+                
+                if (totalDebito > 0) {
+                    let detalhes = [];
+                    if (mensalidadeDebito > 0) {
+                        detalhes.push(`<span class="text-red-500 font-black">MENSALIDADE R$ ${mensalidadeDebito.toFixed(2)}</span>`);
+                    }
+                    if (multasDebito > 0) {
+                        detalhes.push(`<span class="text-orange-500 font-black">MULTA R$ ${multasDebito.toFixed(2)}</span>`);
+                    }
+
+                    pendentesHtml += `<li class="py-2 border-b border-stone-800/50">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time})</span></span>
+                            <span class="font-black text-[11px] text-stone-400 font-mono">TOTAL R$ ${totalDebito.toFixed(2)}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-[9px] uppercase">
+                            ${detalhes.join(' <span class="text-stone-700">|</span> ')}
+                        </div>
+                    </li>`;
+                }
+                
+                const suspensoPorCartao = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+                if (suspensoPorCartao || suspensoesAtivasAtleta.length) {
+                    const badgeSuspensao = (a.vermelho || 0) >= 1
+                        ? '🟥 Vermelho'
+                        : (a.amarelos || 0) >= 3 ? '🟨 3 Amarelos' : '⛔ Suspensão';
+                    const descricaoSuspensoes = suspensoesAtivasAtleta.map(s => {
+                        const total = Number(s.totalGames) || 0;
+                        const restantes = Number(s.remainingGames) || 0;
+                        const verbo = restantes === 1 ? 'falta' : 'faltam';
+                        const unidade = total === 1 ? 'jogo' : 'jogos';
+                        const motivo = s.publicCategory ? `<span class="block text-[9px] text-stone-400">${escaparTextoHTML(s.publicCategory)}</span>` : '';
+                        return `<span class="block text-[10px] font-bold text-amber-200">Suspensão: ${verbo} ${restantes} de ${total} ${unidade}</span>${motivo}`;
+                    }).join('');
+                    suspensosHtml += `<li class="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_auto] gap-2 py-2 items-center">
+                        <span class="min-w-0 truncate text-stone-200">${escaparTextoHTML(a.nome || 'Atleta')}</span>
+                        <span class="min-w-0 text-center leading-tight">${descricaoSuspensoes}</span>
+                        <span class="shrink-0 bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded-md font-black uppercase">${badgeSuspensao}</span>
+                    </li>`;
+                }
             });
+            
             const pendEl = document.getElementById('dash-pendentes');
+            const suspEl = document.getElementById('dash-suspensos');
             if (pendEl) pendEl.innerHTML = pendentesHtml || '<p class="text-xs text-emerald-400 p-2">Tudo em dia!</p>';
+            if (suspEl) suspEl.innerHTML = suspensosHtml || '<p class="text-xs text-stone-500 italic p-2">Nenhum suspenso.</p>';
         }
 
         // Renderização independente da lista de gols, usada ao abrir a aba ou trocar o filtro.
@@ -1971,46 +2146,137 @@
             const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
             filtrados.forEach(a => {
+                const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
                 const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
-                html += `<tr>
-                    <td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
+                html += `<td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
+                    <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
                     <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
                 </tr>`;
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="3" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
         }
         
-        
-        window.searchPlayer = function() {
+                window.searchPlayer = function() {
             const termo = document.getElementById('search-input')?.value?.toLowerCase().trim() || '';
             const resultBox = document.getElementById('search-result');
-            if (!termo || !resultBox) { if (resultBox) resultBox.classList.add('hidden'); return; }
-            const achados = isNaN(termo)
-                ? window.atletasCache.filter(a => a.nome?.toLowerCase().includes(termo))
-                : window.atletasCache.filter(a => parseInt(a.camisa) === parseInt(termo));
-            if (!achados.length) {
+            if (!termo || !resultBox) { if(resultBox) resultBox.classList.add('hidden'); return; }
+            
+            let achados;
+            if (isNaN(termo)) achados = window.atletasCache.filter(a => a.nome?.toLowerCase().includes(termo));
+            else achados = window.atletasCache.filter(a => parseInt(a.camisa) === parseInt(termo));
+            
+            if (achados.length) {
+                let html = '';
+                achados.forEach(a => {
+                    const mesAtual = window.getMesAtual();
+                    const pagoMes = window.verificarPago(a.pagamentos, mesAtual, a);
+                    
+                    let multasHtml = "";
+                    let totalMultasAberto = 0;
+                    
+                    if (a.pagamentos) {
+                        Object.keys(a.pagamentos).forEach(m => {
+                            (a.pagamentos[m].multas || []).forEach(ml => {
+                                const cor = ml.paga ? 'text-emerald-400' : 'text-orange-500';
+                                const status = ml.paga ? 'PAGA' : 'ABERTO';
+                                if (!ml.paga) totalMultasAberto += Number(ml.valor);
+                                multasHtml += `<div class="flex justify-between ${cor} font-mono mt-0.5">
+                                    <span>• ${ml.motivo} (${window.rotuloPeriodoPagamento(m)})</span>
+                                    <span>${status} R$ ${Number(ml.valor).toFixed(2)}</span>
+                                </div>`;
+                            });
+                            // Multas arquivadas
+                            (a.pagamentos[m].multasArquivadasHistorico || []).forEach(arq => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                                multasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
+                                    <span>• ${motivo} (${window.rotuloPeriodoPagamento(m)})</span>
+                                    <span>ARQUIVADA R$ ${valor.toFixed(2)}</span>
+                                </div>`;
+                            });
+                        });
+                    }
+
+                    let extrasHtml = "";
+                    if (a.pagamentos) {
+                        Object.keys(a.pagamentos).forEach(m => {
+                            if (a.pagamentos[m].aportes) {
+                                a.pagamentos[m].aportes.forEach(ap => {
+                                    extrasHtml += `<div class="flex justify-between text-emerald-400 font-mono mt-0.5">
+                                        <span>• ${ap.motivo} (${m})</span>
+                                        <span class="font-black">+ R$ ${Number(ap.valor).toFixed(2)}</span>
+                                    </div>`;
+                                });
+                            }
+                            if (a.pagamentos[m].aportesArquivadosHistorico) {
+                                a.pagamentos[m].aportesArquivadosHistorico.forEach(arq => {
+                                    const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                    const motivo = typeof arq === 'object' ? arq.motivo : 'Aporte Extra';
+                                    extrasHtml += `<div class="flex justify-between text-stone-500 font-mono mt-0.5">
+                                        <span>• ${motivo} (${window.rotuloPeriodoPagamento(m)})</span>
+                                        <span class="font-black">ARQUIVADO + R$ ${valor.toFixed(2)}</span>
+                                    </div>`;
+                                });
+                            }
+                        });
+                    }
+
+                    html += `<div class="p-4 bg-stone-900 border border-stone-700 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-3 shadow-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-black text-stone-100 text-sm">${a.nome}</p>
+                                <p class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">${a.time} | CAMISA #${a.camisa}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black ${pagoMes ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'}">
+                                    ${pagoMes ? 'ADIMPLENTE' : 'INADIMPLENTE'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-stone-800 pt-2 text-stone-300">
+                            <p class="flex justify-between items-center"><span>⚽ Gols:</span> <strong class="text-emerald-400 font-mono">${a.gols || 0}</strong></p>
+                            <p class="flex justify-between items-center"><span>🟨 Amarelos:</span> <strong class="text-amber-500 font-mono">${a.amarelos || 0}/3</strong></p>
+                            <p class="flex justify-between items-center"><span>🟥 Vermelhos:</span> <strong class="text-red-500 font-mono">${a.vermelho || 0}/1</strong></p>
+                            <div class="flex justify-between items-center">
+                                <span>📜 Histórico:</span> 
+                                <div class="flex gap-2 font-mono text-[10px]">
+                                    <span class="flex items-center gap-0.5"><span class="text-amber-500">🟨</span><strong class="text-stone-300">${a.histAmarelos || 0}</strong></span>
+                                    <span class="text-stone-700">|</span>
+                                    <span class="flex items-center gap-0.5"><span class="text-red-500">🟥</span><strong class="text-stone-300">${a.histVermelhos || 0}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-stone-800 pt-2 space-y-2">
+                            <p class="text-[10px] font-black text-stone-500 uppercase">Situação Financeira</p>
+                            
+                            <div class="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-stone-800/50">
+                                <span class="text-stone-300">Mensalidade (Jun):</span>
+                                <span class="font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'} font-mono">${pagoMes ? 'PAGA' : 'PENDENTE R$ ' + formatarValorMensalidade()}</span>
+                            </div>
+                            
+                            <div class="bg-black/20 p-2 rounded-lg border border-stone-800/50">
+                                <p class="text-[9px] font-bold text-orange-500 uppercase mb-1 flex justify-between">
+                                    <span>Histórico de Multas</span>
+                                    <span>Aberto: R$ ${totalMultasAberto.toFixed(2)}</span>
+                                </p>
+                                <div class="max-h-24 overflow-y-auto space-y-0.5">
+                                    ${multasHtml || '<p class="text-[9px] text-stone-600 italic">Sem multas</p>'}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>`;
+                });
+                resultBox.innerHTML = html;
+                resultBox.classList.remove('hidden');
+            } else {
                 resultBox.innerHTML = '<p class="text-stone-500 italic text-center text-xs py-2">Nenhum jogador encontrado.</p>';
-                resultBox.classList.remove('hidden'); return;
+                resultBox.classList.remove('hidden');
             }
-            let html = '';
-            achados.forEach(a => {
-                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
-                html += `<div class="p-4 bg-stone-900 border border-stone-700 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-3 shadow-xl">
-                    <div class="flex justify-between items-start"><div><p class="font-black text-stone-100 text-sm">${a.nome}</p><p class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">${a.time} | CAMISA #${a.camisa}</p></div>
-                    <span class="px-2 py-0.5 rounded text-[9px] font-black ${pagoMes ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'}">${pagoMes ? 'ADIMPLENTE' : 'INADIMPLENTE'}</span></div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-stone-800 pt-2 text-stone-300">
-                        <p class="flex justify-between items-center"><span>⚽ Gols:</span><strong class="text-emerald-400 font-mono">${a.gols || 0}</strong></p>
-                        <p class="flex justify-between items-center"><span>🟨 Amarelos:</span><strong class="text-amber-500 font-mono">${(Number(a.amarelos)||0)+(Number(a.histAmarelos)||0)}</strong></p>
-                        <p class="flex justify-between items-center"><span>🟥 Vermelhos:</span><strong class="text-red-500 font-mono">${(Number(a.vermelho)||0)+(Number(a.histVermelhos)||0)}</strong></p>
-                    </div>
-                    <div class="border-t border-stone-800 pt-2 space-y-2"><p class="text-[10px] font-black text-stone-500 uppercase">Situação Financeira</p>
-                        <div class="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-stone-800/50"><span class="text-stone-300">Mensalidade:</span><span class="font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'} font-mono">${pagoMes ? 'PAGA' : 'PENDENTE R$ ' + formatarValorMensalidade()}</span></div>
-                    </div>
-                </div>`;
-            });
-            resultBox.innerHTML = html; resultBox.classList.remove('hidden');
         };
         
         window.atualizarPlacarGeral = function() {
@@ -2164,18 +2430,22 @@
             
             const anoSelecionado = window.anoFinanceiroSelecionado('financeiro-ano-filtro');
             let mensalMap = {};
-            Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0 });
+            Object.keys(mesesNomes).forEach(m => mensalMap[m] = { fixo: 0, aportes: 0, multas: 0 });
             window.atletasCache.forEach(a => {
                 window.obterPagamentosDoAno(a.pagamentos, anoSelecionado).forEach(({mes, chave, dados}) => {
                     if (!mensalMap[mes]) return;
                     const abatida = (a.abatimentos || []).some(ab => (ab.mes === chave || ab.mes === mes) && Number(ab.ano || window.ANO_LEGADO_FINANCEIRO) === anoSelecionado && ab.motivo === 'Mensalidade ' + (ab.mes || mes));
                     if (dados?.pago && !abatida) mensalMap[mes].fixo += VALOR_MENSALIDADE;
+                    (dados?.aportes || []).forEach(ap => { if (ap.paga) mensalMap[mes].aportes += Number(ap.valor || 0); });
+                    (dados?.aportesArquivadosHistorico || []).forEach(arq => mensalMap[mes].aportes += Number(typeof arq === 'object' ? arq.valor : arq));
+                    (dados?.multas || []).forEach(ml => { if (ml.paga) mensalMap[mes].multas += Number(ml.valor || 0); });
+                    (dados?.multasArquivadasHistorico || []).forEach(arq => mensalMap[mes].multas += Number(typeof arq === 'object' ? arq.valor : arq));
                 });
             });
             
             let mensalHtml = '';
             Object.keys(mensalMap).forEach(mes => {
-                if (mensalMap[mes].fixo > 0) {
+                if (mensalMap[mes].fixo > 0 || mensalMap[mes].aportes > 0 || mensalMap[mes].multas > 0) {
                     mensalHtml += `<tr><td class="p-3 font-bold">${mesesNomes[mes]}</td>
                         <td class="p-3 text-right text-emerald-400 font-mono">R$ ${mensalMap[mes].fixo.toFixed(2)}</td>
                         
@@ -2296,6 +2566,51 @@
                     aportesAcordeao.innerHTML = html;
                 }
             }
+            // Monta multas pagas agrupadas por mês (acordeão)
+            let multasPorMes = {};
+            window.atletasCache.forEach(a => {
+                window.obterPagamentosDoAno(a.pagamentos, anoSelecionado).forEach(({mes, dados}) => {
+                    if (!multasPorMes[mes]) multasPorMes[mes] = [];
+                    (dados?.multas || []).forEach(ml => {
+                        if (ml.paga && Number(ml.valor) > 0) multasPorMes[mes].push({ nome: a.nome, motivo: ml.motivo, valor: Number(ml.valor) });
+                    });
+                    (dados?.multasArquivadasHistorico || []).forEach(arq => {
+                        const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                        const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                        if (valor > 0) multasPorMes[mes].push({ nome: a.nome, motivo, valor });
+                    });
+                });
+            });
+            const receitasPunicoesDoAno = window.isAdminLogado && window.disciplineLoaded
+                ? criarProjecaoPublicaReceitasPunicoes()
+                : (window.receitasPunicoesPublicasCache || []);
+            receitasPunicoesDoAno.filter(item => Number(item.ano) === anoSelecionado).forEach(item => {
+                const mes = String(item.mes).padStart(2, '0');
+                const valor = Number(item.valor || 0);
+                if (!mes || !Number.isFinite(valor) || valor <= 0) return;
+                if (!multasPorMes[mes]) multasPorMes[mes] = [];
+                multasPorMes[mes].push({ nome: 'Clube', motivo: 'Multas e abatimentos recebidos (total)', valor });
+            });
+            const multasAcordeao = document.getElementById('financeiro-multas-acordeao');
+            if (multasAcordeao) {
+                const mesesKeys = Object.keys(multasPorMes).filter(mes => multasPorMes[mes].length > 0).sort();
+                if (mesesKeys.length === 0) {
+                    multasAcordeao.innerHTML = '<div class="py-3 text-stone-500 italic text-center text-xs">Nenhuma multa paga.</div>';
+                } else {
+                    let acordeaoHtml = '';
+                    mesesKeys.forEach(mes => {
+                        const items = multasPorMes[mes];
+                        const totalMes = items.reduce((s, i) => s + i.valor, 0);
+                        acordeaoHtml += acordeaoItem(mesesNomes[mes], totalMes, 'multa-mes-' + mes, items.map(i =>
+                            `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
+                                <span>${i.nome} <span class="text-stone-600">(${i.motivo})</span></span>
+                                <span class="text-orange-500 font-mono">R$ ${i.valor.toFixed(2)}</span>
+                            </div>`
+                        ).join(''));
+                    });
+                    multasAcordeao.innerHTML = acordeaoHtml;
+                }
+            }
 
         }
         
@@ -2385,6 +2700,8 @@
             if (!a) return;
             const novo = (a[campo] || 0) + valor;
             if (novo < 0) return; // Não permite negativo para nada
+            if (campo === 'amarelos' && novo > 3) return;
+            if (campo === 'vermelho' && novo > 1) return;
             a[campo] = novo;
             const valorNaTela = document.getElementById(`scout-stat-${campo}-${id}`);
             if (valorNaTela) valorNaTela.textContent = novo;
@@ -2392,10 +2709,40 @@
             window.salvarNoStorage({ silencioso: true });
         };
         
-        window.salvarHistoricoCartao = function() {
-            window.mostrarToast('O arquivamento disciplinar de cartões foi desativado.', true);
+        window.salvarHistoricoCartao = function(id) {
+            const a = window.atletasCache.find(j => j.id === id);
+            if (!a) return;
+            
+            let arquivouAlgo = false;
+            let novosAmarelos = parseInt(a.amarelos || 0);
+            let novosVermelhos = parseInt(a.vermelho || 0);
+            
+            // Regra: Arquivar somente se atingir o máximo
+            // Amarelos: Max 3. Se tiver 4 ou 5, tira 3 e deixa o resto.
+            if (novosAmarelos >= 3) {
+                a.histAmarelos = (parseInt(a.histAmarelos || 0)) + 3;
+                novosAmarelos = novosAmarelos - 3;
+                arquivouAlgo = true;
+            }
+            
+            // Vermelho: Max 1. Se tiver mais de 1 (raro), tira 1.
+            if (novosVermelhos >= 1) {
+                a.histVermelhos = (parseInt(a.histVermelhos || 0)) + 1;
+                novosVermelhos = novosVermelhos - 1;
+                arquivouAlgo = true;
+            }
+            
+            if (arquivouAlgo) {
+                a.amarelos = novosAmarelos;
+                a.vermelho = novosVermelhos;
+                window.mostrarToast("Cartões arquivados!");
+                window.salvarNoStorage({ silencioso: true });
+                atualizarScoutsSemPerderPosicao();
+            } else {
+                window.mostrarToast("Sem cartões no limite (3 am. ou 1 ver.) para arquivar.", true);
+            }
         };
-        
+
         window.aplicarMultaAtleta = function(id) {
             const motivoInput = document.getElementById(`motivo-${id}`);
             const valorInput = document.getElementById(`vmulta-${id}`);
@@ -2488,7 +2835,27 @@
                 let linhasHtml = '';
 
                 t.atletas.forEach(a => {
-
+                    let multasAtivas = '';
+                    let aportesAtivos = '';
+                    
+                    if (a.pagamentos) {
+                        Object.keys(a.pagamentos).forEach(m => {
+                            a.pagamentos[m].multas?.forEach((multa, idx) => {
+                                multasAtivas += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] ${multa.paga ? 'line-through text-emerald-500 bg-emerald-900/20' : 'text-red-300 bg-red-900/20'}">
+                                    ${multa.motivo} R$${multa.valor.toFixed(0)}
+                                    <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500 scale-75">
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-500'}"><i class="fa-solid fa-box-archive"></i></button>
+                                </span>`;
+                            });
+                            a.pagamentos[m].aportes?.forEach((ap, idx) => {
+                                if (!ap.arquivado) {
+                                    aportesAtivos += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] text-teal-300 bg-teal-900/20">
+                                        ${ap.motivo} R$${ap.valor.toFixed(0)}
+                                    </span>`;
+                                }
+                            });
+                        });
+                    }
 
                     linhasHtml += `
                         <div class="py-1.5 px-2 border-b border-stone-800/30">
@@ -2509,7 +2876,17 @@
                                     <span id="scout-stat-vermelho-${a.id}" class="w-3 text-center font-black text-red-500">${a.vermelho || 0}</span>
                                     <button onclick="window.alterarNumero('${a.id}','vermelho',1)" class="w-4 h-4 bg-stone-700 text-red-500 rounded flex items-center justify-center text-[8px]">+</button>
                                 </span>
+                                <button onclick="window.salvarHistoricoCartao('${a.id}')" class="bg-stone-700 hover:bg-stone-600 text-stone-300 px-1.5 py-0.5 rounded text-[8px] uppercase font-black shrink-0" title="Arquivar cartões">📦</button>
+                                <div class="flex items-center gap-0.5 shrink-0 ml-auto">
+                                    <input type="text" id="motivo-${a.id}" placeholder="motivo" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
+                                    <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
+                                </div>
                             </div>
+                            ${multasAtivas ? `
+                            <div class="flex flex-wrap items-center gap-1 mt-1 pl-1">
+                                ${multasAtivas}
+                            </div>` : ''}
                         </div>`;
                 });
 
@@ -2596,7 +2973,7 @@
                 eventosFinanceirosPunicao(registro).forEach(evento => {
                     if (!Number.isFinite(evento.valor) || evento.valor === 0 || Number(String(evento.data||'').slice(0,4)) !== ano) return;
                     const valor=Number(evento.valor), estorno=evento.tipo==='estorno';
-                    const rotulo=estorno?`Estorno de registro financeiro anterior (${formatarDataISO(evento.data)})`:`Receita de registro financeiro anterior (${formatarDataISO(evento.data)})`;
+                    const rotulo=estorno?`${evento.motivo} (${formatarDataISO(evento.data)})`:`${evento.motivo} (${formatarDataISO(evento.data)})`;
                     html += `<tr><td class="p-2 font-bold">${atleta?.nome || registro.athleteName || 'Atleta'}</td><td class="p-2 text-center ${estorno?'text-red-300':'text-orange-300'}">${rotulo}</td><td class="p-2 text-right ${estorno?'text-red-300':'text-emerald-400'}">${estorno?'−':''}R$ ${Math.abs(valor).toFixed(2)}</td><td class="p-2 text-center text-stone-600">—</td></tr>`;
                 });
             });
@@ -3313,7 +3690,14 @@
             });
         }
 
-        function htmlResumoSuspensoesSumula(sumula) { return ''; }
+        function htmlResumoSuspensoesSumula(sumula) {
+            const aplicadas = Array.isArray(sumula.suspensoesAplicadas) ? sumula.suspensoesAplicadas : [];
+            const pendentes = obterSuspensoesAte(sumula.data);
+            if (!aplicadas.length && !pendentes.length) return '';
+            const aplicadasHtml = aplicadas.length ? `<div class="mb-2"><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões aplicadas nesta partida</p>${aplicadas.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName || 'Atleta')} — <strong>${Number(s.totalGames) || 0} jogo(s)</strong>${s.publicCategory ? ` · ${escaparTextoHTML(s.publicCategory)}` : ''}</p>`).join('')}</div>` : '';
+            const pendentesHtml = pendentes.length ? `<div><p class="text-amber-300 font-black uppercase text-[9px] mb-1">Suspensões em cumprimento após esta partida</p>${pendentes.map(s => `<p class="text-stone-200">${escaparTextoHTML(s.athleteName)} — <strong>${s.remainingGames}/${s.totalGames} jogo(s) restante(s)</strong>${s.publicCategory ? ` · ${escaparTextoHTML(s.publicCategory)}` : ''}<br><span class="text-stone-400 text-[9px]">Domingos previstos: ${s.projectedSundays.map(escaparTextoHTML).join(', ')}. Só contam com súmula publicada.</span></p>`).join('')}</div>` : '';
+            return `<div class="bg-amber-950/30 p-4 rounded-xl border border-amber-800/50 text-[11px] leading-relaxed"><h5 class="text-amber-200 font-black uppercase text-[10px] mb-2 tracking-widest">Suspensões</h5>${aplicadasHtml}${pendentesHtml}</div>`;
+        }
 
         window.salvarNovaSumula = function(e) {
             e.preventDefault();
@@ -3411,6 +3795,8 @@
                 });
                 dl.innerHTML = dlHtml;
             }
+            const hostSuspensoes = document.getElementById('sum-suspensoes-container');
+            if (hostSuspensoes && !hostSuspensoes.children.length) carregarSuspensoesNoFormulario();
             
             let html = '';
             window.sumulasCache.forEach(s => {
@@ -4005,6 +4391,49 @@
 
             addLine('Atleta', athlete.nome || '—', 'font-bold text-white');
 
+            const suspensoesAtivas = obterSuspensoesAte(dataISOHojeLocal())
+                .filter(suspensao => String(suspensao.athleteId) === String(athlete.id));
+            const destaqueSuspensao = document.createElement('section');
+            destaqueSuspensao.setAttribute('aria-label', 'Situação das suspensões por jogos');
+            destaqueSuspensao.className = suspensoesAtivas.length
+                ? 'mt-3 mb-2 rounded-xl border-2 border-red-500 bg-red-950/60 p-4 shadow-lg shadow-red-950/40'
+                : 'mt-3 mb-2 rounded-xl border border-stone-700 bg-stone-800/70 p-3';
+            const tituloSuspensao = document.createElement('p');
+            tituloSuspensao.className = `text-[10px] font-black uppercase tracking-wider ${suspensoesAtivas.length ? 'text-red-200' : 'text-stone-300'}`;
+            tituloSuspensao.textContent = suspensoesAtivas.length ? 'Suspensão ativa por jogos' : 'Suspensão por jogos';
+            destaqueSuspensao.appendChild(tituloSuspensao);
+            if (suspensoesAtivas.length) {
+                suspensoesAtivas.forEach(suspensao => {
+                    const item = document.createElement('div');
+                    item.className = 'mt-2 rounded-lg border border-red-900/70 bg-black/20 p-3';
+                    const progresso = document.createElement('p');
+                    progresso.className = 'text-sm font-black text-white';
+                    progresso.textContent = `${suspensao.servedGames} de ${suspensao.totalGames} cumpridos · restam ${suspensao.remainingGames}`;
+                    item.appendChild(progresso);
+                    const aplicada = document.createElement('p');
+                    aplicada.className = 'mt-1 text-[10px] text-red-100';
+                    aplicada.textContent = `Aplicada na súmula de ${formatarDataISO(suspensao.appliedDate)}.`;
+                    item.appendChild(aplicada);
+                    if (suspensao.reason) {
+                        const motivo = document.createElement('p');
+                        motivo.className = 'mt-1 text-[10px] text-stone-300';
+                        motivo.textContent = `Motivo: ${suspensao.reason}`;
+                        item.appendChild(motivo);
+                    }
+                    const previsao = document.createElement('p');
+                    previsao.className = 'mt-1 text-[10px] font-semibold text-amber-200';
+                    previsao.textContent = `Domingos previstos: ${suspensao.projectedSundays.map(formatarDataISO).join(', ')}. Só contam após publicação da súmula.`;
+                    item.appendChild(previsao);
+                    destaqueSuspensao.appendChild(item);
+                });
+            } else {
+                const semSuspensao = document.createElement('p');
+                semSuspensao.className = 'mt-1 text-[11px] text-stone-400';
+                semSuspensao.textContent = 'Nenhuma suspensão pendente.';
+                destaqueSuspensao.appendChild(semSuspensao);
+            }
+            content.appendChild(destaqueSuspensao);
+
             const destaqueMensalidade = document.createElement('section');
             destaqueMensalidade.setAttribute('aria-label', `Situação da mensalidade de ${tituloMesAtual}`);
             destaqueMensalidade.setAttribute('aria-live', 'polite');
@@ -4052,7 +4481,7 @@
             const meses = Object.keys(pagamentos).sort().reverse();
             const heading = document.createElement('h4');
             heading.className = 'border-t border-stone-700 pt-3 mt-3 font-black text-emerald-400 uppercase text-xs';
-            heading.textContent = 'Histórico de mensalidades';
+            heading.textContent = 'Histórico de mensalidades e multas';
             content.appendChild(heading);
             if (!meses.length) addLine('Pagamentos', 'Nenhum registro encontrado', 'text-stone-400');
             meses.forEach(mes => {
@@ -4072,6 +4501,12 @@
                     prazo.textContent = `Prazo de quitação: até ${competencia.prazo}.`;
                     linha.appendChild(prazo);
                 }
+                (info.multas || []).forEach(multa => {
+                    const detalhe = document.createElement('p');
+                    detalhe.className = multa.paga ? 'text-emerald-300' : 'text-amber-300';
+                    detalhe.textContent = `${multa.motivo || 'Multa'} — R$ ${Number(multa.valor || 0).toFixed(2)} — ${multa.paga ? 'paga' : 'pendente'}`;
+                    linha.appendChild(detalhe);
+                });
                 content.appendChild(linha);
             });
         };
@@ -4219,20 +4654,82 @@
         window.renderArquivados = function() {
             const container = document.getElementById('lista-arquivados-container');
             if (!container || !window.atletasCache) return;
+            
             let html = '';
             window.atletasCache.forEach(atleta => {
-                const hA = Number(atleta.histAmarelos) || 0, hV = Number(atleta.histVermelhos) || 0;
-                if (!hA && !hV) return;
-                html += `<div class="bg-black/40 p-3 rounded-xl border border-stone-800 shadow-inner">
-                    <div class="flex justify-between items-center mb-2 pb-1 border-b border-stone-800/50"><span class="font-black text-stone-200 text-[11px] uppercase">${atleta.nome}</span></div>
-                    <div class="text-[10px] font-mono text-stone-300">Cartões registrados anteriormente: 🟨 ${hA} · 🟥 ${hV}</div>
-                </div>`;
+                const hA = atleta.histAmarelos || 0;
+                const hV = atleta.histVermelhos || 0;
+                let multas = [];
+                
+                if (atleta.pagamentos) {
+                    Object.entries(atleta.pagamentos).forEach(([mes, dados]) => {
+                        if (dados.multasArquivadasHistorico && dados.multasArquivadasHistorico.length > 0) {
+                            dados.multasArquivadasHistorico.forEach((arq, idx) => {
+                                const valor = Number(typeof arq === 'object' ? arq.valor : arq);
+                                const motivo = typeof arq === 'object' ? arq.motivo : 'Arquivado';
+                                multas.push({ mes, valor, motivo, idx });
+                            });
+                        }
+                    });
+                }
+
+                if (hA > 0 || hV > 0 || multas.length > 0) {
+                    html += `<div class="bg-black/40 p-3 rounded-xl border border-stone-800 shadow-inner">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-stone-800/50">
+                            <span class="font-black text-stone-200 text-[11px] uppercase">${atleta.nome}</span>
+                        </div>`;
+                    
+                    if (hA > 0 || hV > 0) {
+                        html += `<div class="space-y-1 mb-2">`;
+                        if (hA > 0) {
+                            html += `<div class="flex items-center justify-between text-[10px] font-mono bg-stone-800/30 p-1.5 rounded">
+                                <span class="text-amber-500 font-bold">🟨 HISTÓRICO: ${hA}</span>
+                                <button onclick="window.excluirCartoesHistorico('${atleta.id}', 'amarelo')" class="text-stone-500 hover:text-red-400 p-1"><i class="fa-solid fa-minus-circle"></i></button>
+                            </div>`;
+                        }
+                        if (hV > 0) {
+                            html += `<div class="flex items-center justify-between text-[10px] font-mono bg-stone-800/30 p-1.5 rounded">
+                                <span class="text-red-500 font-bold">🟥 HISTÓRICO: ${hV}</span>
+                                <button onclick="window.excluirCartoesHistorico('${atleta.id}', 'vermelho')" class="text-stone-500 hover:text-red-400 p-1"><i class="fa-solid fa-minus-circle"></i></button>
+                            </div>`;
+                        }
+                        html += `</div>`;
+                    }
+                    
+                    if (multas.length > 0) {
+                        html += `<div class="space-y-1">`;
+                        multas.forEach(m => {
+                            html += `<div class="flex justify-between items-center text-[10px] bg-stone-800/50 p-1.5 rounded border border-stone-700/30">
+                                <div class="flex gap-2">
+                                    <span class="text-stone-500 font-bold">MÊS ${m.mes}</span>
+                                    <span class="text-stone-400">${m.motivo}</span>
+                                    <span class="text-emerald-400 font-mono">R$ ${m.valor.toFixed(2)}</span>
+                                </div>
+                                <button onclick="window.excluirMultaHistorica('${atleta.id}', '${m.mes}', ${m.idx})" class="text-stone-500 hover:text-red-400"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                }
             });
+            
             container.innerHTML = html || '<div class="text-center py-10 text-stone-500 text-xs italic">Nenhum registro arquivado.</div>';
         };
 
-        window.excluirMultaHistorica = async function() {
-            window.mostrarToast('A edição de multas históricas foi desativada; os registros foram preservados.', true);
+        window.excluirMultaHistorica = async function(atletaId, mes, idx) {
+            if (await window.confirmarAcao('Excluir esta multa do histórico permanentemente?', { confirmText: 'Excluir', destructive: true })) {
+                const a = window.atletasCache.find(j => j.id === atletaId);
+                if(a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
+                    a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
+                    if(a.pagamentos[mes].multasArquivadasHistorico.length === 0) {
+                        delete a.pagamentos[mes].multasArquivadasHistorico;
+                    }
+                    window.salvarNoStorage();
+                    window.renderArquivados();
+                    window.mostrarToast('Multa removida!');
+                }
+            }
         };
 
         window.gerarPDFRelatorio = function() {
@@ -4294,7 +4791,7 @@
                 MENSALIDADES: criarSecao('Mensalidades', [0, 150, 136]),
                 SOCIOS: criarSecao('Pagamentos de sócios', [16, 135, 92]),
                 PATROCINIOS: criarSecao('Patrocínios/Doações', [202, 138, 4]),
-                MULTAS: criarSecao('Registros financeiros anteriores', [234, 112, 24]),
+                MULTAS: criarSecao('Multas', [234, 112, 24]),
                 APORTES: criarSecao('Aportes extras', [20, 155, 170]),
                 GASTOS: criarSecao('Gastos', [211, 47, 47])
             };
@@ -4331,7 +4828,10 @@
                     (dados?.multas || []).forEach(multa => {
                         const valor = Number(multa?.valor) || 0;
                         if (multa?.paga) {
-                            adicionarLinha('MULTAS', atleta.nome, `Receita anterior — ${multa.motivo || 'Sem descrição'}`, periodo, valor);
+                            adicionarLinha('MULTAS', atleta.nome, `Multa paga — ${multa.motivo || 'Sem descrição'}`, periodo, valor);
+                        } else if (valor > 0) {
+                            adicionarLinha('MULTAS', atleta.nome, `Multa pendente — ${multa.motivo || 'Sem descrição'}`, periodo, valor, false);
+                            secoes.MULTAS.pendentes += valor;
                         }
                     });
                     (dados?.multasArquivadasHistorico || []).forEach(arquivado => {
@@ -4351,7 +4851,13 @@
                     if(evento.valor>0) adicionarLinha('MULTAS',nome,evento.motivo,periodo,evento.valor);
                     else adicionarLinhaEstorno('MULTAS',nome,evento.motivo,periodo,Math.abs(evento.valor));
                 });
-
+                if(registro.categoria==='abatimento'||registro.status==='cancelada'||registro.multaStatus==='paga')return;
+                const dataLancamento=String(registro.data||''), original=Number(registro.valorMulta||0);
+                if(original<=0||!pertenceAoPeriodo(dataLancamento))return;
+                const resumo=obterDistribuicaoMultasAtleta(registro.athleteId), saldo=Number(resumo.saldos.get(String(registro.id))||0);
+                if(saldo<=0)return;
+                adicionarLinha('MULTAS',nome,`Saldo pendente — ${rotuloCategoriaPunicao(registro.categoria)} (multa original ${formatarMoedaPDF(original)})`,periodoDoRegistro(dataLancamento),saldo,false);
+                secoes.MULTAS.pendentes+=saldo;
             });
 
             // Pagamentos de sócios.
@@ -4432,15 +4938,17 @@
                     ['Mensalidades', formatarMoedaPDF(secoes.MENSALIDADES.total)],
                     ['Pagamentos de sócios', formatarMoedaPDF(secoes.SOCIOS.total)],
                     ['Patrocínios/Doações', formatarMoedaPDF(secoes.PATROCINIOS.total)],
-                    ['Registros anteriores recebidos', formatarMoedaPDF(secoes.MULTAS.total)],
+                    ['Multas pagas/históricas', formatarMoedaPDF(secoes.MULTAS.total)],
                     ['Aportes extras', formatarMoedaPDF(secoes.APORTES.total)],
                     ['Total de entradas recebidas', formatarMoedaPDF(totalEntradas)],
                     ['Gastos', formatarMoedaPDF(totalSaidas)],
                     ['Saldo final', formatarMoedaPDF(saldo)],
+                    ['Multas pendentes (fora do saldo)', formatarMoedaPDF(secoes.MULTAS.pendentes)]
                 ];
             } else if (categoriaSelecionada === 'MULTAS') {
                 linhasResumo = [
-                    ['Registros anteriores recebidos', formatarMoedaPDF(secoes.MULTAS.total)]
+                    ['Multas pagas/históricas', formatarMoedaPDF(secoes.MULTAS.total)],
+                    ['Multas pendentes', formatarMoedaPDF(secoes.MULTAS.pendentes)]
                 ];
             } else {
                 const secao = secoes[categoriaSelecionada] || secoes.MENSALIDADES;
@@ -4471,7 +4979,7 @@
                 window.mostrarToast('Apenas um administrador autenticado pode excluir itens arquivados.', true);
                 return;
             }
-            const confirmar = await window.confirmarAcao('ATENÇÃO: esta ação excluirá o histórico arquivado de cartões e aportes. Registros financeiros anteriores serão preservados. Deseja continuar?', { confirmText: 'Prosseguir', destructive: true });
+            const confirmar = await window.confirmarAcao('ATENÇÃO: esta ação excluirá permanentemente do app o histórico arquivado de cartões, multas e aportes de todos os atletas. Não excluirá cadastros nem movimentações ativas. Deseja continuar?', { confirmText: 'Prosseguir', destructive: true });
             if (!confirmar) return;
 
             const modal = document.getElementById('excluir-arquivados-modal');
@@ -4543,6 +5051,7 @@
                     atleta.histVermelhos = 0;
                     if (atleta.pagamentos) {
                         Object.keys(atleta.pagamentos).forEach(mes => {
+                            delete atleta.pagamentos[mes].multasArquivadasHistorico;
                             delete atleta.pagamentos[mes].aportesArquivadosHistorico;
                         });
                     }
@@ -4561,7 +5070,6 @@
         };
 
         function switchAdminSubTab(subTabId) {
-            if (subTabId === 'adm-punicoes') return;
             document.querySelectorAll('.adm-sub-content').forEach(c => c.classList.add('hidden'));
             document.getElementById(subTabId)?.classList.remove('hidden');
             if (subTabId === 'adm-arquivos') window.renderArquivados();
@@ -4829,8 +5337,6 @@
             };
             const entregar = (key, n) => {
                 if (!n || vistas[key]) return;
-                // Suprime avisos disciplinares antigos sem apagar os registros remotos.
-                if (notificacaoPunitiva(n)) { vistas[key] = Date.now(); salvarVistas(); return; }
                 const data = n.data ? new Date(n.data).getTime() : 0;
                 let limpezaEm = 0;
                 try { limpezaEm = Number(localStorage.getItem('baba_notificacoes_limpeza_em') || 0); } catch(e) {}
@@ -4918,8 +5424,7 @@
         // Atualiza o badge do sino
         window.atualizarBadgeNotificacoes = function() {
             window.carregarNotificacoes();
-            const notificacoesVisiveis = window.notificacoesCache.filter(n => !notificacaoPunitiva(n));
-            const naoLidas = notificacoesVisiveis.filter(n => !n.lida).length;
+            const naoLidas = window.notificacoesCache.filter(n => !n.lida).length;
             const badge = document.getElementById('notif-badge');
             const sidebarCount = document.getElementById('notif-sidebar-count');
             
@@ -4933,24 +5438,19 @@
         };
         
         // Renderiza a lista de notificações na tela
-        function notificacaoPunitiva(n) {
-            const texto = `${n?.titulo || ''} ${n?.mensagem || ''}`;
-            return n?.tipo === 'multa' || /multa|puni[cç][aã]o|suspens|cart[aã]o vermelho|cart[oõ]es amarelos|pendurado|expuls/i.test(texto);
-        }
-
         window.renderizarNotificacoes = function() {
             window.carregarNotificacoes();
             const lista = document.getElementById('notificacoes-lista');
             if (!lista) return;
-            const notificacoesVisiveis = window.notificacoesCache.filter(n => !notificacaoPunitiva(n));
-            if (notificacoesVisiveis.length === 0) {
+            
+            if (window.notificacoesCache.length === 0) {
                 lista.innerHTML = '<div class="text-center text-stone-600 text-xs italic py-8">Nenhuma notificação. 🎉</div>';
                 return;
             }
             
             const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
             
-            lista.innerHTML = notificacoesVisiveis.map(n => {
+            lista.innerHTML = window.notificacoesCache.map(n => {
                 const data = new Date(n.data);
                 const dataStr = `${data.getDate()} ${meses[data.getMonth()]} ${data.getHours().toString().padStart(2,'0')}:${data.getMinutes().toString().padStart(2,'0')}`;
                 
@@ -5134,6 +5634,77 @@
                 }
             }
             
+            // Verifica multas ativas
+            const comMultas = window.atletasCache.filter(a => {
+                if (!a.pagamentos) return false;
+                let temMulta = false;
+                Object.values(a.pagamentos).forEach(d => {
+                    if (d.multas) d.multas.forEach(ml => { if (!ml.paga) temMulta = true; });
+                });
+                return temMulta;
+            });
+            
+            if (comMultas.length > 0) {
+                const jaTemNotif = window.notificacoesCache.some(n => 
+                    n.tipo === 'multa' && n.data.includes(new Date().toISOString().split('T')[0])
+                );
+                if (!jaTemNotif) {
+                    const detalhes = comMultas.map(a => {
+                        let total = 0;
+                        let multas = [];
+                        Object.entries(a.pagamentos || {}).forEach(([m, d]) => {
+                            if (d.multas) d.multas.forEach(ml => {
+                                if (!ml.paga) {
+                                    total += Number(ml.valor);
+                                    multas.push(`${ml.motivo || 'Multa'} (R$ ${Number(ml.valor).toFixed(2)})`);
+                                }
+                            });
+                        });
+                        return {
+                            nome: a.nome,
+                            camisa: a.camisa || '',
+                            time: a.time || '',
+                            valor: total,
+                            motivo: multas.join('; '),
+                            status: `💰 R$ ${total.toFixed(2)} pendente`
+                        };
+                    });
+                    window.adicionarNotificacao(
+                        `${comMultas.length} atleta(s) com multa(s) ativa(s)`,
+                        `${comMultas.map(a => a.nome).join(', ')} — Regularize as multas pendentes.`,
+                        'multa',
+                        '',
+                        detalhes
+                    );
+                }
+            }
+            
+            // Verifica atletas pendurados/suspensos (3+ amarelos ou 1+ vermelho)
+            const pendurados = window.atletasCache.filter(a => 
+                (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1
+            );
+            
+            pendurados.forEach(a => {
+                const jaTemNotif = window.notificacoesCache.some(n => 
+                    n.tipo === 'alerta' && n.mensagem.includes(a.nome)
+                );
+                if (!jaTemNotif) {
+                    const msg = a.vermelho >= 1 
+                        ? `${a.nome} está com cartão VERMELHO e não pode jogar a próxima partida!`
+                        : `${a.nome} está com ${a.amarelos} cartões amarelos — cuidado com suspensão!`;
+                    const detalhes = [{
+                        nome: a.nome,
+                        camisa: a.camisa || '',
+                        time: a.time || '',
+                        amarelos: a.amarelos || 0,
+                        vermelho: a.vermelho || 0,
+                        status: a.vermelho >= 1 ? '🚫 Suspenso' : '🟨 Pendurado',
+                        obs: a.vermelho >= 1 ? 'Não pode jogar a próxima partida.' : `Mais ${3 - (a.amarelos || 0)} amarelo(s) e estará suspenso.`
+                    }];
+                    window.adicionarNotificacao('⚠️ Alerta de Cartões', msg, 'alerta', '', detalhes);
+                }
+            });
+            
             // Notifica se o placar da última rodada não foi registrado
             if (!window.historicoPlacares || window.historicoPlacares.length === 0) {
                 window.adicionarNotificacao(
@@ -5174,20 +5745,91 @@
         window.calcularResumoNotif = function() {
             const mesAtual = window.getMesAtual();
             const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
-            const pendentes = window.atletasCache.filter(a => !window.verificarPago(a.pagamentos, mesAtual, a));
-            const resumoPendentes = document.getElementById('notif-pendentes-resumo');
-            if (resumoPendentes) resumoPendentes.textContent = `${pendentes.length} atleta(s) - Mensalidade ${mesNome}`;
-            const resumoGeral = document.getElementById('notif-geral-resumo');
-            if (resumoGeral) resumoGeral.textContent = `${window.atletasCache.length} atleta(s) cadastrado(s) no total`;
+            
+            const pendentes = window.atletasCache.filter(a => {
+                return !window.verificarPago(a.pagamentos, mesAtual, a);
+            });
+            document.getElementById('notif-pendentes-resumo').textContent = 
+                `${pendentes.length} atleta(s) - Mensalidade ${mesNome}`;
+            
+            const comMultas = window.atletasCache.filter(a => {
+                if (!a.pagamentos) return false;
+                let temMulta = false;
+                Object.entries(a.pagamentos).forEach(([m, d]) => {
+                    if (d.multas) d.multas.forEach(ml => { if (!ml.paga) temMulta = true; });
+                });
+                return temMulta;
+            });
+            document.getElementById('notif-multas-resumo').textContent = 
+                `${comMultas.length} atleta(s) com multas pendentes`;
+            
+            const suspensos = window.atletasCache.filter(a => {
+                return (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
+            });
+            document.getElementById('notif-suspensos-resumo').textContent = 
+                `${suspensos.length} atleta(s) - ${suspensos.filter(a => (a.amarelos || 0) >= 3).length} pendurados, ${suspensos.filter(a => (a.vermelho || 0) >= 1).length} expulsos`;
+            
+            const total = window.atletasCache.length;
+            document.getElementById('notif-geral-resumo').textContent = 
+                `${total} atleta(s) cadastrado(s) no total`;
+            
+            // --- Popula listas detalhadas ---
             const containerListas = document.getElementById('notif-listas-detalhadas');
             if (containerListas) containerListas.classList.remove('hidden');
+            
+            // Inadimplentes
             const listaInad = document.getElementById('notif-lista-inadimplentes');
-            if (listaInad) listaInad.innerHTML = pendentes.length === 0
-                ? '<div class="text-emerald-400 text-[10px] py-2 italic">🎉 Todos pagaram este mês!</div>'
-                : pendentes.map(a => `<div class="flex justify-between items-center py-2"><span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span><span class="text-[10px] font-mono font-black text-red-400">R$ ${VALOR_MENSALIDADE.toFixed(2)}</span></div>`).join('');
+            if (listaInad) {
+                listaInad.innerHTML = pendentes.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">🎉 Todos pagaram este mês!</div>'
+                    : pendentes.map(a => {
+                        let multas = 0;
+                        if (a.pagamentos) Object.values(a.pagamentos).forEach(d => {
+                            if (d.multas) d.multas.forEach(ml => { if (!ml.paga) multas += Number(ml.valor); });
+                        });
+                        const debito = multas > 0 ? VALOR_MENSALIDADE + multas : VALOR_MENSALIDADE;
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
+                            <span class="text-[10px] font-mono font-black ${multas > 0 ? 'text-orange-400' : 'text-red-400'}">R$ ${debito.toFixed(2)}</span>
+                        </div>`;
+                    }).join('');
+            }
+            
+            // Multados
+            const listaMult = document.getElementById('notif-lista-multados');
+            if (listaMult) {
+                listaMult.innerHTML = comMultas.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">✅ Ninguém com multas pendentes!</div>'
+                    : comMultas.map(a => {
+                        let total = 0;
+                        Object.values(a.pagamentos).forEach(d => {
+                            if (d.multas) d.multas.forEach(ml => { if (!ml.paga) total += Number(ml.valor); });
+                        });
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome}</span>
+                            <span class="text-[10px] font-mono font-black text-orange-400">R$ ${total.toFixed(2)}</span>
+                        </div>`;
+                    }).join('');
+            }
+            
+            // Suspensos
+            const listaSusp = document.getElementById('notif-lista-suspensos');
+            if (listaSusp) {
+                listaSusp.innerHTML = suspensos.length === 0
+                    ? '<div class="text-emerald-400 text-[10px] py-2 italic">✅ Ninguém suspenso no momento!</div>'
+                    : suspensos.map(a => {
+                        const motivo = (a.amarelos || 0) >= 3 && (a.vermelho || 0) >= 1
+                            ? '🔴⚠️ 3+ amarelos + vermelho'
+                            : (a.amarelos || 0) >= 3 ? '⚠️ 3+ amarelos' : '🔴 Vermelho';
+                        return `<div class="flex justify-between items-center py-2">
+                            <span class="text-stone-300 font-bold">${a.nome}</span>
+                            <span class="text-[9px] text-yellow-400 font-bold">${motivo}</span>
+                        </div>`;
+                    }).join('');
+            }
         };
+        
         window.prepararDisparo = function(tipo) {
-            if (tipo === 'multas' || tipo === 'suspensos') { window.mostrarToast('Os avisos de multas e suspensões foram desativados.', true); return; }
             const mesAtual = window.getMesAtual();
             const mesNome = window.mesesPtbr ? window.mesesPtbr[mesAtual] : mesAtual;
             let alvos = [];
@@ -5342,17 +5984,6 @@
         };
 
         // A navegação entre telas é feita somente pelos ícones do menu.
-    </script>
-    <script>
-        // Punições foram aposentadas a pedido do administrador. Dados históricos permanecem intactos.
-        const acaoPunitivaDesativada = function() {
-            window.mostrarToast?.('O sistema de punições foi desativado. Os registros históricos foram preservados.', true);
-        };
-        ['registrarPunicao','confirmarPagamentoPunicao','corrigirValorRecebidoPunicao','revogarPunicao',
-         'estornarRecebimentoPunicao','registrarAbatimentoSuspensao','aplicarMultaAtleta','toggleStatusMulta',
-         'cancelarMulta','excluirMultaHistorica','registrarAlteracaoPunicoes','sincronizarProjecoesPunicoesPublicas',
-         'renderAdminPunicoes','adicionarSuspensaoSumula'].forEach(nome => { window[nome] = acaoPunitivaDesativada; });
-        window.punicoesDirty = false;
     </script>
 
 </body>
