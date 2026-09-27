@@ -4829,6 +4829,8 @@
             };
             const entregar = (key, n) => {
                 if (!n || vistas[key]) return;
+                // Suprime avisos disciplinares antigos sem apagar os registros remotos.
+                if (notificacaoPunitiva(n)) { vistas[key] = Date.now(); salvarVistas(); return; }
                 const data = n.data ? new Date(n.data).getTime() : 0;
                 let limpezaEm = 0;
                 try { limpezaEm = Number(localStorage.getItem('baba_notificacoes_limpeza_em') || 0); } catch(e) {}
