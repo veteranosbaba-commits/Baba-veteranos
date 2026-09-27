@@ -915,6 +915,14 @@
                     </table>
                 </div>
 
+                <div id="temp-punicao-cleanup" class="bg-stone-900/95 rounded-2xl p-4 border border-amber-700/50 shadow-xl">
+                    <h4 class="font-bold text-amber-300 text-xs uppercase mb-2">Limpeza autorizada dos registros do submenu Punições</h4>
+                    <p class="text-[10px] text-stone-400 mb-3">Ferramenta temporária de administrador: identifica somente os lançamentos de multas, abatimentos e estornos da imagem. Multas de cartões e os demais dados ficam fora do alvo.</p>
+                    <button id="temp-punicao-preview" type="button" class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-black text-stone-950">Conferir os lançamentos-alvo</button>
+                    <pre id="temp-punicao-preview-output" class="mt-3 whitespace-pre-wrap text-[10px] text-stone-200"></pre>
+                    <button id="temp-punicao-delete" type="button" class="hidden mt-3 rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white">Apagar somente os registros conferidos</button>
+                </div>
+
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl overflow-x-auto">
                     <h4 class="font-bold text-red-400 text-xs uppercase mb-3">Despesas Lançadas</h4>
                     <table class="w-full text-left text-xs min-w-[500px]">
@@ -5985,6 +5993,93 @@
 
         // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
+
+
+<script>
+(() => {
+  const previewButton = document.getElementById('temp-punicao-preview');
+  const deleteButton = document.getElementById('temp-punicao-delete');
+  const output = document.getElementById('temp-punicao-preview-output');
+  if (!previewButton || !deleteButton || !output) return;
+  const expectedRows = [
+    ['Paulo','Multa — Falta grave','2026-09-26',8000],
+    ['Paulo','Estorno de multa cancelada','2026-09-26',-8000],
+    ['Paulo','Abatimento de suspensão (2 jogo(s))','2026-09-25',2000],
+    ['Paulo','Estorno de multa cancelada','2026-09-26',-2000],
+    ['Paulo','Abatimento de suspensão (5 jogo(s))','2026-09-25',5000],
+    ['Paulo','Estorno de multa cancelada','2026-09-26',-5000],
+    ['Paulo','Abatimento de suspensão (2 jogo(s))','2026-09-26',2000],
+    ['Paulo','Estorno de abatimento vinculado à multa cancelada','2026-09-26',-2000],
+    ['Paulo','Abatimento de suspensão (1 jogo(s))','2026-09-26',1000],
+    ['Paulo','Estorno de abatimento vinculado à multa cancelada','2026-09-26',-1000],
+    ['Pedro','Abatimento de suspensão (1 jogo(s))','2026-09-26',1000],
+    ['Pedro','Estorno de multa cancelada','2026-09-26',-1000]
+  ];
+  const makeKey = (nome, evento) => [nome, String(evento.motivo||''), String(evento.data||''), Math.round(Number(evento.valor||0)*100)].join('|');
+  const expectedCounts = new Map();
+  expectedRows.forEach(([n,m,d,c]) => { const k=[n,m,d,c].join('|'); expectedCounts.set(k,(expectedCounts.get(k)||0)+1); });
+  let selectedIds = [];
+  function findExactCandidates() {
+    if (!window.isAdminLogado || !window.firebaseUser || !window.disciplineLoaded || !window.privateRef || !window.publicRef || !window.babaPodeGravarOnline?.()) throw new Error('admin/offline/unloaded');
+    const actualCounts = new Map(), records=[];
+    (window.punicoesCache||[]).forEach(record => {
+      const athlete=(window.atletasCache||[]).find(a=>String(a.id)===String(record.athleteId));
+      const nome=String(athlete?.nome||record.athleteName||'Atleta');
+      const events=eventosFinanceirosPunicao(record);
+      if (!events.length) return;
+      const keys=events.map(e=>makeKey(nome,e));
+      if (!keys.every(k=>expectedCounts.has(k))) return;
+      records.push(record);
+      keys.forEach(k=>actualCounts.set(k,(actualCounts.get(k)||0)+1));
+    });
+    const exact=[...expectedCounts].every(([k,n])=>actualCounts.get(k)===n) && [...actualCounts].every(([k,n])=>expectedCounts.get(k)===n);
+    return {records,actualCounts,exact};
+  }
+  previewButton.addEventListener('click', () => {
+    deleteButton.classList.add('hidden'); selectedIds=[];
+    try {
+      const result=findExactCandidates();
+      const summary=result.records.map(r=>{
+        const athlete=(window.atletasCache||[]).find(a=>String(a.id)===String(r.athleteId));
+        const ev=eventosFinanceirosPunicao(r).map(e=>`${e.motivo} | ${e.data} | ${e.valor}`).join(' ; ');
+        return `ID ${r.id} | ${athlete?.nome||r.athleteName||'Atleta'} | ${r.categoria} | ${r.status} | ${ev}`;
+      });
+      output.textContent = result.exact
+        ? `Conferência exata: ${result.records.length} registro(s) da coleção privada Punições correspondem às 12 linhas da imagem. Cartões e outros dados não correspondem ao filtro e serão preservados.\n${summary.join('\\n')}`
+        : `Não vou apagar nada: o conjunto não corresponde exatamente às 12 linhas autorizadas. Linhas encontradas: ${[...result.actualCounts.values()].reduce((a,b)=>a+b,0)}; registros candidatos: ${result.records.length}.\n${summary.join('\\n')}`;
+      if (result.exact) { selectedIds=result.records.map(r=>String(r.id)); deleteButton.classList.remove('hidden'); }
+    } catch (_) { output.textContent='Sem ação: o acesso administrativo, a conexão segura ou os dados privados não estão prontos.'; }
+  });
+  deleteButton.addEventListener('click', async () => {
+    deleteButton.disabled=true;
+    try {
+      const result=findExactCandidates();
+      const ids=result.records.map(r=>String(r.id));
+      if (!result.exact || !ids.length || ids.join('|')!==selectedIds.join('|')) throw new Error('preview-changed');
+      if (!await window.confirmarAcao(`Apagar permanentemente os ${ids.length} registros do submenu Punições que geram exatamente as 12 linhas mostradas? Multas de cartões, mensalidades, cadastros e demais dados não serão alterados.`,{confirmText:'Apagar esses registros',destructive:true})) { deleteButton.disabled=false; return; }
+      const remaining=(window.punicoesCache||[]).filter(r=>!ids.includes(String(r.id)));
+      window.punicoesCache=remaining;
+      const suspensoes=criarProjecaoPublicaPunicoes(), receitas=criarProjecaoPublicaReceitasPunicoes();
+      await window.privateRef.child('discipline/records').set(remaining);
+      await Promise.all([
+        window.publicRef.child('data/suspensoesPublicas').set(suspensoes),
+        window.publicRef.child('data/receitasPunicoesPublicas').set(receitas)
+      ]);
+      window.suspensoesPublicasCache=suspensoes;
+      window.receitasPunicoesPublicasCache=receitas;
+      window.punicoesDirty=false;
+      window.punicoesRevision=(Number(window.punicoesRevision)||0)+1;
+      const verify=await window.privateRef.child('discipline/records').once('value');
+      const stored=Array.isArray(verify.val())?verify.val():Object.values(verify.val()||{});
+      if (stored.some(r=>ids.includes(String(r?.id)))) throw new Error('verification-failed');
+      window.renderizarTudo?.();
+      output.textContent=`Exclusão confirmada: ${ids.length} registros do submenu Punições removidos. Multas de cartões e outros dados preservados.`;
+      deleteButton.classList.add('hidden'); previewButton.disabled=true;
+      window.mostrarToast('Registros históricos específicos do submenu Punições removidos.');
+    } catch (_) { output.textContent='Não foi possível confirmar a exclusão completa. Confira os dados antes de tentar novamente.'; deleteButton.disabled=false; }
+  });
+})();
+</script>
 
 </body>
 </html>
