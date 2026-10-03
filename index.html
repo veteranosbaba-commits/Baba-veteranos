@@ -1486,85 +1486,57 @@
             if (!window.dbRef || !window.isAdminLogado || !window.authRef?.currentUser) {
                 throw adminSaveError('ADMIN_NOT_READY', 'A sessão administrativa não está pronta.');
             }
-            const lockLeaseMs = 2000;
-            const user = window.authRef.currentUser;
-            const token = `${user.uid}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-            const offsetSnapshot = await firebase.database().ref('.info/serverTimeOffset').once('value');
-            const serverOffsetMs = Number(offsetSnapshot.val()) || 0;
-            const lockRef = window.dbRef.child('meta/adminSaveLock');
-            const lockResult = await lockRef.transaction(current => {
-                const now = Date.now() + serverOffsetMs;
-                if (current && Number(current.expiresAt) > now) return;
-                return {owner: token, expiresAt: now + lockLeaseMs};
-            }, undefined, false);
-            const activeLock = lockResult.snapshot.val();
-            if (!lockResult.committed || activeLock?.owner !== token) {
-                const sameAccount = typeof activeLock?.owner === 'string' && activeLock.owner.startsWith(`${user.uid}:`);
-                const message = sameAccount
-                    ? 'Uma gravação desta mesma conta ainda está em andamento. Aguarde a liberação e tente novamente.'
-                    : 'Outro administrador está salvando agora. Aguarde e tente novamente.';
-                throw adminSaveError('ADMIN_WRITE_BUSY', message);
-            }
-
-            let lockRenewalPromise = null;
-            let lockOwnershipLost = false;
-            const renewAdminSaveLock = () => {
-                if (lockOwnershipLost) return Promise.resolve(false);
-                if (lockRenewalPromise) return lockRenewalPromise;
-                lockRenewalPromise = (async () => {
-                    try {
-                        const renewal = await lockRef.transaction(current => {
-                            if (!current || current.owner !== token) return;
-                            const now = Date.now() + serverOffsetMs;
-                            return {owner: token, expiresAt: now + lockLeaseMs};
-                        }, undefined, false);
-                        if (!renewal.committed || renewal.snapshot.val()?.owner !== token) lockOwnershipLost = true;
-                        return !lockOwnershipLost;
-                    } catch (renewError) {
-                        lockOwnershipLost = true;
-                        return false;
-                    } finally {
-                        lockRenewalPromise = null;
-                    }
-                })();
-                return lockRenewalPromise;
+            const snapshotPaths = {
+                publicData: ['public', 'data'],
+                privateAthletes: ['private', 'athletes'],
+                privateFinance: ['private', 'finance'],
+                privateDiscipline: ['private', 'discipline', 'records']
             };
-            let lockRenewalTimer = null;
-
-            try {
-                lockRenewalTimer = window.setInterval(() => { void renewAdminSaveLock(); }, 1000);
-                const snapshotRefs = {
-                    publicData: window.publicRef.child('data'),
-                    privateAthletes: window.privateRef.child('athletes'),
-                    privateFinance: window.privateRef.child('finance'),
-                    privateDiscipline: window.privateRef.child('discipline/records')
-                };
-                const snapshots = await Promise.all(requiredKeys.map(key => snapshotRefs[key].once('value')));
-                for (let i = 0; i < requiredKeys.length; i++) {
-                    const key = requiredKeys[i];
-                    const baseline = adminSaveSnapshots[key];
-                    if (!baseline?.loaded) {
-                        throw adminSaveError('ADMIN_BASELINE_MISSING', 'Os dados ainda estão carregando. Atualize a página antes de salvar.');
-                    }
-                    if (canonicalAdminSaveValue(snapshots[i].val()) !== canonicalAdminSaveValue(baseline.value)) {
-                        throw adminSaveError('ADMIN_DATA_CONFLICT', 'Outro administrador atualizou os dados. Nada foi salvo; atualize a página e refaça sua alteração.');
-                    }
+            for (const key of requiredKeys) {
+                if (!adminSaveSnapshots[key]?.loaded) {
+                    throw adminSaveError('ADMIN_BASELINE_MISSING', 'Os dados ainda estão carregando. Atualize a página antes de salvar.');
                 }
-                if (lockRenewalPromise) await lockRenewalPromise;
-                if (lockOwnershipLost) {
-                    throw adminSaveError('ADMIN_WRITE_BUSY', 'A trava de gravação expirou. Atualize e tente novamente.');
-                }
-                await window.dbRef.update(updates);
-                Object.entries(updates).forEach(([path, value]) => applyAdminSaveBaselinePath(path, value));
-            } finally {
-                if (lockRenewalTimer !== null) window.clearInterval(lockRenewalTimer);
-                if (lockRenewalPromise) await lockRenewalPromise;
-                try {
-                    await lockRef.transaction(current => current?.owner === token ? null : undefined, undefined, false);
-                } catch (releaseError) {
-                    console.error('Não foi possível liberar imediatamente a trava de salvamento.', releaseError?.code || '');
+                if (!Object.prototype.hasOwnProperty.call(snapshotPaths, key)) {
+                    throw adminSaveError('ADMIN_BASELINE_MISSING', 'Não foi possível validar os dados. Atualize a página e tente novamente.');
                 }
             }
+
+            let conflictDetected = false;
+            const result = await window.dbRef.transaction(currentValue => {
+                const nextRoot = cloneAdminSaveValue(currentValue) || {};
+                for (const key of requiredKeys) {
+                    let currentBranch = nextRoot;
+                    for (const part of snapshotPaths[key]) {
+                        currentBranch = currentBranch && typeof currentBranch === 'object' ? currentBranch[part] : undefined;
+                    }
+                    if (currentBranch === undefined) currentBranch = null;
+                    if (canonicalAdminSaveValue(currentBranch) !== canonicalAdminSaveValue(adminSaveSnapshots[key].value)) {
+                        conflictDetected = true;
+                        return;
+                    }
+                }
+
+                for (const [path, value] of Object.entries(updates)) {
+                    const parts = String(path).split('/').filter(Boolean);
+                    if (!parts.length) continue;
+                    let target = nextRoot;
+                    for (let i = 0; i < parts.length - 1; i++) {
+                        const part = parts[i];
+                        if (!target[part] || typeof target[part] !== 'object') target[part] = {};
+                        target = target[part];
+                    }
+                    target[parts[parts.length - 1]] = cloneAdminSaveValue(value);
+                }
+                return nextRoot;
+            }, undefined, false);
+
+            if (!result.committed) {
+                if (conflictDetected) {
+                    throw adminSaveError('ADMIN_DATA_CONFLICT', 'Os dados foram alterados em outra sessão. Nada foi salvo; atualize a página e refaça sua alteração.');
+                }
+                throw adminSaveError('ADMIN_DATA_CONFLICT', 'Não foi possível confirmar que os dados continuam atualizados. Atualize a página e tente novamente.');
+            }
+            Object.entries(updates).forEach(([path, value]) => applyAdminSaveBaselinePath(path, value));
         };
 
         window.confirmacaoAppPendente = null;
@@ -2029,13 +2001,11 @@
                     }
                 } catch (error) {
                     console.error('Erro ao salvar:', error?.code || '');
-                    if (!window.babaPodeGravarOnline?.() && !['ADMIN_DATA_CONFLICT', 'ADMIN_WRITE_BUSY', 'ADMIN_BASELINE_MISSING'].includes(error?.code)) {
+                    if (!window.babaPodeGravarOnline?.() && !['ADMIN_DATA_CONFLICT', 'ADMIN_BASELINE_MISSING'].includes(error?.code)) {
                         window.babaAtualizarAvisoConexao?.();
                         if (!opcoes.silencioso) window.mostrarToast('A conexão caiu durante o salvamento. Confira os dados após reconectar; nada será repetido automaticamente.', true);
                     } else if (error?.code === 'ADMIN_DATA_CONFLICT') {
-                        window.mostrarToast('Outro administrador atualizou os dados. Nada foi salvo; atualize a página e refaça sua alteração.', true);
-                    } else if (error?.code === 'ADMIN_WRITE_BUSY') {
-                        window.mostrarToast(error?.message || 'A gravação está temporariamente ocupada. Aguarde e tente novamente.', true);
+                        window.mostrarToast('Os dados foram alterados em outra sessão. Nada foi salvo; atualize a página e refaça sua alteração.', true);
                     } else if (error?.code === 'ADMIN_BASELINE_MISSING') {
                         window.mostrarToast('Os dados ainda estão carregando. Atualize a página antes de salvar.', true);
                     } else if (!opcoes.silencioso) {
@@ -3844,7 +3814,7 @@
             window.commitAdminDataWithGuard(atualizacoes, ['publicData'])
                 .catch(error => {
                     console.error('Falha ao atualizar o resumo público das punições.', error?.code || '');
-                    if (error?.code === 'ADMIN_DATA_CONFLICT') window.mostrarToast('Outro administrador atualizou os dados. Atualize a página antes de continuar.', true);
+                    if (error?.code === 'ADMIN_DATA_CONFLICT') window.mostrarToast('Os dados foram alterados em outra sessão. Atualize a página antes de continuar.', true);
                 })
                 .finally(() => { adminProjectionSyncInProgress = false; });
         };
