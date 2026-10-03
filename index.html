@@ -1532,7 +1532,7 @@
             let lockRenewalTimer = null;
 
             try {
-                lockRenewalTimer = window.setInterval(() => { void renewAdminSaveLock(); }, 700);
+                lockRenewalTimer = window.setInterval(() => { void renewAdminSaveLock(); }, 1000);
                 const snapshotRefs = {
                     publicData: window.publicRef.child('data'),
                     privateAthletes: window.privateRef.child('athletes'),
@@ -1550,7 +1550,8 @@
                         throw adminSaveError('ADMIN_DATA_CONFLICT', 'Outro administrador atualizou os dados. Nada foi salvo; atualize a página e refaça sua alteração.');
                     }
                 }
-                if (!await renewAdminSaveLock()) {
+                if (lockRenewalPromise) await lockRenewalPromise;
+                if (lockOwnershipLost) {
                     throw adminSaveError('ADMIN_WRITE_BUSY', 'A trava de gravação expirou. Atualize e tente novamente.');
                 }
                 await window.dbRef.update(updates);
