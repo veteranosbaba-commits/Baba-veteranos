@@ -1701,32 +1701,44 @@
                             window.isAdminLogado = adminSnapshot.val() === true;
                         }
                         if (window.isAdminLogado) {
-                            window.atualizarInterfaceAcessoAtleta?.(user, 'admin');
+                            const adminProfileSnapshot = await window.rolesRef.child(`users/${user.uid}`).once('value');
+                            const adminProfile = adminProfileSnapshot.val();
+                            const hasAthleteProfile = adminProfile?.role === 'athlete' && typeof adminProfile.athleteId === 'string' && adminProfile.athleteId.length > 0;
+                            window.isAtletaLogado = Boolean(hasAthleteProfile);
+                            window.currentAthleteId = hasAthleteProfile ? String(adminProfile.athleteId) : null;
+                            window.currentUserProfile = hasAthleteProfile ? adminProfile : null;
+                            const roleState = hasAthleteProfile ? 'adminAthlete' : 'admin';
+                            window.atualizarInterfaceAcessoAtleta?.(user, roleState);
                             atualizarAcessoFinanceiro();
                             document.getElementById('admin-badge')?.classList.remove('hidden');
+                            if (hasAthleteProfile) document.getElementById('member-profile-button')?.classList.remove('hidden');
                             await window.carregarDadosPrivadosAdmin?.();
                             window.renderizarTudo();
                             switchTab('admin-panel');
                             void window.carregarFilaVinculos?.();
                             return;
                         }
-                        const profileSnapshot = await window.rolesRef.child(`users/${user.uid}`).once('value');
+                        const [profileSnapshot, pendingSnapshot, adminPendingSnapshot] = await Promise.all([
+                            window.rolesRef.child(`users/${user.uid}`).once('value'),
+                            window.rolesRef.child(`pending/${user.uid}`).once('value'),
+                            window.rolesRef.child(`adminPending/${user.uid}`).once('value')
+                        ]);
                         const profile = profileSnapshot.val();
-                        if (profile?.role === 'athlete' && profile.athleteId) {
+                        if (profile?.role === 'athlete' && typeof profile.athleteId === 'string' && profile.athleteId.length > 0) {
                             window.isAtletaLogado = true;
                             window.currentAthleteId = String(profile.athleteId);
                             window.currentUserProfile = profile;
-                            window.atualizarInterfaceAcessoAtleta?.(user, 'athlete');
+                            const roleState = adminPendingSnapshot.exists() ? 'athleteAdminPending' : 'athlete';
+                            window.atualizarInterfaceAcessoAtleta?.(user, roleState);
                             document.getElementById('member-profile-button')?.classList.remove('hidden');
                             atualizarAcessoFinanceiro();
                             await window.carregarDadosPrivadosAtleta?.(window.currentAthleteId);
+                        } else if (adminPendingSnapshot.exists()) {
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'adminPending');
+                        } else if (pendingSnapshot.exists()) {
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'pending');
                         } else {
-                            const pendingSnapshot = await window.rolesRef.child(`pending/${user.uid}`).once('value');
-                            if (pendingSnapshot.exists()) {
-                                window.atualizarInterfaceAcessoAtleta?.(user, 'pending');
-                            } else {
-                                window.atualizarInterfaceAcessoAtleta?.(user, 'unlinked');
-                            }
+                            window.atualizarInterfaceAcessoAtleta?.(user, 'unlinked');
                         }
                     } catch (error) {
                         console.error('Falha ao validar perfil autenticado.', error?.code || '');
@@ -4173,8 +4185,10 @@
                 unlinked: ['ATLETA · SEM VÍNCULO', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
                 pending: ['ATLETA · EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
                 adminPending: ['ADMIN · EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
+                athleteAdminPending: ['ATLETA · ADM EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
                 athlete: ['ATLETA', 'border-emerald-500/60 bg-emerald-950/60 text-emerald-200'],
                 admin: ['ADMINISTRADOR', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
+                adminAthlete: ['ADMIN + ATLETA', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
                 error: ['ATLETA · ACESSO PENDENTE', 'border-red-500/60 bg-red-950/60 text-red-200']
             };
             const [label, color] = roleMap[state] || roleMap.error;
@@ -4183,8 +4197,8 @@
                 badge.className = `inline-flex h-7 min-w-[56px] items-center justify-center rounded-full border px-2 text-[8px] font-black ${color}`;
             }
             const signedIn = Boolean(user);
-            const isAthlete = signedIn && state === 'athlete';
-            const isAdmin = signedIn && state === 'admin';
+            const isAthlete = signedIn && ['athlete', 'adminAthlete', 'athleteAdminPending'].includes(state);
+            const isAdmin = signedIn && (state === 'admin' || state === 'adminAthlete');
             visible('member-auth-button', signedIn && !isAthlete && !isAdmin);
             visible('member-profile-button', isAthlete);
             visible('member-logout-button', signedIn && !isAdmin);
@@ -4195,7 +4209,7 @@
             visible('athlete-auth-resend', signedIn && state === 'unverified');
             visible('athlete-auth-verify', signedIn && state === 'unverified');
             visible('athlete-auth-request', signedIn && state === 'unlinked');
-            visible('athlete-auth-admin-request', signedIn && state === 'unlinked');
+            visible('athlete-auth-admin-request', signedIn && ['unlinked', 'athlete'].includes(state));
             const session = document.getElementById('athlete-auth-session-status');
             if (session) {
                 const messages = {
@@ -4204,8 +4218,10 @@
                     unlinked: 'E-mail confirmado. Toque em “Solicitar vínculo ao cadastro” para entrar na fila do administrador.',
                     pending: 'Solicitação enviada. Você está como atleta aguardando aprovação; o acesso privado continua bloqueado.',
                     adminPending: 'Solicitação de acesso administrativo enviada. Você não tem privilégios administrativos até a aprovação.',
+                    athleteAdminPending: 'Seu acesso de atleta continua ativo; o pedido administrativo aguarda aprovação.',
                     athlete: 'Vínculo aprovado. Você acessa seu cadastro e consulta o balanço financeiro.',
                     admin: 'Sessão administrativa. A aprovação de vínculos fica no painel técnico.',
+                    adminAthlete: 'Conta administrativa vinculada ao seu cadastro de atleta. Você pode acessar os dois espaços com este login.',
                     error: 'Não foi possível validar seu perfil agora. Tente atualizar o status; o acesso privado permanece bloqueado.'
                 };
                 session.textContent = signedIn ? `${messages[state] || messages.error}${user.email ? ` (${user.email})` : ''}` : '';
@@ -4246,19 +4262,26 @@
                 window.rolesRef.child(`pending/${atual.uid}`).once('value'),
                 window.rolesRef.child(`adminPending/${atual.uid}`).once('value')
             ]);
-            if (atual.uid === window.bootstrapAdminUid || adminSnap.val() === true) {
-                window.isAdminLogado = true; window.isAtletaLogado = false;
-                document.getElementById('admin-badge')?.classList.remove('hidden');
-                window.atualizarInterfaceAcessoAtleta?.(atual, 'admin');
-                return 'admin';
-            }
             const profile = profileSnap.val();
-            if (profile?.role === 'athlete' && profile.athleteId) {
+            const hasAthleteProfile = profile?.role === 'athlete' && typeof profile.athleteId === 'string' && profile.athleteId.length > 0;
+            if (atual.uid === window.bootstrapAdminUid || adminSnap.val() === true) {
+                window.isAdminLogado = true;
+                window.isAtletaLogado = Boolean(hasAthleteProfile);
+                window.currentAthleteId = hasAthleteProfile ? String(profile.athleteId) : null;
+                window.currentUserProfile = hasAthleteProfile ? profile : null;
+                document.getElementById('admin-badge')?.classList.remove('hidden');
+                if (hasAthleteProfile) document.getElementById('member-profile-button')?.classList.remove('hidden');
+                const roleState = hasAthleteProfile ? 'adminAthlete' : 'admin';
+                window.atualizarInterfaceAcessoAtleta?.(atual, roleState);
+                return roleState;
+            }
+            if (hasAthleteProfile) {
                 window.isAdminLogado = false; window.isAtletaLogado = true;
                 window.currentAthleteId = String(profile.athleteId); window.currentUserProfile = profile;
                 document.getElementById('member-profile-button')?.classList.remove('hidden');
-                window.atualizarInterfaceAcessoAtleta?.(atual, 'athlete');
-                return 'athlete';
+                const roleState = adminPendingSnap.exists() ? 'athleteAdminPending' : 'athlete';
+                window.atualizarInterfaceAcessoAtleta?.(atual, roleState);
+                return roleState;
             }
             window.isAdminLogado = false; window.isAtletaLogado = false;
             if (adminPendingSnap.exists()) {
@@ -4371,11 +4394,12 @@
                 const atual = window.authRef?.currentUser;
                 if (!atual) throw new Error('Sua sessão terminou. Entre novamente para continuar.');
                 if (!atual.emailVerified) throw new Error('Confirme seu e-mail antes de solicitar acesso administrativo.');
-                if (state === 'adminPending') { exibirMensagemAcessoAtleta('Sua solicitação administrativa já está aguardando aprovação.'); return; }
-                if (state === 'admin' || state === 'athlete' || state === 'pending') throw new Error('Esta conta já tem um papel ou uma solicitação de vínculo ativa.');
-                if (state !== 'unlinked') throw new Error('Não consegui validar sua conta. Tente novamente.');
+                if (state === 'adminPending' || state === 'athleteAdminPending') { exibirMensagemAcessoAtleta('Sua solicitação administrativa já está aguardando aprovação.'); return; }
+                if (state === 'admin' || state === 'adminAthlete') { exibirMensagemAcessoAtleta('Esta conta já possui acesso administrativo.'); return; }
+                if (state === 'pending') throw new Error('Sua solicitação de vínculo de atleta precisa ser resolvida antes do pedido administrativo.');
+                if (state !== 'unlinked' && state !== 'athlete') throw new Error('Não consegui validar sua conta. Tente novamente.');
                 await window.rolesRef.child(`adminPending/${atual.uid}`).set({email: atual.email, requestedAt: firebase.database.ServerValue.TIMESTAMP});
-                window.atualizarInterfaceAcessoAtleta?.(atual, 'adminPending');
+                window.atualizarInterfaceAcessoAtleta?.(atual, state === 'athlete' ? 'athleteAdminPending' : 'adminPending');
                 exibirMensagemAcessoAtleta('Solicitação enviada. Você só terá acesso administrativo depois que um administrador a aprovar.');
             } catch (error) {
                 const code = String(error?.code || '').toLowerCase();
@@ -4429,7 +4453,11 @@
                 const pending = pendingSnap.val() || {};
                 const admins = adminsSnap.val() || {};
                 const users = usersSnap.val() || {};
-                const entries = Object.entries(pending).filter(([uid]) => admins[uid] !== true && !users[uid]);
+                const entries = Object.entries(pending).filter(([uid]) => {
+                    const profile = users[uid];
+                    const linkedAthlete = profile?.role === 'athlete' && typeof profile.athleteId === 'string' && profile.athleteId.length > 0;
+                    return admins[uid] !== true && (!profile || linkedAthlete);
+                });
                 host.replaceChildren();
                 if (!entries.length) { host.textContent = 'Nenhuma solicitação administrativa pendente.'; return; }
                 for (const [uid, request] of entries) {
@@ -4443,6 +4471,13 @@
                     meta.className = 'text-stone-400 text-[10px]';
                     meta.textContent = `Solicitado em: ${request?.requestedAt ? new Date(request.requestedAt).toLocaleString('pt-BR') : '—'}`;
                     card.appendChild(meta);
+                    const linkedProfile = users[uid]?.role === 'athlete' && typeof users[uid]?.athleteId === 'string' && users[uid].athleteId.length > 0;
+                    if (linkedProfile) {
+                        const linkedNote = document.createElement('p');
+                        linkedNote.className = 'text-emerald-300 text-[10px]';
+                        linkedNote.textContent = 'Vínculo de atleta já aprovado; será mantido após a concessão.';
+                        card.appendChild(linkedNote);
+                    }
                     const actions = document.createElement('div');
                     actions.className = 'flex gap-2';
                     const approve = document.createElement('button');
@@ -4481,14 +4516,18 @@
                 window.rolesRef.child(`pending/${uid}`).once('value')
             ]);
             if (!requestSnap.exists()) throw new Error('A solicitação já não está pendente.');
-            if (userSnap.exists() || athleteRequestSnap.exists()) throw new Error('Esta conta também tem vínculo de atleta pendente ou aprovado; resolva esse vínculo antes.');
+            const existingProfile = userSnap.val();
+            const linkedAthlete = existingProfile?.role === 'athlete' && typeof existingProfile.athleteId === 'string' && existingProfile.athleteId.length > 0;
+            if ((userSnap.exists() && !linkedAthlete) || athleteRequestSnap.exists()) throw new Error('Esta conta tem um vínculo incompatível ou pendente; resolva essa solicitação antes.');
             if (adminSnap.val() === true) throw new Error('Esta conta já é administradora.');
             const email = requestSnap.val()?.email || 'esta conta';
             if (!await window.confirmarAcao(`Conceder acesso administrativo para ${email}? A pessoa terá acesso aos dados administrativos do app.`, {confirmText: 'Conceder acesso'})) return;
             const result = await window.rolesRef.child(`admins/${uid}`).transaction(current => current === true ? undefined : true, undefined, false);
             if (!result.committed) throw new Error('Outro administrador já processou esta solicitação. Atualize a fila.');
             await window.rolesRef.child(`adminPending/${uid}`).remove();
-            window.mostrarToast('Acesso administrativo concedido. A pessoa deve atualizar o app e entrar novamente.');
+            window.mostrarToast(linkedAthlete
+                ? 'Acesso administrativo concedido; o vínculo de atleta foi mantido. A pessoa deve atualizar o app e entrar novamente.'
+                : 'Acesso administrativo concedido sem vínculo de atleta. A pessoa deve atualizar o app e entrar novamente.');
         };
 
         window.recusarSolicitacaoAdministrador = async function(uid) {
