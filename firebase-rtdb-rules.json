@@ -21,17 +21,17 @@
             ".read": "auth != null && auth.token.email_verified === true && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').val() === $athleteId))",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             "pagamentos": {
-              ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
+              ".read": "auth != null && auth.token.email_verified === true && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').val() === $athleteId))",
               ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
             },
             "abatimentos": {
-              ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
+              ".read": "auth != null && auth.token.email_verified === true && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').val() === $athleteId))",
               ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
             }
           }
         },
         "finance": {
-          ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true || (auth.token.email_verified === true && root.child('baba/roles/users/' + auth.uid + '/role').val() === 'athlete' && root.child('baba/roles/users/' + auth.uid + '/athleteId').isString()))",
+          ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
           ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
         },
         "notificacoes_pendentes": {
