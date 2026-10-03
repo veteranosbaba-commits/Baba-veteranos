@@ -4158,25 +4158,85 @@
                 const dados = window.obterDadosPagamento(a.pagamentos, ano, mes).dados || { pago: false };
                 html += `<tr class="border-b border-stone-800/40 text-center text-xs">
                     <td class="p-1.5 font-bold text-left"><span class="text-stone-500">#${a.camisa}</span> ${a.nome}</td>
-                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',${ano},this.checked)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
+                    <td class="p-1.5"><input type="checkbox" onchange="window.toggleMensalidade('${a.id}','${mes}',${ano},this.checked,this)" ${dados.pago ? 'checked' : ''} class="accent-emerald-500"></td>
                 </tr>`;
             });
             const tabela = document.getElementById('adm-mensalidades-tabela');
             if (tabela) tabela.innerHTML = html;
         };
 
-        window.toggleMensalidade = function(id, mes, ano, isChecked) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-            if (!a.pagamentos) a.pagamentos = {};
-            const entrada = window.obterDadosPagamento(a.pagamentos, ano, mes);
-            const chaveAnual = window.chavePagamentoAnual(ano, mes);
-            if (!a.pagamentos[chaveAnual]) {
-                a.pagamentos[chaveAnual] = entrada.dados ? JSON.parse(JSON.stringify(entrada.dados)) : { pago: false, multas: [] };
-                if (entrada.chave !== chaveAnual && entrada.dados) delete a.pagamentos[entrada.chave];
+        window.toggleMensalidade = async function(id, mes, ano, isChecked, checkbox = null) {
+            const athleteId = String(id);
+            const atleta = window.atletasCache.find(j => String(j.id) === athleteId);
+            if (!atleta) return;
+            const baseline = adminSaveSnapshots.privateAthletes;
+            const atletaSalvo = baseline?.value?.[athleteId] || {};
+            const pagamentosSalvos = atletaSalvo.pagamentos || {};
+            const entradaSalva = window.obterDadosPagamento(pagamentosSalvos, ano, mes);
+            const pagoSalvo = entradaSalva.dados?.pago === true;
+            const restaurarCheckbox = () => { if (checkbox) checkbox.checked = pagoSalvo; };
+
+            if (!window.isAdminLogado || !window.authRef?.currentUser || !window.privateRef || !baseline?.loaded) {
+                restaurarCheckbox();
+                window.mostrarToast('Os dados ainda não estão prontos para salvar. Atualize e tente novamente.', true);
+                return;
             }
-            a.pagamentos[chaveAnual].pago = isChecked;
-            window.salvarNoStorage();
+            if (!window.babaExigirConexao()) {
+                restaurarCheckbox();
+                return;
+            }
+
+            if (checkbox) checkbox.disabled = true;
+            let conflitoPagamento = false;
+            try {
+                const chaveAnual = window.chavePagamentoAnual(ano, mes);
+                const resultado = await window.privateRef.child('athletes').transaction(valorAtual => {
+                    const atletasAtuais = cloneAdminSaveValue(valorAtual) || {};
+                    const atletaAtual = cloneAdminSaveValue(atletasAtuais[athleteId]) || {};
+                    const pagamentosAtuais = cloneAdminSaveValue(atletaAtual.pagamentos) || {};
+                    const entradaAtual = window.obterDadosPagamento(pagamentosAtuais, ano, mes);
+                    if (canonicalAdminSaveValue(entradaAtual.dados ?? null) !== canonicalAdminSaveValue(entradaSalva.dados ?? null)) {
+                        conflitoPagamento = true;
+                        return;
+                    }
+                    if (!pagamentosAtuais[chaveAnual]) {
+                        pagamentosAtuais[chaveAnual] = entradaAtual.dados
+                            ? cloneAdminSaveValue(entradaAtual.dados)
+                            : {pago: false, multas: []};
+                        if (entradaAtual.chave !== chaveAnual && entradaAtual.dados) delete pagamentosAtuais[entradaAtual.chave];
+                    }
+                    pagamentosAtuais[chaveAnual].pago = Boolean(isChecked);
+                    atletaAtual.pagamentos = pagamentosAtuais;
+                    atletasAtuais[athleteId] = atletaAtual;
+                    return atletasAtuais;
+                }, undefined, false);
+
+                if (!resultado.committed) {
+                    restaurarCheckbox();
+                    if (conflitoPagamento) {
+                        window.mostrarToast('Este pagamento foi alterado em outra sessão. Atualize a página para conferir antes de tentar novamente.', true);
+                    } else {
+                        window.mostrarToast('Não foi possível confirmar o pagamento. Confira a conexão e atualize a página.', true);
+                    }
+                    return;
+                }
+
+                const atletasPrivadosAtualizados = resultado.snapshot.val() || {};
+                window.privateAthletesCache = cloneAdminSaveValue(atletasPrivadosAtualizados) || {};
+                setAdminSaveSnapshot('privateAthletes', atletasPrivadosAtualizados, true);
+                aplicarCachePrivado();
+                window.renderizarTudo();
+            } catch (error) {
+                restaurarCheckbox();
+                console.error('Erro ao salvar mensalidade:', error?.code || '');
+                if (!window.babaPodeGravarOnline?.()) {
+                    window.mostrarToast('Sem conexão ativa. O pagamento não foi confirmado; atualize e confira antes de tentar novamente.', true);
+                } else {
+                    window.mostrarToast('Não foi possível salvar este pagamento. Atualize a página e tente novamente.', true);
+                }
+            } finally {
+                if (checkbox) checkbox.disabled = false;
+            }
         };
         
         // =====================================================
