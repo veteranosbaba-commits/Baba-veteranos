@@ -802,6 +802,18 @@
                 <button onclick="switchAdminSubTab('adm-sumulas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Partidas</button>
                 <button onclick="switchAdminSubTab('adm-arquivos')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Arquivos</button>
                 <button onclick="switchAdminSubTab('adm-notificacoes')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">📢 Notificar</button>
+                <button onclick="switchAdminSubTab('adm-administradores')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center text-stone-400 whitespace-nowrap">Administradores</button>
+            </div>
+
+            <div id="adm-administradores" class="adm-sub-content hidden space-y-6">
+                <div class="bg-stone-900/95 rounded-xl p-4 border border-sky-800/60">
+                    <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+                        <h4 class="font-bold text-sky-300 text-xs uppercase">Solicitações de acesso administrativo</h4>
+                        <button type="button" onclick="window.carregarFilaAdministradores()" class="text-[10px] bg-stone-800 text-sky-300 px-2 py-1 rounded">Atualizar fila</button>
+                    </div>
+                    <p class="text-[10px] text-stone-400 mb-3">Cada pessoa cria a própria conta, escolhe a própria senha e confirma o e-mail. Só conceda acesso a quem você reconhece.</p>
+                    <div id="admin-request-queue" class="space-y-2 text-xs" aria-live="polite">Toque em “Atualizar fila” para consultar solicitações.</div>
+                </div>
             </div>
 
             <div id="adm-atletas" class="adm-sub-content block space-y-6">
@@ -1294,10 +1306,11 @@
                 <button id="athlete-auth-resend" type="button" onclick="window.enviarConfirmacaoAtleta()" class="hidden w-full text-stone-400 text-xs underline">Reenviar link de confirmação</button>
                 <button id="athlete-auth-verify" type="button" onclick="window.confirmarEmailAtleta()" class="hidden w-full text-emerald-300 text-xs underline">Já confirmei meu e-mail</button>
                 <button id="athlete-auth-request" type="button" onclick="window.solicitarVinculoAtleta()" class="hidden w-full bg-stone-800 text-amber-300 font-bold p-2.5 rounded-lg text-xs">Solicitar vínculo ao cadastro</button>
+                <button id="athlete-auth-admin-request" type="button" onclick="window.solicitarAcessoAdministrador()" class="hidden w-full bg-stone-800 text-sky-300 font-bold p-2.5 rounded-lg text-xs">Solicitar acesso de administrador</button>
                 <button id="athlete-auth-reset" type="button" onclick="window.redefinirSenhaAtleta()" class="w-full text-stone-400 text-xs underline">Esqueci minha senha</button>
                 <button id="athlete-auth-signout" type="button" onclick="window.sairContaAtleta()" class="hidden w-full bg-stone-800 text-red-300 font-bold p-2.5 rounded-lg text-xs">Sair desta conta</button>
             </form>
-            <p class="text-stone-500 text-[10px] mt-3">Cada atleta mantém a própria senha. O vínculo só libera dados privados após aprovação do administrador.</p>
+            <p class="text-stone-500 text-[10px] mt-3">Cada pessoa mantém a própria senha. Vínculos de atleta e acessos de administrador dependem de aprovação.</p>
         </div>
     </div>
 
@@ -4159,6 +4172,7 @@
                 unverified: ['ATLETA · CONFIRMAR E-MAIL', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
                 unlinked: ['ATLETA · SEM VÍNCULO', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
                 pending: ['ATLETA · EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
+                adminPending: ['ADMIN · EM APROVAÇÃO', 'border-sky-500/60 bg-sky-950/60 text-sky-200'],
                 athlete: ['ATLETA', 'border-emerald-500/60 bg-emerald-950/60 text-emerald-200'],
                 admin: ['ADMINISTRADOR', 'border-amber-500/60 bg-amber-950/60 text-amber-200'],
                 error: ['ATLETA · ACESSO PENDENTE', 'border-red-500/60 bg-red-950/60 text-red-200']
@@ -4181,6 +4195,7 @@
             visible('athlete-auth-resend', signedIn && state === 'unverified');
             visible('athlete-auth-verify', signedIn && state === 'unverified');
             visible('athlete-auth-request', signedIn && state === 'unlinked');
+            visible('athlete-auth-admin-request', signedIn && state === 'unlinked');
             const session = document.getElementById('athlete-auth-session-status');
             if (session) {
                 const messages = {
@@ -4188,6 +4203,7 @@
                     unverified: 'Sua conta está conectada. Confirme o e-mail aqui mesmo; não precisa entrar de novo.',
                     unlinked: 'E-mail confirmado. Toque em “Solicitar vínculo ao cadastro” para entrar na fila do administrador.',
                     pending: 'Solicitação enviada. Você está como atleta aguardando aprovação; o acesso privado continua bloqueado.',
+                    adminPending: 'Solicitação de acesso administrativo enviada. Você não tem privilégios administrativos até a aprovação.',
                     athlete: 'Vínculo aprovado. Você acessa seu cadastro e consulta o balanço financeiro.',
                     admin: 'Sessão administrativa. A aprovação de vínculos fica no painel técnico.',
                     error: 'Não foi possível validar seu perfil agora. Tente atualizar o status; o acesso privado permanece bloqueado.'
@@ -4224,10 +4240,11 @@
                 window.atualizarInterfaceAcessoAtleta?.(atual, 'unverified');
                 return 'unverified';
             }
-            const [adminSnap, profileSnap, pendingSnap] = await Promise.all([
+            const [adminSnap, profileSnap, pendingSnap, adminPendingSnap] = await Promise.all([
                 window.rolesRef.child(`admins/${atual.uid}`).once('value'),
                 window.rolesRef.child(`users/${atual.uid}`).once('value'),
-                window.rolesRef.child(`pending/${atual.uid}`).once('value')
+                window.rolesRef.child(`pending/${atual.uid}`).once('value'),
+                window.rolesRef.child(`adminPending/${atual.uid}`).once('value')
             ]);
             if (atual.uid === window.bootstrapAdminUid || adminSnap.val() === true) {
                 window.isAdminLogado = true; window.isAtletaLogado = false;
@@ -4244,6 +4261,10 @@
                 return 'athlete';
             }
             window.isAdminLogado = false; window.isAtletaLogado = false;
+            if (adminPendingSnap.exists()) {
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'adminPending');
+                return 'adminPending';
+            }
             window.atualizarInterfaceAcessoAtleta?.(atual, pendingSnap.exists() ? 'pending' : 'unlinked');
             return pendingSnap.exists() ? 'pending' : 'unlinked';
         };
@@ -4332,11 +4353,37 @@
                     exibirMensagemAcessoAtleta('Ainda não consta como confirmado. Abra o link do e-mail e toque novamente aqui.', true);
                     return;
                 }
-                if (state === 'pending') exibirMensagemAcessoAtleta('E-mail confirmado. Sua solicitação já está aguardando aprovação.');
-                else if (state === 'unlinked') exibirMensagemAcessoAtleta('E-mail confirmado. Agora toque em “Solicitar vínculo ao cadastro”.');
+                if (state === 'pending') exibirMensagemAcessoAtleta('E-mail confirmado. Sua solicitação de vínculo já está aguardando aprovação.');
+                else if (state === 'adminPending') exibirMensagemAcessoAtleta('E-mail confirmado. Sua solicitação de acesso administrativo está aguardando aprovação.');
+                else if (state === 'unlinked') exibirMensagemAcessoAtleta('E-mail confirmado. Escolha se deseja solicitar vínculo de atleta ou acesso administrativo.');
                 else exibirMensagemAcessoAtleta('Seu acesso foi atualizado. Confira a categoria exibida no topo.');
             } catch (error) {
                 exibirMensagemAcessoAtleta('E-mail confirmado, mas não consegui atualizar seu perfil agora. Tente novamente.', true);
+            }
+        };
+
+        window.solicitarAcessoAdministrador = async function() {
+            if (!window.babaExigirConexao?.()) return;
+            const user = window.authRef?.currentUser;
+            if (!user) { exibirMensagemAcessoAtleta('Entre ou crie sua própria conta para solicitar acesso.'); return; }
+            try {
+                const state = await window.revalidarCategoriaAtleta(user);
+                const atual = window.authRef?.currentUser;
+                if (!atual) throw new Error('Sua sessão terminou. Entre novamente para continuar.');
+                if (!atual.emailVerified) throw new Error('Confirme seu e-mail antes de solicitar acesso administrativo.');
+                if (state === 'adminPending') { exibirMensagemAcessoAtleta('Sua solicitação administrativa já está aguardando aprovação.'); return; }
+                if (state === 'admin' || state === 'athlete' || state === 'pending') throw new Error('Esta conta já tem um papel ou uma solicitação de vínculo ativa.');
+                if (state !== 'unlinked') throw new Error('Não consegui validar sua conta. Tente novamente.');
+                await window.rolesRef.child(`adminPending/${atual.uid}`).set({email: atual.email, requestedAt: firebase.database.ServerValue.TIMESTAMP});
+                window.atualizarInterfaceAcessoAtleta?.(atual, 'adminPending');
+                exibirMensagemAcessoAtleta('Solicitação enviada. Você só terá acesso administrativo depois que um administrador a aprovar.');
+            } catch (error) {
+                const code = String(error?.code || '').toLowerCase();
+                const detail = error?.message || '';
+                const message = code.includes('permission') || detail.toLowerCase().includes('permission')
+                    ? 'Não foi possível registrar a solicitação. Sua conta continua sem privilégios administrativos; tente novamente.'
+                    : detail || 'Não foi possível enviar a solicitação. Tente novamente.';
+                exibirMensagemAcessoAtleta(message, true);
             }
         };
 
@@ -4367,6 +4414,88 @@
                     : detail || 'Não foi possível enviar a solicitação. Tente novamente.';
                 exibirMensagemAcessoAtleta(message, true);
             }
+        };
+
+        window.carregarFilaAdministradores = async function() {
+            const host = document.getElementById('admin-request-queue');
+            if (!host || !window.isAdminLogado || !window.firebaseUser) return;
+            host.textContent = 'Carregando solicitações…';
+            try {
+                const [pendingSnap, adminsSnap, usersSnap] = await Promise.all([
+                    window.rolesRef.child('adminPending').once('value'),
+                    window.rolesRef.child('admins').once('value'),
+                    window.rolesRef.child('users').once('value')
+                ]);
+                const pending = pendingSnap.val() || {};
+                const admins = adminsSnap.val() || {};
+                const users = usersSnap.val() || {};
+                const entries = Object.entries(pending).filter(([uid]) => admins[uid] !== true && !users[uid]);
+                host.replaceChildren();
+                if (!entries.length) { host.textContent = 'Nenhuma solicitação administrativa pendente.'; return; }
+                for (const [uid, request] of entries) {
+                    const card = document.createElement('div');
+                    card.className = 'rounded-lg border border-stone-700 bg-stone-950 p-3 space-y-2';
+                    const title = document.createElement('p');
+                    title.className = 'font-bold text-white';
+                    title.textContent = request?.email || 'E-mail não informado';
+                    card.appendChild(title);
+                    const meta = document.createElement('p');
+                    meta.className = 'text-stone-400 text-[10px]';
+                    meta.textContent = `Solicitado em: ${request?.requestedAt ? new Date(request.requestedAt).toLocaleString('pt-BR') : '—'}`;
+                    card.appendChild(meta);
+                    const actions = document.createElement('div');
+                    actions.className = 'flex gap-2';
+                    const approve = document.createElement('button');
+                    approve.type = 'button';
+                    approve.className = 'bg-emerald-700 text-white font-bold p-2 rounded text-[10px]';
+                    approve.textContent = 'Conceder acesso';
+                    approve.addEventListener('click', async () => {
+                        try { await window.aprovarSolicitacaoAdministrador(uid); await window.carregarFilaAdministradores(); }
+                        catch (error) { host.insertAdjacentText('afterbegin', error.message || 'Não foi possível conceder acesso. '); }
+                    });
+                    const reject = document.createElement('button');
+                    reject.type = 'button';
+                    reject.className = 'bg-red-800 text-white font-bold p-2 rounded text-[10px]';
+                    reject.textContent = 'Recusar';
+                    reject.addEventListener('click', async () => {
+                        try { await window.recusarSolicitacaoAdministrador(uid); await window.carregarFilaAdministradores(); }
+                        catch (error) { host.insertAdjacentText('afterbegin', error.message || 'Não foi possível recusar. '); }
+                    });
+                    actions.append(approve, reject);
+                    card.appendChild(actions);
+                    host.appendChild(card);
+                }
+            } catch (error) {
+                host.textContent = 'Não foi possível carregar a fila administrativa. Confira as regras do Firebase.';
+            }
+        };
+
+        window.aprovarSolicitacaoAdministrador = async function(uid) {
+            if (!window.babaExigirConexao?.()) return;
+            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente um administrador autenticado pode aprovar.');
+            if (!uid || uid === window.firebaseUser.uid) throw new Error('Não é possível aprovar esta solicitação.');
+            const [requestSnap, userSnap, adminSnap, athleteRequestSnap] = await Promise.all([
+                window.rolesRef.child(`adminPending/${uid}`).once('value'),
+                window.rolesRef.child(`users/${uid}`).once('value'),
+                window.rolesRef.child(`admins/${uid}`).once('value'),
+                window.rolesRef.child(`pending/${uid}`).once('value')
+            ]);
+            if (!requestSnap.exists()) throw new Error('A solicitação já não está pendente.');
+            if (userSnap.exists() || athleteRequestSnap.exists()) throw new Error('Esta conta também tem vínculo de atleta pendente ou aprovado; resolva esse vínculo antes.');
+            if (adminSnap.val() === true) throw new Error('Esta conta já é administradora.');
+            const email = requestSnap.val()?.email || 'esta conta';
+            if (!await window.confirmarAcao(`Conceder acesso administrativo para ${email}? A pessoa terá acesso aos dados administrativos do app.`, {confirmText: 'Conceder acesso'})) return;
+            const result = await window.rolesRef.child(`admins/${uid}`).transaction(current => current === true ? undefined : true, undefined, false);
+            if (!result.committed) throw new Error('Outro administrador já processou esta solicitação. Atualize a fila.');
+            await window.rolesRef.child(`adminPending/${uid}`).remove();
+            window.mostrarToast('Acesso administrativo concedido. A pessoa deve atualizar o app e entrar novamente.');
+        };
+
+        window.recusarSolicitacaoAdministrador = async function(uid) {
+            if (!window.babaExigirConexao?.()) return;
+            if (!window.isAdminLogado || !window.firebaseUser) throw new Error('Somente um administrador autenticado pode recusar.');
+            await window.rolesRef.child(`adminPending/${uid}`).remove();
+            window.mostrarToast('Solicitação administrativa recusada; nenhum acesso foi concedido.');
         };
 
         window.carregarFilaVinculos = async function() {
@@ -5218,6 +5347,7 @@
             if (subTabId === 'adm-arquivos') window.renderArquivados();
             if (subTabId === 'adm-notificacoes') window.calcularResumoNotif();
             if (subTabId === 'adm-atletas') renderAdminAtletas();
+            if (subTabId === 'adm-administradores') window.carregarFilaAdministradores?.();
             if (subTabId === 'adm-sumulas') window.renderSumulasAdmin();
             if (subTabId === 'adm-punicoes') window.renderAdminPunicoes?.();
             if (subTabId === 'adm-mensalidades') window.loadAdmFinancas();
