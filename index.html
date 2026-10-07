@@ -3811,10 +3811,16 @@
             if (normalizar(desejadasReceitas) !== normalizar(window.receitasPunicoesPublicasCache)) atualizacoes['public/data/receitasPunicoesPublicas'] = desejadasReceitas;
             if (!Object.keys(atualizacoes).length) return;
             adminProjectionSyncInProgress = true;
-            window.commitAdminDataWithGuard(atualizacoes, ['publicData'])
+            window.dbRef.update(atualizacoes)
+                .then(() => {
+                    Object.entries(atualizacoes).forEach(([path, value]) => applyAdminSaveBaselinePath(path, value));
+                    window.suspensoesPublicasCache = desejadasSuspensoes;
+                    window.receitasPunicoesPublicasCache = desejadasReceitas;
+                })
                 .catch(error => {
+                    // Esta projeção é derivada dos registros privados: atualiza somente esses campos
+                    // e não deve bloquear nem alertar como conflito de gravação administrativa.
                     console.error('Falha ao atualizar o resumo público das punições.', error?.code || '');
-                    if (error?.code === 'ADMIN_DATA_CONFLICT') window.mostrarToast('Os dados foram alterados em outra sessão. Atualize a página antes de continuar.', true);
                 })
                 .finally(() => { adminProjectionSyncInProgress = false; });
         };
