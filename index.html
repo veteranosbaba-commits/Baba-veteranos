@@ -497,7 +497,97 @@
             </div>
         </div>
 
-        
+        <!-- BOLÃO: interface inicial, sem gravação de palpites ativada -->
+        <div id="bolao-ver" class="tab-content space-y-5 pt-4">
+            <div class="flex items-center justify-between gap-3">
+                <button type="button" onclick="window.switchTab('dashboard')" class="inline-flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-900 px-3 py-2 text-[10px] font-black uppercase text-stone-300 hover:border-emerald-600 hover:text-emerald-300">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar
+                </button>
+                <span class="rounded-full border border-amber-700/60 bg-amber-950/40 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-amber-300">Em preparação</span>
+            </div>
+
+            <section class="overflow-hidden rounded-2xl border border-emerald-700/60 bg-stone-900/95 shadow-xl">
+                <div class="border-b border-stone-800 bg-gradient-to-r from-emerald-950/80 to-stone-900 p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+                            <i class="fa-solid fa-trophy text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black uppercase tracking-wide text-white">Bolão do Baba</h2>
+                            <p class="mt-1 text-[11px] text-stone-400">Palpite recreativo de placar exato</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4 p-4 sm:p-5">
+                    <div class="rounded-xl border border-stone-700 bg-black/40 p-4">
+                        <p class="mb-4 text-center text-[9px] font-black uppercase tracking-[0.18em] text-stone-500">Próximo jogo</p>
+                        <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+                            <div class="text-center">
+                                <span class="inline-block rounded-lg border border-emerald-700 bg-emerald-950/70 px-2 py-2 text-[10px] font-black uppercase tracking-wide text-emerald-200 sm:px-4 sm:text-xs">Fluminense</span>
+                                <label class="sr-only" for="bolao-placar-flu">Gols do Fluminense</label>
+                                <input id="bolao-placar-flu" type="number" min="0" step="1" inputmode="numeric" placeholder="—" disabled class="mt-3 w-16 rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-xl font-black text-stone-500 opacity-60 sm:w-20" aria-label="Palpite de gols do Fluminense; indisponível durante a prévia">
+                            </div>
+                            <span class="pt-7 text-sm font-black text-stone-600">×</span>
+                            <div class="text-center">
+                                <span class="inline-block rounded-lg border border-stone-700 bg-stone-800 px-2 py-2 text-[10px] font-black uppercase tracking-wide text-stone-300 sm:px-4 sm:text-xs">Botafogo</span>
+                                <label class="sr-only" for="bolao-placar-bota">Gols do Botafogo</label>
+                                <input id="bolao-placar-bota" type="number" min="0" step="1" inputmode="numeric" placeholder="—" disabled class="mt-3 w-16 rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-xl font-black text-stone-500 opacity-60 sm:w-20" aria-label="Palpite de gols do Botafogo; indisponível durante a prévia">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="rounded-xl border border-emerald-900/70 bg-emerald-950/30 p-3">
+                            <p class="text-[9px] font-black uppercase tracking-wider text-stone-400">Placar exato</p>
+                            <p class="mt-1 text-lg font-black text-emerald-300">3 pontos</p>
+                        </div>
+                        <div class="rounded-xl border border-stone-700 bg-stone-800/50 p-3">
+                            <p class="text-[9px] font-black uppercase tracking-wider text-stone-400">Se errar</p>
+                            <p class="mt-1 text-lg font-black text-stone-300">0 pontos</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg border border-amber-900/60 bg-amber-950/20 px-3 py-2 text-center text-[10px] font-bold text-amber-200">
+                        <i class="fa-solid fa-lock mr-1.5"></i>Palpites fecharão no início da partida.
+                    </div>
+                    <button type="button" disabled class="w-full cursor-not-allowed rounded-xl border border-stone-700 bg-stone-800 px-4 py-3 text-xs font-black uppercase tracking-wider text-stone-500 opacity-80">
+                        Palpites ainda não estão liberados
+                    </button>
+                    <p class="text-center text-[9px] leading-relaxed text-stone-500">Esta é apenas a prévia da tela. Nenhum palpite é enviado ou gravado nesta etapa.</p>
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-stone-700 bg-stone-900/95 p-4 shadow-xl sm:p-5">
+                <div class="mb-3 flex items-center justify-between gap-2 border-b border-stone-800 pb-3">
+                    <h3 class="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-stone-200"><i class="fa-solid fa-users text-emerald-400"></i> Participantes</h3>
+                    <span class="rounded-full bg-stone-800 px-2 py-1 text-[9px] font-bold text-stone-400">Lista após liberação</span>
+                </div>
+                <p class="text-xs leading-relaxed text-stone-400">Os nomes aparecerão aqui com uma identificação discreta:</p>
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <span class="rounded-full border border-emerald-800/70 bg-emerald-950/40 px-2 py-1 text-[8px] font-black tracking-wider text-emerald-300">ATLETA</span>
+                    <span class="rounded-full border border-stone-700 bg-stone-800/70 px-2 py-1 text-[8px] font-black tracking-wider text-stone-300">VISITANTE</span>
+                </div>
+                <div class="mt-4 rounded-xl border border-dashed border-stone-700 bg-black/20 p-5 text-center">
+                    <i class="fa-solid fa-user-plus text-xl text-stone-600"></i>
+                    <p class="mt-2 text-[10px] font-bold text-stone-500">A lista de participantes será exibida quando o bolão for aberto.</p>
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-stone-700 bg-stone-900/95 p-4 shadow-xl sm:p-5">
+                <div class="mb-3 flex items-center justify-between gap-2 border-b border-stone-800 pb-3">
+                    <h3 class="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-stone-200"><i class="fa-solid fa-ranking-star text-amber-400"></i> Classificação</h3>
+                    <div class="flex gap-1 rounded-lg bg-black/40 p-1">
+                        <span class="rounded-md bg-emerald-900/50 px-2 py-1 text-[8px] font-black uppercase text-emerald-300">Rodada</span>
+                        <span class="rounded-md px-2 py-1 text-[8px] font-black uppercase text-stone-500">Temporada</span>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-dashed border-stone-700 bg-black/20 p-5 text-center">
+                    <i class="fa-solid fa-medal text-xl text-stone-600"></i>
+                    <p class="mt-2 text-[10px] font-bold text-stone-500">A classificação será calculada após o placar oficial.</p>
+                </div>
+            </section>
+        </div>
 
         <!-- JOGADORES -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
@@ -693,7 +783,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 42</span>
+                <span class="font-bold">Versão 43</span>
             </footer>
         </div>
 
@@ -1264,6 +1354,26 @@
                 <i class="fa-solid fa-circle-arrow-right text-fuchsia-200 text-[10px]"></i>
             </a>
         </div>
+    </div>
+
+    <!-- MENU FLUTUANTE DE JOGOS -->
+    <div id="games-menu-root" class="fixed right-4 z-[55]" style="bottom:calc(env(safe-area-inset-bottom, 0px) + 112px)">
+        <div id="games-menu-panel" class="hidden absolute right-0 w-64 overflow-hidden rounded-2xl border border-emerald-700/60 bg-stone-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-xl" style="bottom:calc(100% + 0.75rem);max-width:calc(100vw - 2rem)" role="menu" aria-label="Jogos">
+            <p class="px-3 pb-2 pt-1 text-[9px] font-black uppercase tracking-[0.2em] text-stone-500">Jogos</p>
+            <button type="button" onclick="window.abrirBolaoPeloMenu()" role="menuitem" class="flex w-full items-center gap-3 rounded-xl border border-emerald-800/50 bg-emerald-950/40 p-3 text-left transition hover:border-emerald-500 hover:bg-emerald-900/40">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300"><i class="fa-solid fa-trophy"></i></span>
+                <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Bolão do Baba</span><span class="mt-1 block text-[9px] text-stone-400">Palpite de placar exato</span></span>
+                <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-emerald-500"></i>
+            </button>
+            <div class="mt-2 flex items-center gap-3 rounded-xl border border-stone-800 bg-stone-900/60 p-3 opacity-60" aria-disabled="true">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-800 text-stone-400"><i class="fa-solid fa-dice"></i></span>
+                <span class="min-w-0"><span class="block text-xs font-black uppercase text-stone-300">Dominó</span><span class="mt-1 block text-[9px] text-stone-500">Em breve</span></span>
+                <i class="fa-solid fa-lock ml-auto text-[9px] text-stone-600"></i>
+            </div>
+        </div>
+        <button id="games-menu-toggle" type="button" onclick="window.toggleGamesMenu()" aria-label="Abrir menu de jogos" aria-controls="games-menu-panel" aria-expanded="false" class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-emerald-300/70 bg-emerald-500 text-stone-950 shadow-[0_8px_24px_rgba(16,185,129,0.35)] transition hover:scale-105 hover:bg-emerald-400 active:scale-95">
+            <span class="flex flex-col items-center justify-center gap-0.5"><i class="fa-solid fa-gamepad text-lg"></i><span class="text-[8px] font-black uppercase tracking-wider">Jogos</span></span>
+        </button>
     </div>
 
     <!-- MODAL LOGIN -->
@@ -4962,6 +5072,7 @@
             // Atualiza nome da página no topo
             const nomes = {
                 'dashboard': 'Painel Geral',
+                'bolao-ver': 'Bolão do Baba',
                 'jogadores': 'Escalação / Times',
                 'artilharia-ver': 'Gols e Artilharia',
                 'financeiro-ver': 'Balanço Financeiro',
@@ -6366,6 +6477,27 @@
             window._disparoPendente = null;
             window.mostrarToast("Disparo cancelado.");
         };
+
+        window.toggleGamesMenu = function(forceOpen) {
+            const panel = document.getElementById('games-menu-panel');
+            const button = document.getElementById('games-menu-toggle');
+            if (!panel || !button) return;
+            const open = typeof forceOpen === 'boolean' ? forceOpen : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !open);
+            button.setAttribute('aria-expanded', String(open));
+            button.setAttribute('aria-label', open ? 'Fechar menu de jogos' : 'Abrir menu de jogos');
+        };
+        window.abrirBolaoPeloMenu = function() {
+            window.toggleGamesMenu(false);
+            if (typeof window.switchTab === 'function') window.switchTab('bolao-ver');
+        };
+        document.addEventListener('click', event => {
+            const root = document.getElementById('games-menu-root');
+            if (root && !root.contains(event.target)) window.toggleGamesMenu(false);
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') window.toggleGamesMenu(false);
+        });
 
         // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
