@@ -247,11 +247,9 @@
             width:100%; height:100%; overflow:hidden !important; overscroll-behavior:none;
         }
         body.snake-fullscreen { height:100vh; height:100dvh; }
-        body.snake-fullscreen #main-topbar {
-            position:fixed !important; top:0; left:0; right:0; width:100%; z-index:60;
-        }
+        body.snake-fullscreen #main-topbar { display:none !important; }
         body.snake-fullscreen #app-content {
-            position:fixed; top:var(--snake-header-height,76px); bottom:var(--snake-footer-height,56px);
+            position:fixed; top:var(--snake-header-height,0px); bottom:var(--snake-footer-height,56px);
             left:0; right:0; width:100%; max-width:none; margin:0; padding:2px 10px 0;
             overflow:hidden; box-sizing:border-box; display:block;
         }
@@ -269,7 +267,7 @@
             flex:none; padding:0 4px 2px; text-align:center; line-height:1;
         }
         body.snake-fullscreen .snake-game-title h2 {
-            margin:0; color:#a5f3fc; font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
+            margin:0; color:#a5f3fc; font-size:9px; font-weight:900; letter-spacing:.10em; text-transform:uppercase;
         }
         body.snake-fullscreen #snake-game-content {
             display:flex; flex:1 1 auto; flex-direction:column; min-height:0; gap:5px;
@@ -281,22 +279,34 @@
         body.snake-fullscreen .snake-hud-label { font-size:7px; }
         body.snake-fullscreen .snake-hud-value { margin-top:0; font-size:14px; }
         body.snake-fullscreen #snake-game-stage {
-            display:block; flex:1 1 auto; width:100%; height:auto !important; min-height:0 !important;
-            max-height:none; border-width:2px; border-color:rgba(34,211,238,.78); border-radius:12px;
+            display:block; flex:0 1 auto; width:100%; height:42vh !important; height:42dvh !important;
+            min-height:150px !important; max-height:330px; border-width:2px;
+            border-color:rgba(34,211,238,.78); border-radius:12px;
         }
         body.snake-fullscreen #snake-game-overlay { gap:6px; padding:12px; }
-        body.snake-fullscreen #snake-game-overlay h3 { font-size:clamp(1rem,4vw,1.25rem); }
+        body.snake-fullscreen #snake-game-overlay h3 { font-size:clamp(.9rem,3vw,1rem); }
         body.snake-fullscreen #snake-game-overlay p { font-size:10px; }
         body.snake-fullscreen #snake-game-start { min-height:40px; padding:8px 18px; }
         body.snake-fullscreen #snake-game-controls {
-            flex:none; display:flex; align-items:center; justify-content:center; gap:4px; width:100%;
+            flex:none; display:flex; align-items:center; justify-content:center; gap:14px; width:100%;
         }
-        body.snake-fullscreen .snake-control {
-            flex:0 0 36px; min-width:36px; width:36px; min-height:38px; height:38px;
-            border-radius:10px; padding:0; font-size:16px !important;
+        body.snake-fullscreen #snake-direction-pad {
+            display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(3,42px); gap:4px;
         }
+        body.snake-fullscreen .snake-control.snake-direction {
+            flex:none; min-width:42px; width:42px; min-height:42px; height:42px;
+            border-radius:12px; padding:0; font-size:18px !important;
+            border-color:rgba(34,211,238,.55); background:linear-gradient(145deg,#1e293b,#0b1220);
+            box-shadow:0 3px 0 rgba(2,6,23,.9), inset 0 1px rgba(255,255,255,.06);
+        }
+        body.snake-fullscreen .snake-pad-center {
+            display:flex; align-items:center; justify-content:center; color:#22d3ee; font-size:18px;
+            text-shadow:0 0 10px rgba(34,211,238,.65);
+        }
+        body.snake-fullscreen #snake-game-actions { display:flex; flex-direction:column; gap:6px; }
         body.snake-fullscreen .snake-control.snake-action {
-            flex-basis:54px; width:54px; min-width:54px; font-size:9px !important;
+            flex:none; width:70px; min-width:70px; height:42px; min-height:42px;
+            border-radius:12px; padding:0 4px; font-size:9px !important;
         }
         body.snake-fullscreen #snake-game-footer {
             position:fixed; left:0; right:0; bottom:0; z-index:56; display:flex;
@@ -724,12 +734,21 @@
                         </div>
                     </div>
                     <div id="snake-game-controls" aria-label="Controles do jogo">
-                        <button type="button" class="snake-control snake-direction" aria-label="Mover para cima" onclick="window.babaSnakeTurn('up')">▲</button>
-                        <button type="button" class="snake-control snake-direction" aria-label="Mover para a esquerda" onclick="window.babaSnakeTurn('left')">◀</button>
-                        <button type="button" class="snake-control snake-direction" aria-label="Mover para baixo" onclick="window.babaSnakeTurn('down')">▼</button>
-                        <button type="button" class="snake-control snake-direction" aria-label="Mover para a direita" onclick="window.babaSnakeTurn('right')">▶</button>
-                        <button id="snake-pause" type="button" class="snake-control snake-action" onclick="window.babaSnakeTogglePause()">Pausar</button>
-                        <button type="button" class="snake-control snake-action" onclick="window.babaSnakeRestart()">Reiniciar</button>
+                        <div id="snake-direction-pad" role="group" aria-label="Direções da cobra">
+                            <span aria-hidden="true"></span>
+                            <button type="button" class="snake-control snake-direction" aria-label="Mover para cima" onclick="window.babaSnakeTurn('up')">▲</button>
+                            <span aria-hidden="true"></span>
+                            <button type="button" class="snake-control snake-direction" aria-label="Mover para a esquerda" onclick="window.babaSnakeTurn('left')">◀</button>
+                            <span class="snake-pad-center" aria-hidden="true">●</span>
+                            <button type="button" class="snake-control snake-direction" aria-label="Mover para a direita" onclick="window.babaSnakeTurn('right')">▶</button>
+                            <span aria-hidden="true"></span>
+                            <button type="button" class="snake-control snake-direction" aria-label="Mover para baixo" onclick="window.babaSnakeTurn('down')">▼</button>
+                            <span aria-hidden="true"></span>
+                        </div>
+                        <div id="snake-game-actions" aria-label="Ações da partida">
+                            <button id="snake-pause" type="button" class="snake-control snake-action" onclick="window.babaSnakeTogglePause()">Pausar</button>
+                            <button type="button" class="snake-control snake-action" onclick="window.babaSnakeRestart()">Reiniciar</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -935,7 +954,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 50</span>
+                <span class="font-bold">Versão 51</span>
             </footer>
         </div>
 
@@ -6925,7 +6944,7 @@
                 if (!document.body.classList.contains('snake-fullscreen')) return;
                 const topbar = document.getElementById('main-topbar');
                 const footer = document.getElementById('snake-game-footer');
-                const headerHeight = Math.ceil(topbar?.getBoundingClientRect().height || 76);
+                const headerHeight = topbar && getComputedStyle(topbar).display !== 'none' ? Math.ceil(topbar.getBoundingClientRect().height) : 0;
                 const footerHeight = Math.ceil(footer?.getBoundingClientRect().height || 56);
                 document.documentElement.style.setProperty('--snake-header-height', headerHeight + 'px');
                 document.documentElement.style.setProperty('--snake-footer-height', footerHeight + 'px');
