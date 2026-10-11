@@ -182,6 +182,65 @@
         }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         .rotate-90 { transform: rotate(90deg); }
+
+        /* Jogo Cobra Neon: estilos isolados para não alterar o restante do app. */
+        #snake-game-stage {
+            position: relative;
+            width: 100%;
+            height: min(56vh, 520px);
+            min-height: 280px;
+            overflow: hidden;
+            border: 1px solid rgba(16, 185, 129, .35);
+            border-radius: 1rem;
+            background: #06111c;
+            touch-action: none;
+            user-select: none;
+        }
+        #snake-game-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        #snake-game-hud {
+            position: absolute;
+            inset: 10px 10px auto;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .snake-hud-card {
+            min-width: 68px;
+            border: 1px solid rgba(148,163,184,.22);
+            border-radius: 12px;
+            background: rgba(3,10,16,.78);
+            padding: 7px 10px;
+            color: #e2e8f0;
+            text-align: center;
+            backdrop-filter: blur(8px);
+        }
+        .snake-hud-label { display:block; color:#94a3b8; font-size:8px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+        .snake-hud-value { display:block; margin-top:2px; color:#67e8f9; font-family:ui-monospace,monospace; font-size:18px; font-weight:900; }
+        #snake-game-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 24px;
+            background: rgba(2,8,14,.78);
+            text-align: center;
+            backdrop-filter: blur(4px);
+        }
+        #snake-game-overlay.hidden { display:none; }
+        #snake-game-overlay h3 { color:#fff; font-size:clamp(1.35rem,5vw,2rem); font-weight:1000; text-transform:uppercase; letter-spacing:.08em; text-shadow:0 0 18px rgba(34,211,238,.75); }
+        #snake-game-overlay p { max-width:28rem; color:#cbd5e1; font-size:12px; line-height:1.5; }
+        #snake-game-start { min-height:48px; border:1px solid rgba(103,232,249,.7); border-radius:14px; background:linear-gradient(135deg,#06b6d4,#10b981); padding:12px 24px; color:#03131a; font-size:14px; font-weight:1000; text-transform:uppercase; box-shadow:0 0 24px rgba(34,211,238,.25); }
+        .snake-control { display:flex; min-width:56px; min-height:48px; align-items:center; justify-content:center; border:1px solid rgba(71,85,105,.9); border-radius:14px; background:#111827; color:#e2e8f0; font-size:18px; font-weight:900; touch-action:manipulation; }
+        .snake-control:active { transform:scale(.96); border-color:#22d3ee; color:#67e8f9; }
+        @media (max-height: 560px) {
+            #snake-game-stage { height: 48vh; min-height:220px; }
+        }
     </style>
 
     <style>
@@ -570,6 +629,54 @@
             </section>
         </div>
 
+        <!-- COBRA NEON: jogo individual; recorde exclusivamente no armazenamento local -->
+        <div id="snake-ver" class="tab-content space-y-4 pt-4 pb-24">
+            <div class="flex items-center justify-start gap-3">
+                <button type="button" onclick="window.switchTab('dashboard')" class="inline-flex items-center gap-2 rounded-lg border border-stone-700 bg-stone-900 px-3 py-2 text-[10px] font-black uppercase text-stone-300 hover:border-cyan-500 hover:text-cyan-200">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar
+                </button>
+            </div>
+            <section class="overflow-hidden rounded-2xl border border-cyan-800/60 bg-stone-900/95 shadow-xl">
+                <div class="border-b border-stone-800 bg-gradient-to-r from-cyan-950/80 via-stone-900 to-emerald-950/60 p-4 sm:p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-200"><i class="fa-solid fa-gamepad text-lg" aria-hidden="true"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-lg font-black uppercase tracking-wide text-white">Cobra Neon</h2>
+                            <p class="mt-1 text-[10px] text-stone-400">Jogo individual · sem ranking online</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4 p-3 sm:p-5">
+                    <div id="snake-game-stage">
+                        <canvas id="snake-game-canvas" aria-label="Jogo Cobra Neon. Use os controles na tela, deslize ou use as setas do teclado." role="img">Seu navegador não oferece suporte ao jogo.</canvas>
+                        <div id="snake-game-hud" aria-live="polite">
+                            <div class="snake-hud-card"><span class="snake-hud-label">Pontos</span><span id="snake-score" class="snake-hud-value">0</span></div>
+                            <div class="snake-hud-card"><span class="snake-hud-label">Recorde local</span><span id="snake-record" class="snake-hud-value">0</span></div>
+                            <div class="snake-hud-card"><span class="snake-hud-label">Nível</span><span id="snake-level" class="snake-hud-value">1</span></div>
+                        </div>
+                        <div id="snake-game-overlay">
+                            <h3 id="snake-overlay-title">Cobra Neon</h3>
+                            <p id="snake-overlay-message">Pegue os cristais, aumente sua pontuação e desvie do próprio rastro. O recorde fica apenas neste aparelho.</p>
+                            <button id="snake-game-start" type="button" onclick="window.babaSnakeStart()">Começar</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 sm:mx-auto sm:max-w-sm">
+                        <span aria-hidden="true"></span>
+                        <button type="button" class="snake-control" aria-label="Mover para cima" onclick="window.babaSnakeTurn('up')">▲</button>
+                        <span aria-hidden="true"></span>
+                        <button type="button" class="snake-control" aria-label="Mover para a esquerda" onclick="window.babaSnakeTurn('left')">◀</button>
+                        <button id="snake-pause" type="button" class="snake-control text-[10px] uppercase" onclick="window.babaSnakeTogglePause()">Pausar</button>
+                        <button type="button" class="snake-control" aria-label="Mover para a direita" onclick="window.babaSnakeTurn('right')">▶</button>
+                        <span aria-hidden="true"></span>
+                        <button type="button" class="snake-control" aria-label="Mover para baixo" onclick="window.babaSnakeTurn('down')">▼</button>
+                        <button type="button" class="snake-control text-[10px] uppercase text-cyan-200" onclick="window.babaSnakeRestart()">Reiniciar</button>
+                    </div>
+                    <p class="text-center text-[10px] leading-relaxed text-stone-400">No celular, deslize sobre o tabuleiro ou use as setas. No computador, use as setas ou WASD.</p>
+                    <p id="snake-local-note" class="rounded-lg border border-cyan-900/50 bg-cyan-950/20 px-3 py-2 text-center text-[9px] font-bold text-cyan-100/80">Recorde salvo só neste aparelho, separado por atleta quando conectado; visitante usa identificador local. Não vai ao banco nem sincroniza entre aparelhos.</p>
+                </div>
+            </section>
+        </div>
+
         <!-- JOGADORES -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
             <div class="flex space-x-3 mb-1">
@@ -764,7 +871,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 46</span>
+                <span class="font-bold">Versão 47</span>
             </footer>
         </div>
 
@@ -1345,6 +1452,11 @@
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300"><i class="fa-solid fa-trophy"></i></span>
                 <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Bolão do Baba</span><span class="mt-1 block text-[9px] text-stone-400">Palpite de placar exato</span></span>
                 <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-emerald-500"></i>
+            </button>
+            <button type="button" onclick="window.abrirSnakePeloMenu()" role="menuitem" class="mt-2 flex w-full items-center gap-3 rounded-xl border border-cyan-800/50 bg-cyan-950/30 p-3 text-left transition hover:border-cyan-500 hover:bg-cyan-900/40">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-200"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
+                <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Cobra Neon</span><span class="mt-1 block text-[9px] text-stone-400">Recorde pessoal neste aparelho</span></span>
+                <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-cyan-400" aria-hidden="true"></i>
             </button>
             <div class="mt-2 flex items-center gap-3 rounded-xl border border-stone-800 bg-stone-900/60 p-3 opacity-60" aria-disabled="true">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-800 text-stone-400"><i class="fa-solid fa-dice"></i></span>
@@ -5040,6 +5152,8 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
             if(target) target.classList.add('active');
+            if (tabId === 'snake-ver') window.babaSnakeTabEnter?.();
+            else window.babaSnakeTabLeave?.();
 
             // Renderiza notificações ao abrir a aba
             if (tabId === 'notificacoes-ver') {
@@ -5054,6 +5168,7 @@
             const nomes = {
                 'dashboard': 'Painel Geral',
                 'bolao-ver': 'Bolão do Baba',
+                'snake-ver': 'Cobra Neon',
                 'jogadores': 'Escalação / Times',
                 'artilharia-ver': 'Gols e Artilharia',
                 'financeiro-ver': 'Balanço Financeiro',
@@ -6472,6 +6587,10 @@
             window.toggleGamesMenu(false);
             if (typeof window.switchTab === 'function') window.switchTab('bolao-ver');
         };
+        window.abrirSnakePeloMenu = function() {
+            window.toggleGamesMenu(false);
+            if (typeof window.switchTab === 'function') window.switchTab('snake-ver');
+        };
         document.addEventListener('click', event => {
             const root = document.getElementById('games-menu-root');
             if (root && !root.contains(event.target)) window.toggleGamesMenu(false);
@@ -6479,6 +6598,276 @@
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape') window.toggleGamesMenu(false);
         });
+
+        // COBRA NEON: recorde local por atleta/conta neste aparelho; sem gravação no Firebase.
+        (() => {
+            const canvas = document.getElementById('snake-game-canvas');
+            const stage = document.getElementById('snake-game-stage');
+            if (!canvas || !stage) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            const grid = 20;
+            const colors = ['#22d3ee','#34d399','#a78bfa','#fbbf24','#fb7185','#f8fafc'];
+            const recordStorageKey = 'baba_veteranos_cobra_neon_records_v1';
+            const guestStorageKey = 'baba_veteranos_cobra_neon_guest_v1';
+            const game = {
+                width: 0, height: 0, cols: 0, rows: 0, dpr: 1,
+                snake: [], food: null, dir: {x:1,y:0}, nextDir: {x:1,y:0},
+                score: 0, best: 0, level: 1, speed: 180, particles: [],
+                scope: '', ready: false, started: false, paused: true,
+                userPaused: false, over: false, raf: 0, lastTime: 0, elapsed: 0
+            };
+            const scoreEl = document.getElementById('snake-score');
+            const bestEl = document.getElementById('snake-record');
+            const levelEl = document.getElementById('snake-level');
+            const overlay = document.getElementById('snake-game-overlay');
+            const overlayTitle = document.getElementById('snake-overlay-title');
+            const overlayMessage = document.getElementById('snake-overlay-message');
+            const overlayButton = document.getElementById('snake-game-start');
+            const pauseButton = document.getElementById('snake-pause');
+            const localNote = document.getElementById('snake-local-note');
+
+            function playerScope() {
+                if (window.isAtletaLogado && window.currentAthleteId) return 'atleta:' + String(window.currentAthleteId);
+                const uid = window.firebaseUser?.uid || window.authRef?.currentUser?.uid;
+                if (uid) return 'conta:' + String(uid);
+                try {
+                    let guest = localStorage.getItem(guestStorageKey);
+                    if (!guest) {
+                        guest = (window.crypto?.randomUUID?.() || (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)));
+                        localStorage.setItem(guestStorageKey, guest);
+                    }
+                    return 'visitante:' + guest;
+                } catch (_) {
+                    return 'visitante:aparelho';
+                }
+            }
+            function readRecords() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(recordStorageKey) || '{}');
+                    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+                } catch (_) { return {}; }
+            }
+            function refreshRecordOwner() {
+                const scope = playerScope();
+                if (scope === game.scope && game.ready) return;
+                game.scope = scope;
+                const records = readRecords();
+                const value = Number(records[scope]);
+                game.best = Number.isSafeInteger(value) && value > 0 ? value : 0;
+                updateHud();
+            }
+            function saveBest() {
+                try {
+                    const records = readRecords();
+                    records[game.scope || playerScope()] = game.best;
+                    localStorage.setItem(recordStorageKey, JSON.stringify(records));
+                } catch (_) {
+                    if (localNote) localNote.textContent = 'O jogo continua funcionando, mas este navegador não permitiu salvar o recorde local.';
+                }
+            }
+            function updateHud() {
+                if (scoreEl) scoreEl.textContent = String(game.score);
+                if (bestEl) bestEl.textContent = String(game.best);
+                if (levelEl) levelEl.textContent = String(game.level);
+                if (pauseButton) pauseButton.textContent = game.paused && game.started && !game.over ? 'Retomar' : 'Pausar';
+            }
+            function showOverlay(title, message, buttonText, visible = true) {
+                if (overlayTitle) overlayTitle.textContent = title;
+                if (overlayMessage) overlayMessage.textContent = message;
+                if (overlayButton) overlayButton.textContent = buttonText;
+                if (overlay) overlay.classList.toggle('hidden', !visible);
+            }
+            function resizeCanvas() {
+                const rect = stage.getBoundingClientRect();
+                if (rect.width < 40 || rect.height < 40) return;
+                const oldCols = game.cols, oldRows = game.rows;
+                game.width = rect.width; game.height = rect.height;
+                game.dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.round(game.width * game.dpr);
+                canvas.height = Math.round(game.height * game.dpr);
+                ctx.setTransform(game.dpr, 0, 0, game.dpr, 0, 0);
+                game.cols = Math.max(8, Math.floor(game.width / grid));
+                game.rows = Math.max(8, Math.floor(game.height / grid));
+                if (game.ready && (oldCols !== game.cols || oldRows !== game.rows)) {
+                    const occupied = new Set();
+                    let invalid = false;
+                    for (const part of game.snake) {
+                        const key = part.x + ':' + part.y;
+                        if (part.x >= game.cols || part.y >= game.rows || occupied.has(key)) { invalid = true; break; }
+                        occupied.add(key);
+                    }
+                    if (invalid) resetRound(false);
+                    else if (!game.food || game.food.x >= game.cols || game.food.y >= game.rows) game.food = spawnFood();
+                }
+                draw(performance.now());
+            }
+            function spawnFood() {
+                const empty = [];
+                const occupied = new Set(game.snake.map(part => part.x + ':' + part.y));
+                for (let y = 0; y < game.rows; y++) for (let x = 0; x < game.cols; x++) if (!occupied.has(x + ':' + y)) empty.push({x,y});
+                if (!empty.length) { finishGame(true); return null; }
+                return empty[Math.floor(Math.random() * empty.length)];
+            }
+            function resetRound(startNow) {
+                game.score = 0; game.level = 1; game.speed = 180;
+                game.dir = {x:1,y:0}; game.nextDir = {x:1,y:0}; game.particles = [];
+                const cx = Math.floor(game.cols / 2), cy = Math.floor(game.rows / 2);
+                game.snake = [{x:cx,y:cy},{x:Math.max(0,cx-1),y:cy},{x:Math.max(0,cx-2),y:cy}];
+                game.over = false; game.elapsed = 0; game.lastTime = 0;
+                game.food = spawnFood();
+                updateHud(); draw(performance.now());
+                if (startNow) startGame();
+            }
+            function updateLevel() {
+                game.level = Math.min(6, 1 + Math.floor(game.score / 10));
+                game.speed = Math.max(75, 180 - (game.level - 1) * 20);
+            }
+            function burst(x, y, count = 18) {
+                for (let i=0; i<count; i++) game.particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:24,color:Math.random()>.45?colors[game.level-1]:'#fb7185'});
+            }
+            function step() {
+                game.dir = game.nextDir;
+                const head = {x:game.snake[0].x + game.dir.x, y:game.snake[0].y + game.dir.y};
+                if (head.x < 0) head.x = game.cols - 1;
+                if (head.x >= game.cols) head.x = 0;
+                if (head.y < 0) head.y = game.rows - 1;
+                if (head.y >= game.rows) head.y = 0;
+                const eats = Boolean(game.food && head.x === game.food.x && head.y === game.food.y);
+                const body = game.snake.slice(0, eats ? game.snake.length : game.snake.length - 1);
+                if (body.some(part => part.x === head.x && part.y === head.y)) { finishGame(false); return; }
+                game.snake.unshift(head);
+                if (eats) {
+                    game.score += 1;
+                    updateLevel();
+                    burst(game.food.x * grid + grid/2, game.food.y * grid + grid/2, 22);
+                    if (game.score > game.best) { game.best = game.score; saveBest(); }
+                    game.food = spawnFood();
+                    updateHud();
+                } else game.snake.pop();
+            }
+            function drawBackground() {
+                const gradient = ctx.createLinearGradient(0,0,0,game.height);
+                gradient.addColorStop(0,'#071827'); gradient.addColorStop(1,'#03070c');
+                ctx.fillStyle = gradient; ctx.fillRect(0,0,game.width,game.height);
+                ctx.strokeStyle = 'rgba(148,163,184,.055)'; ctx.lineWidth = 1;
+                for (let x=0; x<=game.width; x+=grid) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,game.height); ctx.stroke(); }
+                for (let y=0; y<=game.height; y+=grid) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(game.width,y); ctx.stroke(); }
+            }
+            function draw(time = 0) {
+                if (!game.width || !game.height) return;
+                drawBackground();
+                if (game.food) {
+                    const pulse = 1 + Math.sin(time * .008) * .13;
+                    ctx.save(); ctx.translate(game.food.x*grid+grid/2, game.food.y*grid+grid/2); ctx.scale(pulse,pulse);
+                    ctx.fillStyle = '#fb7185'; ctx.shadowBlur = 22; ctx.shadowColor = '#fb7185';
+                    ctx.beginPath(); ctx.arc(0,0,grid*.34,0,Math.PI*2); ctx.fill(); ctx.restore();
+                }
+                const color = colors[game.level-1];
+                game.snake.forEach((part,index) => {
+                    const inset = index === 0 ? 1 : 2;
+                    ctx.fillStyle = index === 0 ? '#ecfeff' : color; ctx.shadowBlur = index === 0 ? 18 : 12; ctx.shadowColor = color;
+                    if (typeof ctx.roundRect === 'function') { ctx.beginPath(); ctx.roundRect(part.x*grid+inset,part.y*grid+inset,grid-inset*2,grid-inset*2,5); ctx.fill(); }
+                    else ctx.fillRect(part.x*grid+inset,part.y*grid+inset,grid-inset*2,grid-inset*2);
+                });
+                ctx.shadowBlur = 0;
+                for (let i=game.particles.length-1;i>=0;i--) {
+                    const p=game.particles[i]; ctx.globalAlpha=Math.max(0,p.life/24); ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,3,3); p.x+=p.vx; p.y+=p.vy; p.life--;
+                    if (p.life<=0) game.particles.splice(i,1);
+                }
+                ctx.globalAlpha=1;
+            }
+            function frame(time) {
+                if (game.paused || game.over || !game.started) return;
+                if (!game.lastTime) game.lastTime = time;
+                const delta = Math.min(100, time - game.lastTime);
+                game.lastTime = time; game.elapsed += delta;
+                while (game.elapsed >= game.speed && !game.over) { game.elapsed -= game.speed; step(); }
+                draw(time);
+                if (!game.over && !game.paused) game.raf = requestAnimationFrame(frame);
+            }
+            function stopFrame() { if (game.raf) cancelAnimationFrame(game.raf); game.raf = 0; }
+            function startGame() {
+                if (!game.ready) initialize();
+                refreshRecordOwner();
+                if (game.over || !game.started) resetRound(false);
+                game.started = true; game.paused = false; game.userPaused = false; game.lastTime = 0;
+                showOverlay('', '', '', false); updateHud(); stopFrame(); game.raf = requestAnimationFrame(frame);
+            }
+            function restartGame() {
+                if (!game.ready) initialize();
+                refreshRecordOwner(); game.started = true; game.over = false; game.paused = false; game.userPaused = false;
+                resetRound(false); startGame();
+            }
+            function pauseGame(manual = true) {
+                if (!game.started || game.over) return;
+                game.paused = true; game.userPaused = manual; stopFrame();
+                if (manual) showOverlay('Jogo pausado', 'Seu recorde local continua salvo. Toque para retomar.', 'Retomar', true);
+                updateHud(); draw(performance.now());
+            }
+            function finishGame(won) {
+                game.over = true; game.started = false; game.paused = true; game.userPaused = false; stopFrame();
+                const title = won ? 'Tabuleiro completo!' : 'Fim de jogo';
+                const message = `Pontuação: ${game.score} · nível ${game.level} · recorde local: ${game.best}`;
+                showOverlay(title, message, 'Jogar novamente', true); updateHud(); draw(performance.now());
+            }
+            function initialize() {
+                if (game.ready) return;
+                refreshRecordOwner(); resizeCanvas();
+                game.snake = [{x:Math.floor(game.cols/2),y:Math.floor(game.rows/2)}];
+                game.food = spawnFood(); game.ready = true; draw(performance.now());
+                showOverlay('Cobra Neon', 'Pegue os cristais, aumente sua pontuação e desvie do próprio rastro.', 'Começar', true);
+            }
+            function enterTab() {
+                if (!game.ready) initialize();
+                else resizeCanvas();
+                refreshRecordOwner();
+                if (game.started && !game.over && !game.userPaused) startGame();
+                else if (game.userPaused) showOverlay('Jogo pausado', 'Seu recorde local continua salvo. Toque para retomar.', 'Retomar', true);
+                else if (game.over) showOverlay('Fim de jogo', `Pontuação: ${game.score} · nível ${game.level} · recorde local: ${game.best}`, 'Jogar novamente', true);
+                draw(performance.now());
+            }
+            function leaveTab() { if (game.started && !game.over) pauseGame(false); }
+            function turn(direction) {
+                if (!game.started || game.paused || game.over) return;
+                const vector = {up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}[direction];
+                if (!vector || (vector.x === -game.dir.x && vector.y === -game.dir.y)) return;
+                game.nextDir = vector;
+            }
+            function togglePause() {
+                if (!game.started || game.over) { startGame(); return; }
+                if (game.paused) startGame(); else pauseGame(true);
+            }
+            window.babaSnakeStart = startGame;
+            window.babaSnakeRestart = restartGame;
+            window.babaSnakeTogglePause = togglePause;
+            window.babaSnakeTurn = turn;
+            window.babaSnakeTabEnter = enterTab;
+            window.babaSnakeTabLeave = leaveTab;
+
+            let pointer = null;
+            canvas.addEventListener('pointerdown', event => { pointer = {x:event.clientX,y:event.clientY}; canvas.setPointerCapture?.(event.pointerId); });
+            canvas.addEventListener('pointerup', event => {
+                if (!pointer) return;
+                const dx=event.clientX-pointer.x, dy=event.clientY-pointer.y; pointer=null;
+                if (Math.max(Math.abs(dx),Math.abs(dy)) < 18) return;
+                turn(Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up'));
+            });
+            canvas.addEventListener('pointercancel', () => { pointer=null; });
+            document.addEventListener('keydown', event => {
+                if (!document.getElementById('snake-ver')?.classList.contains('active')) return;
+                const key=event.key.toLowerCase();
+                const direction=({arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'})[key];
+                if (direction) { event.preventDefault(); turn(direction); }
+                else if (key==='escape') { event.preventDefault(); togglePause(); }
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) leaveTab();
+                else if (document.getElementById('snake-ver')?.classList.contains('active')) enterTab();
+            });
+            if ('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(stage);
+            else window.addEventListener('resize', resizeCanvas);
+        })();
 
         // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
