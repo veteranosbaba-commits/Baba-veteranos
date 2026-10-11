@@ -250,7 +250,7 @@
         body.snake-fullscreen #main-topbar { display:none !important; }
         body.snake-fullscreen #app-content {
             position:fixed; top:var(--snake-header-height,0px); bottom:var(--snake-footer-height,56px);
-            left:0; right:0; width:100%; max-width:none; margin:0; padding:2px 10px 0;
+            left:0; right:0; width:100%; max-width:none; margin:0; padding:6px 10px 0;
             overflow:hidden; box-sizing:border-box; display:block;
         }
         body.snake-fullscreen #app-content > * { margin:0 !important; }
@@ -264,7 +264,7 @@
             overflow:hidden; border:0; border-radius:0; background:transparent; box-shadow:none;
         }
         body.snake-fullscreen .snake-game-title {
-            flex:none; padding:0 4px 2px; text-align:center; line-height:1;
+            flex:none; padding:4px; text-align:center; line-height:1.1;
         }
         body.snake-fullscreen .snake-game-title h2 {
             margin:0; color:#a5f3fc; font-size:9px; font-weight:900; letter-spacing:.10em; text-transform:uppercase;
@@ -279,8 +279,8 @@
         body.snake-fullscreen .snake-hud-label { font-size:7px; }
         body.snake-fullscreen .snake-hud-value { margin-top:0; font-size:14px; }
         body.snake-fullscreen #snake-game-stage {
-            display:block; flex:0 1 auto; width:100%; height:42vh !important; height:42dvh !important;
-            min-height:150px !important; max-height:330px; border-width:2px;
+            display:block; flex:0 1 auto; width:100%; height:40vh !important; height:40dvh !important;
+            min-height:140px !important; max-height:300px; border-width:2px;
             border-color:rgba(34,211,238,.78); border-radius:12px;
         }
         body.snake-fullscreen #snake-game-overlay { gap:6px; padding:12px; }
@@ -289,6 +289,7 @@
         body.snake-fullscreen #snake-game-start { min-height:40px; padding:8px 18px; }
         body.snake-fullscreen #snake-game-controls {
             flex:none; display:flex; align-items:center; justify-content:center; gap:14px; width:100%;
+            margin-top:auto !important; padding-bottom:8px;
         }
         body.snake-fullscreen #snake-direction-pad {
             display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(3,42px); gap:4px;
@@ -954,7 +955,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 51</span>
+                <span class="font-bold">Versão 52</span>
             </footer>
         </div>
 
