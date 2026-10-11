@@ -187,8 +187,8 @@
         #snake-game-stage {
             position: relative;
             width: 100%;
-            height: min(56vh, 520px);
-            min-height: 280px;
+            height: min(42vh, 400px);
+            min-height: 220px;
             overflow: hidden;
             border: 1px solid rgba(16, 185, 129, .35);
             border-radius: 1rem;
@@ -239,7 +239,7 @@
         .snake-control { display:flex; min-width:56px; min-height:48px; align-items:center; justify-content:center; border:1px solid rgba(71,85,105,.9); border-radius:14px; background:#111827; color:#e2e8f0; font-size:18px; font-weight:900; touch-action:manipulation; }
         .snake-control:active { transform:scale(.96); border-color:#22d3ee; color:#67e8f9; }
         @media (max-height: 560px) {
-            #snake-game-stage { height: 48vh; min-height:220px; }
+            #snake-game-stage { height: 38vh; min-height:180px; }
         }
     </style>
 
@@ -871,7 +871,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 47</span>
+                <span class="font-bold">Versão 48</span>
             </footer>
         </div>
 
@@ -5148,6 +5148,11 @@
             } else if (tabId === 'financeiro-ver' && !(adminCanOpen || athleteCanReadFinance)) {
                 window.mostrarToast('O balanço financeiro é disponível para atletas aprovados e administradores.', true);
                 tabId = 'dashboard';
+            }
+            const gamesRoot = document.getElementById('games-menu-root');
+            if (gamesRoot) {
+                if (tabId === 'snake-ver') window.toggleGamesMenu?.(false);
+                gamesRoot.style.display = tabId === 'snake-ver' ? 'none' : '';
             }
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const target = document.getElementById(tabId);
