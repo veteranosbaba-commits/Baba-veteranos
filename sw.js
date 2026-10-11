@@ -1,5 +1,5 @@
-// Service Worker - Baba Veteranos v47: app shell e dependências locais offline.
-const CACHE_NAME = 'baba-veteranos-v47';
+// Service Worker - Baba Veteranos v48: app shell e dependências locais offline.
+const CACHE_NAME = 'baba-veteranos-v48';
 const BASE_URL = new URL('./', self.registration.scope);
 const APP_ROOT = BASE_URL.pathname;
 const INDEX_URL = new URL('index.html', BASE_URL).href;
