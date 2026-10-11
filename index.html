@@ -288,8 +288,9 @@
         body.snake-fullscreen #snake-game-overlay p { font-size:10px; }
         body.snake-fullscreen #snake-game-start { min-height:40px; padding:8px 18px; }
         body.snake-fullscreen #snake-game-controls {
-            flex:none; display:flex; align-items:center; justify-content:center; gap:14px; width:100%;
-            margin-top:auto !important; padding-bottom:8px;
+            position:fixed; left:50%; bottom:calc(var(--snake-footer-height,56px) + 8px); z-index:55;
+            transform:translateX(-50%); width:max-content; flex:none; display:flex;
+            align-items:center; justify-content:center; gap:14px;
         }
         body.snake-fullscreen #snake-direction-pad {
             display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(3,42px); gap:4px;
@@ -325,6 +326,12 @@
         #snake-games-slot #games-menu-root { position:relative !important; right:auto !important; bottom:auto !important; z-index:56 !important; }
         @media (max-height: 560px) {
             #snake-game-stage { height: 32vh; min-height:160px; }
+            body.snake-fullscreen #snake-game-stage { height:34vh !important; height:34dvh !important; min-height:120px !important; max-height:200px; }
+            body.snake-fullscreen #snake-direction-pad { grid-template-columns:repeat(3,34px); grid-template-rows:repeat(3,34px); gap:4px; }
+            body.snake-fullscreen .snake-control.snake-direction { width:34px; min-width:34px; height:34px; min-height:34px; }
+            body.snake-fullscreen .snake-control.snake-action { width:60px; min-width:60px; height:36px; min-height:36px; }
+            body.snake-fullscreen #snake-game-actions { gap:4px; }
+            body.snake-fullscreen #snake-game-controls { gap:10px; }
         }
     </style>
 
@@ -955,7 +962,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 52</span>
+                <span class="font-bold">Versão 53</span>
             </footer>
         </div>
 
