@@ -288,27 +288,32 @@
         body.snake-fullscreen #snake-game-overlay p { font-size:10px; }
         body.snake-fullscreen #snake-game-start { min-height:40px; padding:8px 18px; }
         body.snake-fullscreen #snake-game-controls {
-            position:fixed; left:50%; bottom:calc(var(--snake-footer-height,56px) + 8px); z-index:55;
-            transform:translateX(-50%); width:max-content; flex:none; display:flex;
-            align-items:center; justify-content:center; gap:14px;
+            position:static; z-index:auto; transform:none; width:100%; flex:none; display:flex;
+            flex-direction:column; align-items:center; justify-content:flex-start; gap:32px;
+            margin-top:24px !important; padding:0 0 4px;
         }
         body.snake-fullscreen #snake-direction-pad {
-            display:grid; grid-template-columns:repeat(3,42px); grid-template-rows:repeat(3,42px); gap:4px;
+            --snake-direction-key:clamp(54px,15vw,68px);
+            display:grid; grid-template-columns:repeat(3,var(--snake-direction-key));
+            grid-template-rows:repeat(3,var(--snake-direction-key)); gap:8px;
         }
         body.snake-fullscreen .snake-control.snake-direction {
-            flex:none; min-width:42px; width:42px; min-height:42px; height:42px;
-            border-radius:12px; padding:0; font-size:18px !important;
-            border-color:rgba(34,211,238,.55); background:linear-gradient(145deg,#1e293b,#0b1220);
-            box-shadow:0 3px 0 rgba(2,6,23,.9), inset 0 1px rgba(255,255,255,.06);
+            flex:none; min-width:var(--snake-direction-key); width:var(--snake-direction-key);
+            min-height:var(--snake-direction-key); height:var(--snake-direction-key);
+            border-radius:14px; padding:0; font-size:clamp(20px,5vw,24px) !important;
+            border-color:rgba(34,211,238,.65); background:linear-gradient(145deg,#1e293b,#0b1220);
+            box-shadow:0 4px 0 rgba(2,6,23,.9), inset 0 1px rgba(255,255,255,.08);
         }
         body.snake-fullscreen .snake-pad-center {
-            display:flex; align-items:center; justify-content:center; color:#22d3ee; font-size:18px;
+            display:flex; align-items:center; justify-content:center; color:#22d3ee; font-size:20px;
             text-shadow:0 0 10px rgba(34,211,238,.65);
         }
-        body.snake-fullscreen #snake-game-actions { display:flex; flex-direction:column; gap:6px; }
+        body.snake-fullscreen #snake-game-actions {
+            display:flex; flex-direction:row; align-items:center; justify-content:center; gap:18px; width:100%;
+        }
         body.snake-fullscreen .snake-control.snake-action {
-            flex:none; width:70px; min-width:70px; height:42px; min-height:42px;
-            border-radius:12px; padding:0 4px; font-size:9px !important;
+            flex:none; width:clamp(94px,22vw,100px); min-width:clamp(94px,22vw,100px);
+            height:48px; min-height:48px; border-radius:12px; padding:0 6px; font-size:10px !important;
         }
         body.snake-fullscreen #snake-game-footer {
             position:fixed; left:0; right:0; bottom:0; z-index:56; display:flex;
@@ -324,14 +329,19 @@
         }
         #snake-games-slot { display:flex; align-items:center; justify-content:flex-end; }
         #snake-games-slot #games-menu-root { position:relative !important; right:auto !important; bottom:auto !important; z-index:56 !important; }
-        @media (max-height: 560px) {
-            #snake-game-stage { height: 32vh; min-height:160px; }
-            body.snake-fullscreen #snake-game-stage { height:34vh !important; height:34dvh !important; min-height:120px !important; max-height:200px; }
-            body.snake-fullscreen #snake-direction-pad { grid-template-columns:repeat(3,34px); grid-template-rows:repeat(3,34px); gap:4px; }
-            body.snake-fullscreen .snake-control.snake-direction { width:34px; min-width:34px; height:34px; min-height:34px; }
-            body.snake-fullscreen .snake-control.snake-action { width:60px; min-width:60px; height:36px; min-height:36px; }
-            body.snake-fullscreen #snake-game-actions { gap:4px; }
-            body.snake-fullscreen #snake-game-controls { gap:10px; }
+        @media (max-height: 620px) {
+            body.snake-fullscreen #snake-game-stage { height:30vh !important; height:30dvh !important; min-height:130px !important; max-height:180px; }
+            body.snake-fullscreen #snake-direction-pad { --snake-direction-key:clamp(48px,13vw,56px); gap:6px; }
+            body.snake-fullscreen #snake-game-actions { gap:14px; }
+            body.snake-fullscreen .snake-control.snake-action { width:92px; min-width:92px; height:42px; min-height:42px; }
+            body.snake-fullscreen #snake-game-controls { gap:18px; margin-top:18px !important; }
+        }
+        @media (max-height: 500px) {
+            body.snake-fullscreen #snake-game-stage { height:26vh !important; height:26dvh !important; min-height:110px !important; max-height:150px; }
+            body.snake-fullscreen #snake-direction-pad { --snake-direction-key:clamp(44px,12vw,50px); gap:4px; }
+            body.snake-fullscreen #snake-game-actions { gap:10px; }
+            body.snake-fullscreen .snake-control.snake-action { width:86px; min-width:86px; height:38px; min-height:38px; }
+            body.snake-fullscreen #snake-game-controls { gap:14px; margin-top:12px !important; }
         }
     </style>
 
@@ -962,7 +972,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 53</span>
+                <span class="font-bold">Versão 54</span>
             </footer>
         </div>
 
