@@ -63,7 +63,6 @@
           "palpites": {
             "$uid": {
               ".read": "auth != null && auth.token.email_verified === true && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
-              ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid",
               "$rodadaId": {
                 ".validate": "newData.hasChildren(['palpites', 'enviadoEm'])",
                 "palpites": {
@@ -85,9 +84,14 @@
                 },
                 "$other": {
                   ".validate": false
-                }
+                },
+                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/status').val() === 'aberta' && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/encerrada').val() !== true && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').isNumber() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').isNumber() && now >= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').val() && now <= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').val()"
               }
             }
+          },
+          "resultados": {
+            ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+            ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
           }
         }
       },
