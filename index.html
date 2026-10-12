@@ -899,7 +899,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 55</span>
+                <span class="font-bold">Versão 56</span>
             </footer>
         </div>
 
@@ -3011,36 +3011,100 @@
         // FUNÇÕES ADMIN
         // =====================================================
         
-        window.cadastrarAtleta = function(e) { 
-            e.preventDefault(); 
+        window.cadastrarAtleta = async function(e) {
+            e.preventDefault();
             const nome = document.getElementById('cad-nome')?.value?.trim();
             const camisa = parseInt(document.getElementById('cad-camisa')?.value);
             const time = document.getElementById('cad-time')?.value;
-            
+
             if (!nome || isNaN(camisa) || !time) { window.mostrarToast('Preencha todos os campos!', true); return; }
             if (camisa < 0 || camisa > 99) { window.mostrarToast('Número da camisa deve ser entre 0 e 99!', true); return; }
-            
-            const novoAtleta = { 
-                id: 'atleta_' + Date.now(), nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
-                histAmarelos: 0, histVermelhos: 0, pagamentos: {} 
-            };
-            
-            // Inserir na posição correta pelo time (BOTAFOGO primeiro, FLUMINENSE depois)
-            const ordemTimes = { "BOTAFOGO": 0, "FLUMINENSE": 1 };
-            const timeNovo = ordemTimes[time] ?? 0;
-            let posInsercao = window.atletasCache.length;
-            for (let i = 0; i < window.atletasCache.length; i++) {
-                const timeAtual = ordemTimes[window.atletasCache[i].time] ?? 0;
-                if (timeAtual > timeNovo) {
-                    posInsercao = i;
-                    break;
-                }
+            if (!window.isAdminLogado || !window.authRef?.currentUser || !window.dbRef) {
+                window.mostrarToast('Apenas um administrador autenticado pode cadastrar atletas.', true);
+                return;
             }
-            window.atletasCache.splice(posInsercao, 0, novoAtleta);
-            
-            document.getElementById('form-cadastro-atleta')?.reset(); 
-            window.mostrarToast("Jogador cadastrado!"); 
-            window.salvarNoStorage(); 
+            if (!window.babaExigirConexao?.()) return;
+            if (window.cadastroAtletaEmAndamento || syncEmAndamento) {
+                window.mostrarToast('Aguarde a conclusão do salvamento atual.', true);
+                return;
+            }
+
+            window.cadastroAtletaEmAndamento = true;
+            const novoAtleta = {
+                id: 'atleta_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                nome, camisa, time, gols: 0, amarelos: 0, vermelho: 0,
+                histAmarelos: 0, histVermelhos: 0, pagamentos: {}
+            };
+            const camposPublicos = ['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos'];
+            const atletaPublico = Object.fromEntries(camposPublicos.map(campo => [campo, novoAtleta[campo]]));
+            const atletaPrivado = { pagamentos: {} };
+            const ordemTimes = { BOTAFOGO: 0, FLUMINENSE: 1 };
+            let idDuplicado = false;
+            let dadosNaoCarregados = false;
+
+            try {
+                // A transação reaplica somente a inclusão sobre a árvore mais recente do Firebase.
+                // Assim, alterações independentes feitas em outra sessão são preservadas.
+                const resultado = await window.dbRef.transaction(valorAtual => {
+                    idDuplicado = false;
+                    dadosNaoCarregados = false;
+                    if (!valorAtual || typeof valorAtual !== 'object' || !valorAtual.public?.data) {
+                        dadosNaoCarregados = true;
+                        return;
+                    }
+
+                    const proximaRaiz = cloneAdminSaveValue(valorAtual);
+                    const dadosPublicos = proximaRaiz.public.data;
+                    const listaArmazenada = dadosPublicos.atletas;
+                    const atletasAtuais = Array.isArray(listaArmazenada)
+                        ? listaArmazenada.slice()
+                        : Object.values(listaArmazenada || {});
+                    const privadosAtuais = proximaRaiz.private?.athletes;
+
+                    if (atletasAtuais.some(atleta => String(atleta?.id) === String(novoAtleta.id)) ||
+                        (privadosAtuais && Object.prototype.hasOwnProperty.call(privadosAtuais, novoAtleta.id))) {
+                        idDuplicado = true;
+                        return;
+                    }
+
+                    const timeNovo = ordemTimes[time] ?? 0;
+                    let posInsercao = atletasAtuais.length;
+                    for (let i = 0; i < atletasAtuais.length; i++) {
+                        if ((ordemTimes[atletasAtuais[i]?.time] ?? 0) > timeNovo) {
+                            posInsercao = i;
+                            break;
+                        }
+                    }
+                    atletasAtuais.splice(posInsercao, 0, atletaPublico);
+                    dadosPublicos.atletas = atletasAtuais;
+
+                    if (!proximaRaiz.private || typeof proximaRaiz.private !== 'object') proximaRaiz.private = {};
+                    if (!proximaRaiz.private.athletes || typeof proximaRaiz.private.athletes !== 'object' || Array.isArray(proximaRaiz.private.athletes)) {
+                        proximaRaiz.private.athletes = {};
+                    }
+                    proximaRaiz.private.athletes[novoAtleta.id] = atletaPrivado;
+                    return proximaRaiz;
+                }, undefined, false);
+
+                if (!resultado.committed) {
+                    const mensagem = idDuplicado
+                        ? 'Esse cadastro já existe. Atualize a lista de atletas antes de tentar novamente.'
+                        : dadosNaoCarregados
+                            ? 'Os dados do app ainda estão carregando. Atualize a página e tente novamente.'
+                            : 'Não foi possível confirmar o cadastro. Confira a conexão antes de tentar novamente.';
+                    window.mostrarToast(mensagem, true);
+                    return;
+                }
+
+                document.getElementById('form-cadastro-atleta')?.reset();
+                window.mostrarToast('Jogador cadastrado! Atualizando a lista…');
+                setTimeout(() => window.location.reload(), 700);
+            } catch (error) {
+                console.error('Falha ao cadastrar atleta:', error?.code || '');
+                window.mostrarToast('Não foi possível salvar o atleta. Confira a conexão e atualize a página antes de tentar novamente.', true);
+            } finally {
+                window.cadastroAtletaEmAndamento = false;
+            }
         };
         
         window.excluirAtleta = async function(id) {
