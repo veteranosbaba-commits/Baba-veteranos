@@ -109,12 +109,16 @@
         };
     }
 
-    function validatePredictions(value) {
+    function validatePredictions(value, matches) {
         var guesses = assertObject(value, 'Os palpites');
         var ids = Object.keys(guesses);
-        if (!ids.length) throw new TypeError('Registre pelo menos um palpite.');
+        var expectedIds = toEntries(matches).map(function (entry) { return String((entry[1] && entry[1].id) || entry[0]); });
+        if (!expectedIds.length || ids.length !== expectedIds.length || expectedIds.some(function (id) { return !Object.prototype.hasOwnProperty.call(guesses, id); })) {
+            throw new TypeError('Registre um palpite válido para cada partida da rodada.');
+        }
         ids.forEach(function (id) {
             assertKey(id, 'ID da partida');
+            if (expectedIds.indexOf(id) === -1) throw new TypeError('O palpite contém uma partida que não pertence a esta rodada.');
             var score = assertObject(guesses[id], 'O placar previsto');
             ['mandante', 'visitante'].forEach(function (side) {
                 if (!Number.isInteger(score[side]) || score[side] < 0) {
@@ -128,9 +132,9 @@
     async function savePrediction(roundId, guesses) {
         var user = requireVerifiedUser();
         var rid = assertKey(roundId, 'ID da rodada');
-        var cleanGuesses = validatePredictions(guesses);
         var round = await readPath(PATHS.rodadas + '/' + rid);
         var config = await readPath(PATHS.config);
+        var cleanGuesses = validatePredictions(guesses, round && round.partidas);
         var now = Date.now();
         if (!round || !config || !config.bolaoId || round.bolaoId !== config.bolaoId || round.status !== 'aberta' || round.encerrada === true || round.resultadoRevelado === true || !Number.isFinite(Number(round.inicioPalpites)) || !Number.isFinite(Number(round.fimPalpites)) || now < Number(round.inicioPalpites) || now > Number(round.fimPalpites)) {
             throw new TypeError('Os palpites desta rodada ainda não estão abertos ou o prazo terminou.');
@@ -299,6 +303,8 @@
         host.replaceChildren();
 
         if (view.erro) {
+            view.ranking = null;
+            renderPublicRanking();
             host.appendChild(makeText('p', 'rounded-xl border border-red-800 bg-red-950/40 p-3 text-sm text-red-200', view.erro));
             return;
         }
@@ -491,7 +497,7 @@
         return scoreOutcome(prediction.mandante, prediction.visitante) === scoreOutcome(official.mandante, official.visitante) ? 1 : 0;
     }
 
-    async function buildCurrentRanking(bolaoId, resultOverride) {
+    async function buildCurrentRanking(bolaoId, resultOverride, revealRoundId) {
         var data = await Promise.all([
             readPath(PATHS.rodadas),
             readPath(PATHS.resultados),
@@ -505,6 +511,7 @@
             var roundId = roundEntry[0];
             var round = roundEntry[1] || {};
             if (round.bolaoId !== bolaoId) return;
+            if (round.resultadoRevelado !== true && roundId !== revealRoundId) return;
             var official = (resultOverride && resultOverride[roundId]) || results[roundId];
             if (!official || !official.partidas) return;
             Object.keys(predictions).forEach(function (uid) {
@@ -543,8 +550,7 @@
         });
         var resultRecord = {partidas: cleanScores, atualizadoEm: window.firebase.database.ServerValue.TIMESTAMP};
         var config = await readPath(PATHS.config);
-        var activePool = Boolean(config && config.bolaoId === round.bolaoId);
-        var rankingWasVisible = Boolean(activePool && config.rankingLiberado === true);
+        var activePool = Boolean(config && config.bolaoId && config.bolaoId === round.bolaoId);
         var lockAndHide = {};
         lockAndHide[PATHS.resultados + '/' + rid] = resultRecord;
         lockAndHide[PATHS.rodadas + '/' + rid + '/resultadoRevelado'] = false;
@@ -554,9 +560,9 @@
         var publish = {};
         publish[PATHS.rodadas + '/' + rid + '/resultadoRevelado'] = true;
         if (activePool) {
-            var updatedRanking = await buildCurrentRanking(config.bolaoId);
+            var updatedRanking = await buildCurrentRanking(config.bolaoId, null, rid);
             publish[PATHS.ranking] = Object.keys(updatedRanking).length ? updatedRanking : null;
-            publish[PATHS.config + '/rankingLiberado'] = rankingWasVisible;
+            publish[PATHS.config + '/rankingLiberado'] = true;
         }
         await getBabaRef().update(publish);
         return true;
@@ -567,13 +573,18 @@
         var rid = assertKey(roundId, 'ID da rodada');
         var existing = await readPath(PATHS.rodadas + '/' + rid);
         if (!existing) throw new TypeError('A rodada não foi encontrada.');
+        var official = await readPath(PATHS.resultados + '/' + rid);
+        var roundMatches = toEntries(existing.partidas);
+        if (existing.resultadoRevelado !== true || !official || !official.partidas || !roundMatches.length || roundMatches.some(function (entry) {
+            var matchId = String((entry[1] && entry[1].id) || entry[0]);
+            var score = official.partidas[matchId];
+            return !score || !Number.isInteger(score.mandante) || score.mandante < 0 || !Number.isInteger(score.visitante) || score.visitante < 0;
+        })) throw new TypeError('Não é possível encerrar sem resultado oficial completo e revelado.');
         if (existing.encerrada === true || existing.status === 'encerrada') return true;
         var updates = {};
         updates[PATHS.rodadas + '/' + rid + '/status'] = 'encerrada';
         updates[PATHS.rodadas + '/' + rid + '/encerrada'] = true;
         updates[PATHS.rodadas + '/' + rid + '/encerradaEm'] = window.firebase.database.ServerValue.TIMESTAMP;
-        var config = await readPath(PATHS.config);
-        if (config && config.bolaoId === existing.bolaoId) updates[PATHS.config + '/rankingLiberado'] = true;
         await getBabaRef().update(updates);
         return true;
     }

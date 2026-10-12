@@ -65,15 +65,15 @@
           "palpites": {
             "$uid": {
               "$rodadaId": {
-                ".validate": "newData.hasChildren(['palpites', 'enviadoEm'])",
+                ".validate": "newData.hasChildren(['palpites', 'enviadoEm']) && newData.child('palpites').numChildren() === root.child('baba/public/bolao/rodadas/' + $rodadaId + '/partidas').numChildren()", 
                 "palpites": {
                   "$partidaId": {
                     ".validate": "newData.hasChildren(['mandante', 'visitante'])",
                     "mandante": {
-                      ".validate": "newData.isNumber() && newData.val() >= 0"
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/partidas/' + $partidaId).exists()"
                     },
                     "visitante": {
-                      ".validate": "newData.isNumber() && newData.val() >= 0"
+                      ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/partidas/' + $partidaId).exists()"
                     },
                     "$other": {
                       ".validate": false
@@ -81,12 +81,12 @@
                   }
                 },
                 "enviadoEm": {
-                  ".validate": "newData.isNumber()"
+                  ".validate": "newData.isNumber() && newData.val() === now"
                 },
                 "$other": {
                   ".validate": false
                 },
-                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && root.child('baba/public/bolao/config/bolaoId').val() === root.child('baba/public/bolao/rodadas/' + $rodadaId + '/bolaoId').val() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/status').val() === 'aberta' && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/encerrada').val() !== true && root.child('baba/private/bolao/resultados/' + $rodadaId + '/partidas').exists() === false && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').isNumber() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').isNumber() && now >= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').val() && now <= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').val()",
+                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && newData.exists() && root.child('baba/public/bolao/config/bolaoId').isString() && root.child('baba/public/bolao/config/bolaoId').val() !== '' && root.child('baba/public/bolao/config/bolaoId').val() === root.child('baba/public/bolao/rodadas/' + $rodadaId + '/bolaoId').val() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/status').val() === 'aberta' && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/encerrada').val() !== true && root.child('baba/private/bolao/resultados/' + $rodadaId + '/partidas').exists() === false && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').isNumber() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').isNumber() && now >= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').val() && now <= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').val()",
                 ".read": "root.child('baba/public/bolao/rodadas/' + $rodadaId + '/resultadoRevelado').val() === true && root.child('baba/private/bolao/resultados/' + $rodadaId + '/partidas').exists()"
               }
             }
