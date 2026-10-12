@@ -899,7 +899,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 56</span>
+                <span class="font-bold">Versão 57</span>
             </footer>
         </div>
 
@@ -3043,8 +3043,14 @@
             let dadosNaoCarregados = false;
 
             try {
-                // A transação reaplica somente a inclusão sobre a árvore mais recente do Firebase.
-                // Assim, alterações independentes feitas em outra sessão são preservadas.
+                // Carrega a raiz antes da transação para que o SDK não aborte com cache vazio.
+                const raizCarregada = await window.dbRef.once('value');
+                if (!raizCarregada.exists() || !raizCarregada.child('public/data').exists()) {
+                    window.mostrarToast('Os dados do app ainda estão carregando. Atualize a página e tente novamente.', true);
+                    return;
+                }
+                // Reaplica somente a inclusão sobre a raiz mais recente do Firebase;
+                // o SDK refaz a transação se outra sessão gravar durante o processo.
                 const resultado = await window.dbRef.transaction(valorAtual => {
                     idDuplicado = false;
                     dadosNaoCarregados = false;
