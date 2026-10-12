@@ -990,7 +990,21 @@
         </div>
 
         <!-- ADMIN PANEL -->
-        <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
+            <div id="bolao-ver" class="tab-content space-y-6 pt-4">
+            <section class="rounded-2xl border border-emerald-800/60 bg-stone-900 p-4 space-y-3">
+                <h2 class="text-sm font-black uppercase tracking-wider text-emerald-300">Bolão</h2>
+                <p class="text-xs text-stone-400">Registre seu palpite. Os palpites não são exibidos nesta tela.</p>
+                <p class="text-xs font-bold text-stone-200">Participantes: <span id="bolao-participantes-count">0</span></p>
+                <div id="bolao-login-prompt" class="hidden rounded-xl border border-amber-800/60 bg-amber-950/30 p-3 text-xs text-amber-200">
+                    Entre em uma conta com e-mail confirmado para registrar um palpite.
+                    <button type="button" onclick="window.toggleAthleteAuth()" class="ml-2 underline font-bold">Entrar</button>
+                </div>
+                <p id="bolao-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
+            </section>
+            <div id="bolao-rodadas-lista" class="space-y-4" aria-live="polite"></div>
+        </div>
+
+    <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
             <div class="bg-stone-950 border-2 border-amber-500 p-4 rounded-2xl flex justify-between items-center shadow-xl">
                 <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
                 <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black rounded-lg uppercase transition">Fechar</button>
@@ -1480,6 +1494,11 @@
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-200"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
                 <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Cobra Neon</span><span class="mt-1 block text-[9px] text-stone-400">Recorde pessoal neste aparelho</span></span>
                 <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-cyan-400" aria-hidden="true"></i>
+            </button>
+            <button type="button" onclick="window.bolaoAbrir()" role="menuitem" class="mt-2 flex w-full items-center gap-3 rounded-xl border border-emerald-800/50 bg-emerald-950/30 p-3 text-left transition hover:border-emerald-500 hover:bg-emerald-900/40">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-200"><i class="fa-solid fa-futbol" aria-hidden="true"></i></span>
+                <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Bolão</span><span class="mt-1 block text-[9px] text-stone-400">Registre seu palpite</span></span>
+                <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-emerald-400" aria-hidden="true"></i>
             </button>
             <div class="mt-2 flex items-center gap-3 rounded-xl border border-stone-800 bg-stone-900/60 p-3 opacity-60" aria-disabled="true">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-800 text-stone-400"><i class="fa-solid fa-dice"></i></span>
