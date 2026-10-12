@@ -993,7 +993,8 @@
             <div id="bolao-ver" class="tab-content space-y-6 pt-4">
             <section class="rounded-2xl border border-emerald-800/60 bg-stone-900 p-4 space-y-3">
                 <h2 class="text-sm font-black uppercase tracking-wider text-emerald-300">Bolão</h2>
-                <p class="text-xs text-stone-400">Registre seu palpite. Os palpites não são exibidos nesta tela.</p>
+                <p id="bolao-titulo-atual" class="text-[11px] text-stone-400"></p>
+                <p class="text-xs text-stone-400">Registre seu palpite. Ele só será revelado após o resultado oficial; os placares oficiais não serão exibidos.</p>
                 <p class="text-xs font-bold text-stone-200">Participantes: <span id="bolao-participantes-count">0</span></p>
                 <button id="bolao-admin-open" type="button" onclick="window.bolaoAdminAbrir()" class="hidden w-full rounded-xl border border-amber-700/60 bg-amber-950/30 px-3 py-3 text-left text-xs font-black uppercase text-amber-200">Administração do Bolão</button>
                 <div id="bolao-login-prompt" class="hidden rounded-xl border border-amber-800/60 bg-amber-950/30 p-3 text-xs text-amber-200">
@@ -1002,6 +1003,7 @@
                 </div>
                 <p id="bolao-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
             </section>
+            <section id="bolao-ranking-publico" class="space-y-2"></section>
             <div id="bolao-rodadas-lista" class="space-y-4" aria-live="polite"></div>
         </div>
 
@@ -1014,6 +1016,15 @@
             <button type="button" onclick="window.bolaoAdminVoltar()" class="shrink-0 rounded-lg bg-stone-800 px-3 py-2 text-[10px] font-black uppercase text-white">Voltar</button>
         </header>
         <p id="bolao-admin-status" role="status" aria-live="polite" class="min-h-5 text-xs text-emerald-300"></p>
+        <section class="space-y-3 rounded-2xl border border-red-900/50 bg-stone-900 p-4">
+            <h3 class="text-xs font-black uppercase tracking-wide text-red-200">Novo Bolão</h3>
+            <p id="bolao-admin-bolao-atual" class="text-xs text-stone-400">Nenhum Bolão aberto.</p>
+            <form id="bolao-admin-novo-bolao" class="flex flex-col gap-3 sm:flex-row">
+                <input id="bolao-admin-nome-bolao" type="text" maxlength="80" required placeholder="Nome do novo Bolão" class="min-w-0 flex-1 rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
+                <button type="submit" class="rounded-lg border border-red-800 bg-red-950/50 px-4 py-2 text-xs font-black uppercase text-red-200">Abrir e reiniciar ranking</button>
+            </form>
+        </section>
+
         <section class="space-y-4 rounded-2xl border border-amber-800/40 bg-stone-900 p-4">
             <h3 class="text-xs font-black uppercase tracking-wide text-amber-200">Abrir rodada</h3>
             <form id="bolao-admin-nova-rodada" class="space-y-4">

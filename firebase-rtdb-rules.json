@@ -23,13 +23,15 @@
           },
           "participantes": {
             ".read": true,
-            "$uid": {
-              ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && newData.exists()",
-              ".validate": "newData.val() === true"
+            "$bolaoId": {
+              "$uid": {
+                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && newData.exists()",
+                ".validate": "newData.val() === true"
+              }
             }
           },
           "ranking": {
-            ".read": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
+            ".read": "root.child('baba/public/bolao/config/rankingLiberado').val() === true",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)"
           }
         }
@@ -62,7 +64,6 @@
         "bolao": {
           "palpites": {
             "$uid": {
-              ".read": "auth != null && auth.token.email_verified === true && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
               "$rodadaId": {
                 ".validate": "newData.hasChildren(['palpites', 'enviadoEm'])",
                 "palpites": {
@@ -85,7 +86,8 @@
                 "$other": {
                   ".validate": false
                 },
-                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/status').val() === 'aberta' && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/encerrada').val() !== true && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').isNumber() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').isNumber() && now >= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').val() && now <= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').val()"
+                ".write": "auth != null && auth.token.email_verified === true && auth.uid === $uid && root.child('baba/public/bolao/config/bolaoId').val() === root.child('baba/public/bolao/rodadas/' + $rodadaId + '/bolaoId').val() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/status').val() === 'aberta' && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/encerrada').val() !== true && root.child('baba/private/bolao/resultados/' + $rodadaId + '/partidas').exists() === false && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').isNumber() && root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').isNumber() && now >= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/inicioPalpites').val() && now <= root.child('baba/public/bolao/rodadas/' + $rodadaId + '/fimPalpites').val()",
+                ".read": "root.child('baba/public/bolao/rodadas/' + $rodadaId + '/resultadoRevelado').val() === true && root.child('baba/private/bolao/resultados/' + $rodadaId + '/partidas').exists()"
               }
             }
           },
