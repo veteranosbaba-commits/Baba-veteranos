@@ -2,17 +2,19 @@
 (function () {
     'use strict';
 
-    var ROOT = 'public/bolao';
-    var PRIVATE_PREDICTIONS = 'private/bolao/palpites';
-    var PRIVATE_RESULTS = 'private/bolao/resultados';
+    var ROOT = 'public';
+    var PRIVATE_PREDICTIONS = 'private/palpites';
+    var PRIVATE_RESULTS = 'private/resultados';
     var PUBLIC_PARTICIPANTS = ROOT + '/participantes';
     var PATHS = Object.freeze({
         config: ROOT + '/config',
         rodadas: ROOT + '/rodadas',
         ranking: ROOT + '/ranking',
         participantes: PUBLIC_PARTICIPANTS,
+        revelados: ROOT + '/revelados',
         palpites: PRIVATE_PREDICTIONS,
-        resultados: PRIVATE_RESULTS
+        resultados: PRIVATE_RESULTS,
+        auditoria: 'private/auditoria'
     });
     var activeListeners = new Set();
     var view = {config: null, rodadas: null, participantes: null, ranking: null, palpitesRevelados: {}, erro: ''};
@@ -26,20 +28,21 @@
     var authUnsubscribe = null;
     var bolaoTabObserver = null;
     var bolaoAdminTabObserver = null;
-    var adminView = {config: null, rodadas: null, resultados: null, erro: ''};
+    var adminView = {config: null, rodadas: null, resultados: null, auditoria: {}, erro: ''};
+    var auditLoaded = Object.create(null);
+    var auditLoads = Object.create(null);
     var adminListenersStarted = false;
     var adminUnsubscribers = [];
 
-    function getBabaRef() {
-        if (window.dbRef && typeof window.dbRef.child === 'function') return window.dbRef;
+    function getBolaoRef() {
         if (window.firebase && window.firebase.apps && window.firebase.apps.length) {
-            return window.firebase.database().ref('baba');
+            return window.firebase.database().ref('bolao');
         }
         throw new Error('O Firebase do app ainda não foi inicializado.');
     }
 
     function getRef(path) {
-        return getBabaRef().child(path);
+        return getBolaoRef().child(path);
     }
 
     function currentUser() {
@@ -78,13 +81,25 @@
         return snapshot.exists() ? snapshot.val() : null;
     }
 
-    async function writePath(path, value, mode) {
+    async function callAdminAction(action, payload) {
         assertAdminWrite();
-        var object = assertObject(value, 'Os dados');
-        var ref = getRef(path);
-        if (mode === 'update') await ref.update(object);
-        else await ref.set(object);
-        return true;
+        var user = currentUser();
+        var app = window.firebase && window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : null;
+        if (!user || !app || typeof user.getIdToken !== 'function') throw new Error('A sessão administrativa não está pronta.');
+        var projectId = app.options.projectId;
+        var localHost = window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        var endpoint = localHost
+            ? 'http://127.0.0.1:5001/' + projectId + '/us-central1/bolaoAdminAction'
+            : 'https://us-central1-' + projectId + '.cloudfunctions.net/bolaoAdminAction';
+        var token = await user.getIdToken();
+        var response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({action: action, payload: payload || {}})
+        });
+        var body = await response.json().catch(function () { return {}; });
+        if (!response.ok) throw new Error(body && body.error && body.error.message ? body.error.message : 'A operação administrativa foi rejeitada.');
+        return body.result;
     }
 
     function listenPath(path, callback, onError) {
@@ -121,8 +136,8 @@
             if (expectedIds.indexOf(id) === -1) throw new TypeError('O palpite contém uma partida que não pertence a esta rodada.');
             var score = assertObject(guesses[id], 'O placar previsto');
             ['mandante', 'visitante'].forEach(function (side) {
-                if (!Number.isInteger(score[side]) || score[side] < 0) {
-                    throw new TypeError('Informe gols inteiros iguais ou maiores que zero.');
+                if (!Number.isInteger(score[side]) || score[side] < 0 || score[side] > 100) {
+                    throw new TypeError('Informe gols inteiros entre 0 e 100.');
                 }
             });
         });
@@ -139,14 +154,12 @@
         if (!round || !config || !config.bolaoId || round.bolaoId !== config.bolaoId || round.status !== 'aberta' || round.encerrada === true || round.resultadoRevelado === true || !Number.isFinite(Number(round.inicioPalpites)) || !Number.isFinite(Number(round.fimPalpites)) || now < Number(round.inicioPalpites) || now > Number(round.fimPalpites)) {
             throw new TypeError('Os palpites desta rodada ainda não estão abertos ou o prazo terminou.');
         }
-        var bolaoId = assertKey(round.bolaoId, 'ID do Bolão');
         var updates = {};
         updates[PRIVATE_PREDICTIONS + '/' + user.uid + '/' + rid] = {
             palpites: cleanGuesses,
             enviadoEm: window.firebase.database.ServerValue.TIMESTAMP
         };
-        updates[PUBLIC_PARTICIPANTS + '/' + bolaoId + '/' + assertKey(user.uid, 'UID')] = true;
-        await getBabaRef().update(updates);
+        await getBolaoRef().update(updates);
         return true;
     }
 
@@ -200,25 +213,21 @@
     function loadRevealedPredictions() {
         var config = view.config || {};
         var bolaoId = config.bolaoId;
-        var participants = view.participantes || {};
-        if (!bolaoId || !view.rodadas || !Object.keys(participants).length) return;
+        if (!bolaoId || !view.rodadas) return;
         var generation = publicLoadGeneration;
         toEntries(view.rodadas).forEach(function (roundEntry) {
             var roundId = roundEntry[0];
             var round = roundEntry[1] || {};
             if (round.bolaoId !== bolaoId || round.resultadoRevelado !== true) return;
-            if (!view.palpitesRevelados[roundId]) view.palpitesRevelados[roundId] = {};
-            Object.keys(participants).forEach(function (uid) {
-                var key = roundId + '|' + uid;
-                if (revealedLoads[key]) return;
-                revealedLoads[key] = true;
-                readPath(PATHS.palpites + '/' + assertKey(uid, 'UID') + '/' + assertKey(roundId, 'ID da rodada')).then(function (record) {
-                    if (generation !== publicLoadGeneration || !record) return;
-                    view.palpitesRevelados[roundId][uid] = record;
-                    renderBolao();
-                }).catch(function () {
-                    delete revealedLoads[key];
-                });
+            var key = String(roundId);
+            if (revealedLoads[key]) return;
+            revealedLoads[key] = true;
+            readPath(PATHS.revelados + '/' + assertKey(roundId, 'ID da rodada')).then(function (records) {
+                if (generation !== publicLoadGeneration) return;
+                view.palpitesRevelados[roundId] = records || {};
+                renderBolao();
+            }).catch(function () {
+                delete revealedLoads[key];
             });
         });
     }
@@ -358,6 +367,7 @@
                     var input = document.createElement('input');
                     input.type = 'number';
                     input.min = '0';
+                    input.max = '100';
                     input.step = '1';
                     input.required = true;
                     input.inputMode = 'numeric';
@@ -433,159 +443,58 @@
     async function adminOpenBolao(titulo) {
         assertAdminWrite();
         var name = String(titulo || '').trim();
-        if (!name) throw new TypeError('Informe o nome do novo Bolão.');
-        var suffix = window.crypto && typeof window.crypto.randomUUID === 'function'
-            ? window.crypto.randomUUID().replace(/-/g, '')
-            : (Date.now() + '_' + Math.floor(Math.random() * 1000000));
-        var bolaoId = assertKey('b_' + suffix, 'ID do Bolão');
-        var updates = {};
-        updates[PATHS.config + '/bolaoId'] = bolaoId;
-        updates[PATHS.config + '/titulo'] = name;
-        updates[PATHS.config + '/status'] = 'aberto';
-        updates[PATHS.config + '/rankingLiberado'] = false;
-        updates[PATHS.config + '/abertoEm'] = window.firebase.database.ServerValue.TIMESTAMP;
-        updates[PATHS.ranking] = null;
-        await getBabaRef().update(updates);
-        return bolaoId;
+        if (!name || name.length > 80) throw new TypeError('Informe um nome válido para o novo Bolão.');
+        var result = await callAdminAction('openPool', {title: name});
+        return result && result.bolaoId;
     }
 
     async function adminCreateRound(input) {
         assertAdminWrite();
         var title = String((input && input.titulo) || '').trim();
         if (!title) throw new TypeError('Informe o nome da rodada.');
-        var config = await readPath(PATHS.config);
-        if (!config || !config.bolaoId || config.status !== 'aberto') throw new TypeError('Abra um novo Bolão antes de cadastrar rodadas.');
-        var bolaoId = assertKey(config.bolaoId, 'ID do Bolão');
         var schedule = validateSchedule(input.inicioPalpites, input.fimPalpites);
-        var matches = validateMatches(input.partidas);
-        var suffix = window.crypto && typeof window.crypto.randomUUID === 'function'
-            ? window.crypto.randomUUID().replace(/-/g, '')
-            : (Date.now() + '_' + Math.floor(Math.random() * 1000000));
-        var roundId = assertKey('r_' + suffix, 'ID da rodada');
-        await getRef(PATHS.rodadas + '/' + roundId).set({
-            titulo: title,
-            bolaoId: bolaoId,
-            partidas: matches,
-            inicioPalpites: schedule.startAt,
-            fimPalpites: schedule.endAt,
-            status: 'aberta',
-            encerrada: false,
-            resultadoRevelado: false,
-            criadaEm: window.firebase.database.ServerValue.TIMESTAMP
+        var matches = toEntries(validateMatches(input.partidas)).map(function (entry) {
+            return {mandante: entry[1].mandante, visitante: entry[1].visitante};
         });
-        return roundId;
+        var result = await callAdminAction('createRound', {title: title, startAt: schedule.startAt, endAt: schedule.endAt, matches: matches});
+        return result && result.roundId;
     }
 
     async function adminUpdateSchedule(roundId, startAt, endAt) {
         assertAdminWrite();
         var rid = assertKey(roundId, 'ID da rodada');
-        var existing = await readPath(PATHS.rodadas + '/' + rid);
-        if (!existing) throw new TypeError('A rodada não foi encontrada.');
-        if (existing.encerrada === true || existing.status === 'encerrada' || existing.resultadoRevelado === true) throw new TypeError('O período desta rodada não pode mais ser alterado.');
         var schedule = validateSchedule(startAt, endAt);
-        await getRef(PATHS.rodadas + '/' + rid).update({inicioPalpites: schedule.startAt, fimPalpites: schedule.endAt});
+        await callAdminAction('updateSchedule', {roundId: rid, startAt: schedule.startAt, endAt: schedule.endAt});
         return true;
     }
 
-    function scoreOutcome(home, away) {
-        return home > away ? 1 : (home < away ? -1 : 0);
-    }
-
-    function scoreOnePrediction(prediction, official) {
-        if (!prediction || !official) return 0;
-        if (prediction.mandante === official.mandante && prediction.visitante === official.visitante) return 3;
-        return scoreOutcome(prediction.mandante, prediction.visitante) === scoreOutcome(official.mandante, official.visitante) ? 1 : 0;
-    }
-
-    async function buildCurrentRanking(bolaoId, resultOverride, revealRoundId) {
-        var data = await Promise.all([
-            readPath(PATHS.rodadas),
-            readPath(PATHS.resultados),
-            readPath(PATHS.palpites)
-        ]);
-        var rounds = data[0] || {};
-        var results = data[1] || {};
-        var predictions = data[2] || {};
-        var ranking = {};
-        toEntries(rounds).forEach(function (roundEntry) {
-            var roundId = roundEntry[0];
-            var round = roundEntry[1] || {};
-            if (round.bolaoId !== bolaoId) return;
-            if (round.resultadoRevelado !== true && roundId !== revealRoundId) return;
-            var official = (resultOverride && resultOverride[roundId]) || results[roundId];
-            if (!official || !official.partidas) return;
-            Object.keys(predictions).forEach(function (uid) {
-                var userRound = predictions[uid] && predictions[uid][roundId];
-                if (!userRound || !userRound.palpites) return;
-                var points = 0;
-                Object.keys(official.partidas).forEach(function (matchId) {
-                    points += scoreOnePrediction(userRound.palpites[matchId], official.partidas[matchId]);
-                });
-                if (!ranking[uid]) ranking[uid] = {bolaoId: bolaoId, pontos: 0, rodadasPontuadas: 0};
-                ranking[uid].pontos += points;
-                ranking[uid].rodadasPontuadas += 1;
-            });
-        });
-        Object.keys(ranking).forEach(function (uid) {
-            ranking[uid].atualizadoEm = window.firebase.database.ServerValue.TIMESTAMP;
-        });
-        return ranking;
-    }
-
-    async function adminSaveOfficialResult(roundId, scores) {
+    async function adminSaveOfficialResult(roundId, scores, correction, reason) {
         assertAdminWrite();
         var rid = assertKey(roundId, 'ID da rodada');
-        var round = await readPath(PATHS.rodadas + '/' + rid);
-        if (!round) throw new TypeError('A rodada não foi encontrada.');
-        var matches = toEntries(round.partidas);
-        if (!matches.length) throw new TypeError('A rodada não tem partidas cadastradas.');
-        var cleanScores = {};
-        matches.forEach(function (entry) {
-            var matchId = assertKey((entry[1] && entry[1].id) || entry[0], 'ID da partida');
-            var score = scores && scores[matchId];
-            if (!score || !Number.isInteger(score.mandante) || score.mandante < 0 || !Number.isInteger(score.visitante) || score.visitante < 0) {
-                throw new TypeError('Preencha o resultado oficial de todas as partidas.');
-            }
-            cleanScores[matchId] = {mandante: score.mandante, visitante: score.visitante};
-        });
-        var resultRecord = {partidas: cleanScores, atualizadoEm: window.firebase.database.ServerValue.TIMESTAMP};
-        var config = await readPath(PATHS.config);
-        var activePool = Boolean(config && config.bolaoId && config.bolaoId === round.bolaoId);
-        var lockAndHide = {};
-        lockAndHide[PATHS.resultados + '/' + rid] = resultRecord;
-        lockAndHide[PATHS.rodadas + '/' + rid + '/resultadoRevelado'] = false;
-        if (activePool) lockAndHide[PATHS.config + '/rankingLiberado'] = false;
-        await getBabaRef().update(lockAndHide);
-
-        var publish = {};
-        publish[PATHS.rodadas + '/' + rid + '/resultadoRevelado'] = true;
-        if (activePool) {
-            var updatedRanking = await buildCurrentRanking(config.bolaoId, null, rid);
-            publish[PATHS.ranking] = Object.keys(updatedRanking).length ? updatedRanking : null;
-            publish[PATHS.config + '/rankingLiberado'] = true;
-        }
-        await getBabaRef().update(publish);
+        await callAdminAction('saveResult', {roundId: rid, scores: scores, correction: correction === true, reason: String(reason || '')});
+        refreshRoundAudit(rid, true);
         return true;
     }
 
     async function adminCloseRound(roundId) {
         assertAdminWrite();
         var rid = assertKey(roundId, 'ID da rodada');
-        var existing = await readPath(PATHS.rodadas + '/' + rid);
-        if (!existing) throw new TypeError('A rodada não foi encontrada.');
-        var official = await readPath(PATHS.resultados + '/' + rid);
-        var roundMatches = toEntries(existing.partidas);
-        if (existing.resultadoRevelado !== true || !official || !official.partidas || !roundMatches.length || roundMatches.some(function (entry) {
-            var matchId = String((entry[1] && entry[1].id) || entry[0]);
-            var score = official.partidas[matchId];
-            return !score || !Number.isInteger(score.mandante) || score.mandante < 0 || !Number.isInteger(score.visitante) || score.visitante < 0;
-        })) throw new TypeError('Não é possível encerrar sem resultado oficial completo e revelado.');
-        if (existing.encerrada === true || existing.status === 'encerrada') return true;
-        var updates = {};
-        updates[PATHS.rodadas + '/' + rid + '/status'] = 'encerrada';
-        updates[PATHS.rodadas + '/' + rid + '/encerrada'] = true;
-        updates[PATHS.rodadas + '/' + rid + '/encerradaEm'] = window.firebase.database.ServerValue.TIMESTAMP;
-        await getBabaRef().update(updates);
+        await callAdminAction('closeRound', {roundId: rid});
+        refreshRoundAudit(rid, true);
+        return true;
+    }
+
+    async function adminReopenRound(roundId, startAt, endAt, reason) {
+        assertAdminWrite();
+        var schedule = validateSchedule(startAt, endAt);
+        var rid = assertKey(roundId, 'ID da rodada');
+        await callAdminAction('reopenRound', {
+            roundId: rid,
+            startAt: schedule.startAt,
+            endAt: schedule.endAt,
+            reason: String(reason || '')
+        });
+        refreshRoundAudit(rid, true);
         return true;
     }
 
@@ -697,11 +606,57 @@
         });
     }
 
-    function renderAdminRoundCard(roundId, round, savedResult) {
+    function refreshRoundAudit(roundId, force) {
+        var rid = assertKey(roundId, 'ID da rodada');
+        if (auditLoads[rid] || (!force && auditLoaded[rid])) return;
+        auditLoads[rid] = true;
+        readPath(PATHS.auditoria + '/rodadas/' + rid).then(function (events) {
+            adminView.auditoria[rid] = events || {};
+            auditLoaded[rid] = true;
+            renderAdminPanel();
+        }).catch(function () {
+            adminView.auditoria[rid] = null;
+            auditLoaded[rid] = true;
+            renderAdminPanel();
+        }).finally(function () { delete auditLoads[rid]; });
+    }
+
+    function renderRoundAudit(roundId, events) {
+        var box = document.createElement('details');
+        box.className = 'rounded-xl border border-stone-800 bg-stone-950/50 p-3';
+        var records = Object.keys(events || {}).map(function (id) { return events[id] || {}; });
+        records.sort(function (a, b) { return Number(b.occurredAt || 0) - Number(a.occurredAt || 0); });
+        var summary = makeText('summary', 'cursor-pointer text-xs font-black uppercase text-amber-200', 'Auditoria administrativa · ' + records.length);
+        box.appendChild(summary);
+        if (events === null) {
+            box.appendChild(makeText('p', 'mt-2 text-xs text-red-300', 'Não foi possível carregar a auditoria desta rodada.'));
+        } else if (!records.length) {
+            box.appendChild(makeText('p', 'mt-2 text-xs text-stone-500', 'Nenhuma alteração auditada.'));
+        } else {
+            records.forEach(function (record) {
+                var row = makeText('div', 'mt-3 border-t border-stone-800 pt-3 text-[11px] text-stone-300', '');
+                var time = Number(record.occurredAt || 0);
+                var dateText = Number.isFinite(time) && time > 0 ? new Date(time).toLocaleString('pt-BR') : 'Data indisponível';
+                row.appendChild(makeText('p', 'font-bold text-stone-100', String(record.action || 'alteração') + ' · ' + dateText));
+                row.appendChild(makeText('p', 'mt-1 break-all text-stone-400', 'UID administrador: ' + String(record.actorUid || 'indisponível')));
+                if (record.reason) row.appendChild(makeText('p', 'mt-1 text-stone-300', 'Motivo: ' + String(record.reason)));
+                if (record.before || record.after) {
+                    var before = record.before && record.before.partidas ? JSON.stringify(record.before.partidas) : (record.before ? 'existente' : '—');
+                    var after = record.after && record.after.partidas ? JSON.stringify(record.after.partidas) : (record.after ? 'registrado' : '—');
+                    row.appendChild(makeText('p', 'mt-1 break-words text-stone-500', 'Antes: ' + before + ' · Depois: ' + after));
+                }
+                box.appendChild(row);
+            });
+        }
+        return box;
+    }
+
+    function renderAdminRoundCard(roundId, round, savedResult, auditEvents) {
         var card = makeText('section', 'space-y-4 rounded-2xl border border-amber-800/50 bg-stone-900 p-4', '');
         var closed = round.encerrada === true || round.status === 'encerrada';
         card.appendChild(makeText('h3', 'text-sm font-black uppercase text-amber-300', String(round.titulo || round.nome || ('Rodada ' + roundId))));
-        card.appendChild(makeText('p', 'text-[11px] text-stone-400', (closed ? 'Encerrada' : 'Aberta') + ' · ' + roundId));
+        card.appendChild(makeText('p', 'text-[11px] text-stone-400', (round.status === 'processando' ? 'Resultado em processamento' : (closed ? 'Encerrada' : 'Aberta')) + ' · ' + roundId));
+        card.appendChild(renderRoundAudit(roundId, auditEvents));
 
         var scheduleForm = document.createElement('form');
         scheduleForm.className = 'grid grid-cols-1 gap-3 rounded-xl border border-stone-800 bg-stone-950/50 p-3 sm:grid-cols-2';
@@ -709,7 +664,7 @@
         var endField = labelledInput('Fim dos palpites', 'datetime-local', localDateTimeInput(round.fimPalpites));
         scheduleForm.appendChild(startField.label); scheduleForm.appendChild(endField.label);
         var updateTimes = makeText('button', 'sm:col-span-2 rounded-lg bg-stone-700 px-3 py-2 text-xs font-black uppercase text-white disabled:opacity-50', 'Salvar período de palpites');
-        updateTimes.type = 'submit'; updateTimes.disabled = closed;
+        updateTimes.type = 'submit'; updateTimes.disabled = closed || round.status === 'processando';
         scheduleForm.appendChild(updateTimes);
         scheduleForm.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -739,7 +694,7 @@
                 var fields = makeText('div', 'grid grid-cols-[1fr_auto_1fr] items-center gap-2', '');
                 [['mandante', score.mandante], ['visitante', score.visitante]].forEach(function (side, index) {
                     var input = document.createElement('input');
-                    input.type = 'number'; input.min = '0'; input.step = '1'; input.required = true;
+                    input.type = 'number'; input.min = '0'; input.max = '100'; input.step = '1'; input.required = true;
                     input.className = 'w-full rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-white';
                     input.dataset.matchId = matchId; input.dataset.side = side[0]; input.setAttribute('aria-label', 'Resultado oficial: gols ' + side[0]);
                     if (side[1] !== undefined && side[1] !== null) input.value = String(side[1]);
@@ -748,7 +703,8 @@
                 });
                 row.appendChild(fields); resultForm.appendChild(row);
             });
-            var saveResult = makeText('button', 'w-full rounded-lg bg-emerald-700 px-3 py-3 text-xs font-black uppercase text-white', 'Cadastrar resultado oficial');
+            var isCorrection = Boolean(savedResult && savedResult.partidas);
+            var saveResult = makeText('button', 'w-full rounded-lg bg-emerald-700 px-3 py-3 text-xs font-black uppercase text-white', isCorrection ? 'Corrigir resultado oficial' : 'Publicar resultado e encerrar rodada');
             saveResult.type = 'submit'; resultForm.appendChild(saveResult);
             resultForm.addEventListener('submit', async function (event) {
                 event.preventDefault();
@@ -759,16 +715,22 @@
                         if (!scores[id]) scores[id] = {};
                         scores[id][input.dataset.side] = Number(input.value);
                     });
-                    await adminSaveOfficialResult(roundId, scores);
-                    setAdminStatus('Resultado oficial salvo em área privada.', false);
+                    var reason = '';
+                    if (isCorrection) {
+                        if (!window.confirm('Corrigir o resultado já publicado? A mudança será registrada na auditoria.')) return;
+                        reason = String(window.prompt('Motivo obrigatório da correção:') || '').trim();
+                        if (reason.length < 8) { setAdminStatus('Informe um motivo de pelo menos 8 caracteres.', true); return; }
+                    }
+                    await adminSaveOfficialResult(roundId, scores, isCorrection, reason);
+                    setAdminStatus(isCorrection ? 'Correção registrada; ranking e rodada atualizados.' : 'Resultado publicado; palpites revelados e rodada encerrada.', false);
                 } catch (error) {
-                    setAdminStatus(error instanceof TypeError ? error.message : 'Não foi possível salvar o resultado oficial.', true);
+                    setAdminStatus(error instanceof TypeError ? error.message : (error && error.message) || 'Não foi possível salvar o resultado oficial.', true);
                 }
             });
             card.appendChild(resultForm);
         }
 
-        if (!closed) {
+        if (!closed && savedResult && savedResult.partidas && round.resultadoRevelado === true) {
             var closeButton = makeText('button', 'w-full rounded-lg border border-red-800 bg-red-950/40 px-3 py-3 text-xs font-black uppercase text-red-200', 'Encerrar rodada');
             closeButton.type = 'button';
             closeButton.addEventListener('click', async function () {
@@ -803,7 +765,8 @@
         var rounds = toEntries(adminView.rodadas);
         if (!rounds.length) host.appendChild(makeText('p', 'rounded-xl border border-stone-700 bg-stone-900 p-4 text-sm text-stone-300', 'Nenhuma rodada cadastrada. Abra a primeira acima.'));
         rounds.forEach(function (entry) {
-            host.appendChild(renderAdminRoundCard(entry[0], entry[1] || {}, (adminView.resultados || {})[entry[0]] || null));
+            refreshRoundAudit(entry[0], false);
+            host.appendChild(renderAdminRoundCard(entry[0], entry[1] || {}, (adminView.resultados || {})[entry[0]] || null, adminView.auditoria[entry[0]]));
         });
     }
 
@@ -841,6 +804,9 @@
         adminUnsubscribers.forEach(function (unsubscribe) { unsubscribe(); });
         adminUnsubscribers = [];
         adminListenersStarted = false;
+        auditLoaded = Object.create(null);
+        auditLoads = Object.create(null);
+        adminView.auditoria = {};
     }
 
     function startViewListeners() {
@@ -883,20 +849,15 @@
         lerConfig: function () { return readPath(PATHS.config); },
         lerRodadas: function () { return readPath(PATHS.rodadas); },
         lerRanking: function () { return readPath(PATHS.ranking); },
-        gravarConfig: function (dados) { return writePath(PATHS.config, dados, 'update'); },
-        gravarRodada: function (rodadaId, dados) {
-            return writePath(PATHS.rodadas + '/' + assertKey(rodadaId, 'ID da rodada'), dados, 'set');
-        },
-        gravarItemRanking: function (uid, dados) {
-            return writePath(PATHS.ranking + '/' + assertKey(uid, 'UID'), dados, 'update');
-        },
         gravarPalpite: savePrediction,
         abrirBolao: adminOpenBolao,
         abrirRodada: adminCreateRound,
         definirPeriodoPalpites: adminUpdateSchedule,
         gravarResultadoOficial: adminSaveOfficialResult,
         encerrarRodada: adminCloseRound,
+        reabrirRodada: adminReopenRound,
         lerResultadosOficiais: function () { return readPath(PATHS.resultados); },
+        lerAuditoria: function (escopo) { return readPath(PATHS.auditoria + '/' + assertKey(escopo, 'Escopo da auditoria')); },
         ouvirConfig: function (callback, onError) { return listenPath(PATHS.config, callback, onError); },
         ouvirRodadas: function (callback, onError) { return listenPath(PATHS.rodadas, callback, onError); },
         ouvirRanking: function (callback, onError) { return listenPath(PATHS.ranking, callback, onError); },

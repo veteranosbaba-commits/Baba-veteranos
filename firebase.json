@@ -1,5 +1,21 @@
 {
   "database": {
     "rules": "firebase-rtdb-rules.json"
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "bolao",
+    "runtime": "nodejs20"
+  },
+  "emulators": {
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
+    },
+    "auth": {
+      "port": 9099
+    }
   }
 }
