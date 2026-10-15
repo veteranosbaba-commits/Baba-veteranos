@@ -397,6 +397,44 @@
 
     function outcome(home, away) { return home > away ? 1 : (home < away ? -1 : 0); }
 
+    function stableVisualSuffix(playerKey) {
+        var hash = 2166136261;
+        var value = String(playerKey || '');
+        for (var index = 0; index < value.length; index += 1) {
+            hash ^= value.charCodeAt(index);
+            hash = Math.imul(hash, 16777619);
+        }
+        return (hash >>> 0).toString(36).toUpperCase().padStart(7, '0');
+    }
+
+    function buildDisplayNames() {
+        var groups = Object.create(null);
+        var config = view.config || {};
+        toEntries(view.rodadas).forEach(function (roundEntry) {
+            var roundId = roundEntry[0]; var round = roundEntry[1] || {};
+            if (round.bolaoId !== config.bolaoId || round.resultadoRevelado !== true) return;
+            var revealed = view.palpitesRevelados[roundId] || {};
+            Object.keys(revealed).forEach(function (playerKey) {
+                var record = revealed[playerKey];
+                var nickname = record && typeof record.apelido === 'string' ? record.apelido.trim() : '';
+                if (!nickname || !record.palpites) return;
+                var groupKey = nickname.toLocaleLowerCase('pt-BR');
+                if (!groups[groupKey]) groups[groupKey] = Object.create(null);
+                groups[groupKey][playerKey] = nickname;
+            });
+        });
+        var displayNames = Object.create(null);
+        Object.keys(groups).forEach(function (groupKey) {
+            var members = groups[groupKey];
+            var playerKeys = Object.keys(members);
+            if (playerKeys.length < 2) return;
+            playerKeys.forEach(function (playerKey) {
+                displayNames[playerKey] = members[playerKey] + ' · ' + stableVisualSuffix(playerKey);
+            });
+        });
+        return displayNames;
+    }
+
     function calculateRanking() {
         var totals = Object.create(null);
         var config = view.config || {};
@@ -428,7 +466,7 @@
         });
     }
 
-    function appendRevealedPredictions(card, roundId, round) {
+    function appendRevealedPredictions(card, roundId, round, displayNames) {
         if (round.resultadoRevelado !== true) return;
         var guesses = view.palpitesRevelados[roundId];
         card.appendChild(makeText('h4', 'border-t border-stone-800 pt-3 text-xs font-black uppercase text-amber-200', 'Palpites revelados'));
@@ -440,7 +478,7 @@
         playerKeys.forEach(function (playerKey) {
             var player = guesses[playerKey];
             var item = makeText('div', 'rounded-xl border border-stone-800 bg-stone-950/60 p-3 space-y-2', '');
-            item.appendChild(makeText('p', 'text-xs font-black text-stone-200', player.apelido || 'Participante'));
+            item.appendChild(makeText('p', 'text-xs font-black text-stone-200', (displayNames && displayNames[playerKey]) || player.apelido || 'Participante'));
             matches.forEach(function (entry) {
                 var matchId = String((entry[1] && entry[1].id) || entry[0]);
                 var score = player.palpites[matchId]; var match = entry[1] || {};
@@ -450,11 +488,12 @@
         });
     }
 
-    function renderPublicRanking() {
+    function renderPublicRanking(displayNames) {
         var host = document.getElementById('bolao-ranking-publico');
         if (!host) return;
         host.replaceChildren();
         var ranking = calculateRanking();
+        displayNames = displayNames || buildDisplayNames();
         host.appendChild(makeText('h3', 'mb-2 text-xs font-black uppercase tracking-wide text-amber-200', 'Ranking do Bolão'));
         if (!ranking.length) { host.appendChild(makeText('p', 'text-xs text-stone-400', 'O ranking aparece após a primeira revelação.')); return; }
         var position = 0; var lastPoints = null;
@@ -462,7 +501,7 @@
             if (lastPoints === null || record.pontos !== lastPoints) position = index + 1;
             lastPoints = record.pontos;
             var row = makeText('div', 'flex items-center justify-between gap-3 border-b border-stone-800 py-2 text-xs', '');
-            row.appendChild(makeText('span', 'font-bold text-stone-200', position + 'º · ' + record.apelido));
+            row.appendChild(makeText('span', 'font-bold text-stone-200', position + 'º · ' + ((displayNames && displayNames[record.playerKey]) || record.apelido)));
             row.appendChild(makeText('span', 'font-black text-emerald-300', record.pontos + ' pts'));
             host.appendChild(row);
         });
@@ -492,6 +531,7 @@
             renderPublicRanking(); return;
         }
         var rounds = toEntries(view.rodadas).filter(function (entry) { return entry[1] && entry[1].bolaoId === activeBolaoId; });
+        var displayNames = buildDisplayNames();
         if (!rounds.length) host.appendChild(makeText('p', 'rounded-xl border border-stone-700 bg-stone-900 p-4 text-sm text-stone-300', 'Ainda não há rodadas cadastradas para este Bolão.'));
         rounds.forEach(function (entry) {
             var roundId = entry[0]; var round = entry[1] || {};
@@ -516,10 +556,10 @@
                 bindPredictionForm(form, roundId, round, user, view.ownPredictions[roundId]);
                 card.appendChild(form);
             }
-            appendRevealedPredictions(card, roundId, round);
+            appendRevealedPredictions(card, roundId, round, displayNames);
             host.appendChild(card);
         });
-        renderPublicRanking();
+        renderPublicRanking(displayNames);
     }
 
     function validateSchedule(startAt, endAt) {
