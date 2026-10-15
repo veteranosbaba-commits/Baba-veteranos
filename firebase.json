@@ -1,5 +1,13 @@
 {
   "database": {
     "rules": "firebase-rtdb-rules.json"
+  },
+  "emulators": {
+    "database": {
+      "port": 9000
+    },
+    "auth": {
+      "port": 9099
+    }
   }
 }

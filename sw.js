@@ -1,5 +1,5 @@
-// Service Worker - Baba Veteranos v58: app shell e dependências locais offline.
-const CACHE_NAME = 'baba-veteranos-v58';
+// Service Worker - Baba Veteranos v65: app shell e dependências locais offline.
+const CACHE_NAME = 'baba-veteranos-v65';
 const BASE_URL = new URL('./', self.registration.scope);
 const APP_ROOT = BASE_URL.pathname;
 const INDEX_URL = new URL('index.html', BASE_URL).href;
@@ -8,6 +8,7 @@ const OFFLINE_URL = new URL('offline.html', BASE_URL).href;
 const CORE_FILES = [
   './',
   'index.html',
+  'bolao-firebase.js',
   'offline.html',
   'manifest.webmanifest',
   'apple-touch-icon.png',

@@ -990,7 +990,77 @@
         </div>
 
         <!-- ADMIN PANEL -->
-        <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
+            <div id="bolao-ver" class="tab-content space-y-6 pt-4">
+            <section class="rounded-2xl border border-emerald-800/60 bg-stone-900 p-4 space-y-3">
+                <h2 class="text-sm font-black uppercase tracking-wider text-emerald-300">Bolão</h2>
+                <p id="bolao-titulo-atual" class="text-[11px] text-stone-400"></p>
+                <p class="text-xs text-stone-400">Atletas usam conta confirmada; visitantes só informam um apelido, sem cadastro nem login. Você pode editar o palpite até o encerramento; ele só será revelado depois.</p>
+                <button id="bolao-admin-open" type="button" onclick="window.bolaoAdminAbrir()" class="hidden w-full rounded-xl border border-amber-700/60 bg-amber-950/30 px-3 py-3 text-left text-xs font-black uppercase text-amber-200">Administração do Bolão</button>
+                <div id="bolao-login-prompt" class="hidden rounded-xl border border-amber-800/60 bg-amber-950/30 p-3 text-xs text-amber-200">
+                    Para participar como atleta, confirme o e-mail da conta. Visitantes podem palpitar sem cadastro nem login; se houver uma conta não confirmada aberta, saia dela para continuar como visitante.
+                    <button type="button" onclick="window.toggleAthleteAuth()" class="ml-2 underline font-bold">Entrar</button>
+                </div>
+                <form id="bolao-apelido-form" class="hidden space-y-2 rounded-xl border border-stone-700 bg-stone-950/50 p-3">
+                    <label class="block space-y-1 text-xs font-bold text-stone-300">Seu nome ou apelido público
+                        <input id="bolao-apelido-input" type="text" maxlength="40" minlength="2" required placeholder="Como quer aparecer no Bolão?" class="w-full rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white">
+                    </label>
+                    <button type="submit" class="rounded-lg bg-stone-700 px-3 py-2 text-xs font-bold text-white">Salvar nome/apelido</button>
+                    <p id="bolao-apelido-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
+                </form>
+                <p id="bolao-apelido-saved" class="hidden text-xs font-bold text-stone-200"></p>
+                <p id="bolao-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
+            </section>
+            <section id="bolao-ranking-publico" class="space-y-2"></section>
+            <div id="bolao-rodadas-lista" class="space-y-4" aria-live="polite"></div>
+        </div>
+
+    <div id="bolao-admin" class="tab-content space-y-6 pt-4">
+        <header class="flex items-center justify-between gap-3 rounded-2xl border border-amber-800/60 bg-stone-950 p-4">
+            <div>
+                <h2 class="text-sm font-black uppercase tracking-wider text-amber-300">Administração do Bolão</h2>
+                <p class="mt-1 text-[10px] text-stone-400">Rodadas, prazos e resultados oficiais</p>
+            </div>
+            <button type="button" onclick="window.bolaoAdminVoltar()" class="shrink-0 rounded-lg bg-stone-800 px-3 py-2 text-[10px] font-black uppercase text-white">Voltar</button>
+        </header>
+        <p id="bolao-admin-status" role="status" aria-live="polite" class="min-h-5 text-xs text-emerald-300"></p>
+        <section class="space-y-3 rounded-2xl border border-red-900/50 bg-stone-900 p-4">
+            <h3 class="text-xs font-black uppercase tracking-wide text-red-200">Novo Bolão</h3>
+            <p id="bolao-admin-bolao-atual" class="text-xs text-stone-400">Nenhum Bolão aberto.</p>
+            <form id="bolao-admin-novo-bolao" class="flex flex-col gap-3 sm:flex-row">
+                <input id="bolao-admin-nome-bolao" type="text" maxlength="80" required placeholder="Nome do novo Bolão" class="min-w-0 flex-1 rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
+                <button type="submit" class="rounded-lg border border-red-800 bg-red-950/50 px-4 py-2 text-xs font-black uppercase text-red-200">Abrir e reiniciar ranking</button>
+            </form>
+        </section>
+
+        <section class="space-y-4 rounded-2xl border border-amber-800/40 bg-stone-900 p-4">
+            <h3 class="text-xs font-black uppercase tracking-wide text-amber-200">Abrir rodada</h3>
+            <form id="bolao-admin-nova-rodada" class="space-y-4">
+                <label class="block space-y-1 text-xs font-bold text-stone-300">Nome da rodada
+                    <input id="bolao-admin-titulo-novo" type="text" maxlength="80" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
+                </label>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label class="block space-y-1 text-xs font-bold text-stone-300">Início dos palpites
+                        <input id="bolao-admin-inicio-novo" type="datetime-local" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
+                    </label>
+                    <label class="block space-y-1 text-xs font-bold text-stone-300">Fim dos palpites
+                        <input id="bolao-admin-fim-novo" type="datetime-local" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
+                    </label>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-stone-300">Partidas da rodada</p>
+                    <div id="bolao-admin-novas-partidas" class="space-y-2"></div>
+                    <button id="bolao-admin-add-match" type="button" class="rounded-lg border border-stone-700 px-3 py-2 text-xs font-bold text-stone-200">Adicionar partida</button>
+                </div>
+                <button type="submit" class="w-full rounded-xl bg-amber-600 px-4 py-3 text-xs font-black uppercase text-stone-950">Abrir rodada</button>
+            </form>
+        </section>
+        <section class="space-y-3">
+            <h3 class="text-xs font-black uppercase tracking-wide text-stone-300">Rodadas cadastradas</h3>
+            <div id="bolao-admin-rodadas" class="space-y-4" aria-live="polite"></div>
+        </section>
+    </div>
+
+    <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
             <div class="bg-stone-950 border-2 border-amber-500 p-4 rounded-2xl flex justify-between items-center shadow-xl">
                 <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
                 <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black rounded-lg uppercase transition">Fechar</button>
@@ -1481,6 +1551,11 @@
                 <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Cobra Neon</span><span class="mt-1 block text-[9px] text-stone-400">Recorde pessoal neste aparelho</span></span>
                 <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-cyan-400" aria-hidden="true"></i>
             </button>
+            <button type="button" onclick="window.bolaoAbrir()" role="menuitem" class="mt-2 flex w-full items-center gap-3 rounded-xl border border-emerald-800/50 bg-emerald-950/30 p-3 text-left transition hover:border-emerald-500 hover:bg-emerald-900/40">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-200"><i class="fa-solid fa-futbol" aria-hidden="true"></i></span>
+                <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Bolão</span><span class="mt-1 block text-[9px] text-stone-400">Registre seu palpite</span></span>
+                <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-emerald-400" aria-hidden="true"></i>
+            </button>
             <div class="mt-2 flex items-center gap-3 rounded-xl border border-stone-800 bg-stone-900/60 p-3 opacity-60" aria-disabled="true">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-800 text-stone-400"><i class="fa-solid fa-dice"></i></span>
                 <span class="min-w-0"><span class="block text-xs font-black uppercase text-stone-300">Dominó</span><span class="mt-1 block text-[9px] text-stone-500">Em breve</span></span>
@@ -1878,6 +1953,11 @@
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                     console.log('Firebase inicializado');
+                }
+                if (/^(localhost|127\\.0\\.0\\.1)$/.test(window.location.hostname) && !window.__babaFirebaseEmulators) {
+                    firebase.auth().useEmulator('http://127.0.0.1:9099');
+                    firebase.database().useEmulator('127.0.0.1', 9000);
+                    window.__babaFirebaseEmulators = true;
                 }
                 window.dbRef = firebase.database().ref('baba');
                 window.publicRef = window.dbRef.child('public');
@@ -6998,6 +7078,8 @@
 
         // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
+
+    <script src="./bolao-firebase.js"></script>
 
 </body>
 </html>
