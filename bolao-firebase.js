@@ -10,8 +10,10 @@
         resultadosPublicos: PUBLIC + '/resultados',
         revelados: PUBLIC + '/revelados',
         palpites: PRIVATE + '/palpites',
+        palpitesVisitantes: PRIVATE + '/palpitesVisitantes',
         resultadosPrivados: PRIVATE + '/resultados',
-        perfis: PRIVATE + '/perfis'
+        perfis: PRIVATE + '/perfis',
+        visitantes: PRIVATE + '/visitantes'
     });
 
     var activeListeners = new Set();
@@ -39,6 +41,7 @@
         ownPredictionsLoaded: Object.create(null),
         profile: null,
         profileUid: '',
+        profileKind: '',
         erro: ''
     };
     var adminView = {config: null, rodadas: null, resultados: null, erro: ''};
@@ -61,9 +64,39 @@
     function requireVerifiedUser() {
         var user = currentUser();
         if (!user || user.emailVerified !== true) {
-            throw new Error('Entre com uma conta e confirme o e-mail para registrar um palpite.');
+            throw new Error('Para participar como atleta, entre com uma conta e confirme o e-mail.');
         }
         return user;
+    }
+
+    var VISITOR_ID_STORAGE_KEY = 'babaBolaoVisitorId';
+
+    function getVisitorId() {
+        try {
+            var saved = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
+            if (saved && /^[a-f0-9]{32}$/.test(saved)) return saved;
+            if (!window.crypto || typeof window.crypto.getRandomValues !== 'function') {
+                throw new Error('Este navegador não permite criar uma identidade local segura para visitante.');
+            }
+            var bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            var visitorId = Array.from(bytes).map(function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
+            window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, visitorId);
+            return visitorId;
+        } catch (error) {
+            if (error && error.message && error.message.indexOf('identidade local') >= 0) throw error;
+            throw new Error('Não foi possível guardar a identidade do visitante neste navegador. Ative o armazenamento local e tente novamente.');
+        }
+    }
+
+    function getParticipantIdentity() {
+        var user = currentUser();
+        if (user && user.emailVerified === true) return {kind: 'atleta', id: String(user.uid), profilePath: PATHS.perfis + '/' + assertKey(user.uid, 'UID')};
+        if (!user) {
+            var visitorId = getVisitorId();
+            return {kind: 'visitante', id: visitorId, profilePath: PATHS.visitantes + '/' + visitorId};
+        }
+        return {kind: 'naoVerificado', id: String(user.uid), profilePath: ''};
     }
 
     function assertAdminWrite() {
@@ -157,7 +190,7 @@
     function safeProfileName(value, userUid) {
         var name = String(value || '').trim().replace(/\s+/g, ' ');
         if (name.length < 2 || name.length > 40) throw new TypeError('O nome ou apelido deve ter entre 2 e 40 caracteres.');
-        if (/[.#$\[\]/\u0000-\u001f]/.test(name)) throw new TypeError('O nome ou apelido contém caracteres inválidos.');
+        if (/[.#$\/\[\]\u0000-\u001f]/.test(name)) throw new TypeError('O nome ou apelido contém caracteres inválidos.');
         if (userUid && name.toLowerCase() === String(userUid).toLowerCase()) throw new TypeError('Use um nome ou apelido, não o identificador da conta.');
         return name;
     }
@@ -171,13 +204,18 @@
             var status = document.getElementById('bolao-apelido-status');
             if (status) status.textContent = '';
             try {
-                var user = requireVerifiedUser();
+                var identity = getParticipantIdentity();
+                if (identity.kind === 'naoVerificado') throw new Error('Confirme o e-mail da conta ou saia dela para participar como visitante.');
                 var input = document.getElementById('bolao-apelido-input');
-                var name = safeProfileName(input && input.value, user.uid);
-                var profilePath = PATHS.perfis + '/' + assertKey(user.uid, 'UID');
-                var existing = normalizeProfile(await readPath(profilePath));
-                var playerKey = existing ? existing.playerKey : getRef(PATHS.perfis).push().key;
-                await getRef(profilePath).set({apelido: name, playerKey: playerKey});
+                var name = safeProfileName(input && input.value, identity.id);
+                var existing = normalizeProfile(await readPath(identity.profilePath));
+                if (existing) {
+                    if (status) status.textContent = 'Já existe um apelido salvo para este navegador/conta: ' + existing.apelido;
+                    return;
+                }
+                var collection = identity.kind === 'atleta' ? PATHS.perfis : PATHS.visitantes;
+                var playerKey = getRef(collection).push().key;
+                await getRef(identity.profilePath).set({apelido: name, playerKey: playerKey});
                 if (status) status.textContent = 'Apelido salvo. Ele será exibido com seus palpites e no ranking.';
             } catch (error) {
                 if (status) status.textContent = error && error.message ? error.message : 'Não foi possível salvar o apelido.';
@@ -185,29 +223,31 @@
         });
     }
 
-    function syncProfileListener(user) {
-        var uid = user && user.uid ? String(user.uid) : '';
-        if (uid === view.profileUid) return;
+    function syncProfileListener() {
+        var identity;
+        try { identity = getParticipantIdentity(); }
+        catch (error) {
+            if (profileUnsubscribe) { profileUnsubscribe(); profileUnsubscribe = null; }
+            view.profileUid = ''; view.profileKind = ''; view.profile = null; view.erro = error.message;
+            updateAliasPanel(); renderBolao(); return;
+        }
+        var identityKey = identity.kind + ':' + identity.id;
+        if (identityKey === view.profileUid && identity.kind === view.profileKind) return;
         if (profileUnsubscribe) { profileUnsubscribe(); profileUnsubscribe = null; }
-        view.profileUid = uid;
-        view.profile = null;
-        view.ownPredictions = Object.create(null);
-        view.ownPredictionsLoaded = Object.create(null);
+        view.profileUid = identityKey; view.profileKind = identity.kind; view.profile = null;
+        var aliasInput = document.getElementById('bolao-apelido-input');
+        if (aliasInput) aliasInput.value = '';
+        view.ownPredictions = Object.create(null); view.ownPredictionsLoaded = Object.create(null);
         Object.keys(ownPredictionUnsubs).forEach(function (key) { ownPredictionUnsubs[key](); delete ownPredictionUnsubs[key]; });
-        if (uid) {
-            profileUnsubscribe = listenPath(PATHS.perfis + '/' + assertKey(uid, 'UID'), function (value) {
+        if (identity.kind !== 'naoVerificado') {
+            profileUnsubscribe = listenPath(identity.profilePath, function (value) {
                 view.profile = normalizeProfile(value);
-                syncOwnPredictionListeners();
-                updateAliasPanel();
-                renderBolao();
+                syncOwnPredictionListeners(); updateAliasPanel(); renderBolao();
             }, function () {
-                view.profile = null;
-                updateAliasPanel();
-                renderBolao();
+                view.profile = null; updateAliasPanel(); renderBolao();
             });
         } else {
-            updateAliasPanel();
-            renderBolao();
+            updateAliasPanel(); renderBolao();
         }
     }
 
@@ -217,8 +257,9 @@
         var input = document.getElementById('bolao-apelido-input');
         var button = form && form.querySelector('button[type="submit"]');
         var user = currentUser();
+        var canSetAlias = !user || user.emailVerified === true;
         if (!form) return;
-        form.classList.toggle('hidden', !user || user.emailVerified !== true || Boolean(view.profile));
+        form.classList.toggle('hidden', !canSetAlias || Boolean(view.profile));
         if (saved) {
             saved.textContent = view.profile ? 'Seu nome/apelido público: ' + view.profile.apelido : '';
             saved.classList.toggle('hidden', !view.profile);
@@ -269,8 +310,10 @@
     }
 
     function savePrediction(roundId, guesses) {
-        var user = requireVerifiedUser();
+        var identity = getParticipantIdentity();
+        if (identity.kind === 'naoVerificado') throw new Error('Confirme o e-mail da conta ou saia dela para participar como visitante.');
         var profile = view.profile;
+        if (view.profileKind !== identity.kind || view.profileUid !== identity.kind + ':' + identity.id) throw new Error('Carregando seu perfil. Aguarde um instante e tente novamente.');
         if (!profile) throw new Error('Salve primeiro seu nome ou apelido público.');
         var rid = assertKey(roundId, 'ID da rodada');
         var round = view.rodadas && view.rodadas[rid];
@@ -281,30 +324,47 @@
         }
         var clean = validateScoreMap(guesses, round.partidas, 'Os palpites');
         var record = {palpites: clean, enviadoEm: window.firebase.database.ServerValue.TIMESTAMP};
-        return getRef(PATHS.palpites + '/' + rid + '/' + assertKey(user.uid, 'UID')).set(record);
+        if (identity.kind === 'atleta') {
+            return getRef(PATHS.palpites + '/' + rid + '/' + assertKey(identity.id, 'UID')).set(record);
+        }
+        record.apelido = profile.apelido;
+        record.playerKey = profile.playerKey;
+        return getRef(PATHS.palpitesVisitantes + '/' + rid + '/' + assertKey(identity.id, 'ID do visitante')).set(record);
     }
 
     function syncOwnPredictionListeners() {
-        var user = currentUser();
+        var identity;
+        try { identity = getParticipantIdentity(); }
+        catch (error) { view.erro = error.message; return; }
         var desired = Object.create(null);
-        if (user && view.profile && view.config && view.rodadas) {
+        if (identity.kind !== 'naoVerificado' && view.profile && view.config && view.rodadas) {
             toEntries(view.rodadas).forEach(function (entry) {
                 var rid = entry[0]; var round = entry[1] || {};
-                if (round.bolaoId === view.config.bolaoId && round.status === 'aberta' && round.resultadoRevelado !== true) desired[rid] = true;
+                if (round.bolaoId === view.config.bolaoId && round.status === 'aberta' && round.resultadoRevelado !== true) {
+                    var path = identity.kind === 'atleta'
+                        ? PATHS.palpites + '/' + assertKey(rid, 'ID da rodada') + '/' + assertKey(identity.id, 'UID')
+                        : PATHS.palpitesVisitantes + '/' + assertKey(rid, 'ID da rodada') + '/' + assertKey(identity.id, 'ID do visitante');
+                    desired[identity.kind + ':' + identity.id + '|' + rid] = {rid: rid, path: path};
+                }
             });
         }
-        Object.keys(ownPredictionUnsubs).forEach(function (rid) {
-            if (!desired[rid]) { ownPredictionUnsubs[rid](); delete ownPredictionUnsubs[rid]; delete view.ownPredictions[rid]; delete view.ownPredictionsLoaded[rid]; }
+        Object.keys(ownPredictionUnsubs).forEach(function (key) {
+            if (!desired[key]) {
+                ownPredictionUnsubs[key](); delete ownPredictionUnsubs[key];
+                var rid = key.slice(key.lastIndexOf('|') + 1);
+                delete view.ownPredictions[rid]; delete view.ownPredictionsLoaded[rid];
+            }
         });
-        Object.keys(desired).forEach(function (rid) {
-            if (ownPredictionUnsubs[rid]) return;
-            ownPredictionUnsubs[rid] = listenPath(PATHS.palpites + '/' + assertKey(rid, 'ID da rodada') + '/' + assertKey(user.uid, 'UID'), function (value) {
-                view.ownPredictions[rid] = value || null;
-                view.ownPredictionsLoaded[rid] = true;
+        Object.keys(desired).forEach(function (key) {
+            if (ownPredictionUnsubs[key]) return;
+            var item = desired[key];
+            ownPredictionUnsubs[key] = listenPath(item.path, function (value) {
+                view.ownPredictions[item.rid] = value || null;
+                view.ownPredictionsLoaded[item.rid] = true;
                 renderBolao();
             }, function () {
-                view.ownPredictions[rid] = null;
-                view.ownPredictionsLoaded[rid] = true;
+                view.ownPredictions[item.rid] = null;
+                view.ownPredictionsLoaded[item.rid] = true;
                 renderBolao();
             });
         });
@@ -419,8 +479,8 @@
         updateAliasPanel();
         if (!host) return;
         var user = currentUser();
-        var canGuess = Boolean(user && user.emailVerified === true);
-        if (loginPrompt) loginPrompt.classList.toggle('hidden', canGuess);
+        var canGuess = !user || user.emailVerified === true;
+        if (loginPrompt) loginPrompt.classList.toggle('hidden', !user || user.emailVerified === true);
         host.replaceChildren();
         if (view.erro) {
             host.appendChild(makeText('p', 'rounded-xl border border-red-800 bg-red-950/40 p-3 text-sm text-red-200', view.erro));
@@ -535,21 +595,34 @@
             readPath(PATHS.resultadosPrivados + '/' + rid),
             readPath(PATHS.palpites + '/' + rid),
             readPath(PATHS.perfis),
+            readPath(PATHS.palpitesVisitantes + '/' + rid),
+            readPath(PATHS.visitantes),
             readPath(PATHS.config)
         ]);
-        var round = values[0]; var privateResult = values[1]; var predictions = values[2] || {}; var profiles = values[3] || {}; var config = values[4];
+        var round = values[0]; var privateResult = values[1]; var athletePicks = values[2] || {}; var athleteProfiles = values[3] || {};
+        var visitorPicks = values[4] || {}; var visitorProfiles = values[5] || {}; var config = values[6];
         if (!round || !config || round.bolaoId !== config.bolaoId) throw new Error('A rodada não pertence ao Bolão atual.');
         if (Date.now() <= Number(round.fimPalpites)) throw new Error('A revelação só pode ocorrer após o encerramento do prazo.');
         if (!privateResult || !privateResult.partidas) throw new Error('Salve primeiro o resultado oficial.');
         var official = validateScoreMap(privateResult.partidas, round.partidas, 'O resultado oficial');
         var revealed = {};
-        Object.keys(predictions).forEach(function (uid) {
-            var record = predictions[uid]; var profile = normalizeProfile(profiles[uid]);
-            if (!profile || profile.apelido.toLowerCase() === String(uid).toLowerCase()) throw new Error('Um participante ainda não tem um apelido válido salvo.');
-            var playerKey = assertKey(profile.playerKey, 'Identificador privado do participante');
-            if (revealed[playerKey]) throw new Error('Há perfis duplicados; peça para o administrador corrigir antes de revelar.');
-            var guesses = validateScoreMap(record && record.palpites, round.partidas, 'Um palpite registrado');
-            revealed[playerKey] = {apelido: profile.apelido, palpites: guesses};
+        function addParticipant(profile, rawGuesses, sourceId) {
+            var normalized = normalizeProfile(profile);
+            if (!normalized || normalized.apelido.toLowerCase() === String(sourceId).toLowerCase()) throw new Error('Um participante ainda não tem um apelido válido salvo.');
+            var playerKey = assertKey(normalized.playerKey, 'Identificador do participante');
+            if (playerKey.length !== 20) throw new Error('O identificador público de um participante está inválido.');
+            if (Object.prototype.hasOwnProperty.call(revealed, playerKey)) throw new Error('Dois perfis usam a mesma chave interna; corrija antes de revelar.');
+            var guesses = validateScoreMap(rawGuesses, round.partidas, 'Um palpite registrado');
+            revealed[playerKey] = {apelido: normalized.apelido, palpites: guesses};
+        }
+        Object.keys(athletePicks).forEach(function (uid) {
+            var record = athletePicks[uid];
+            addParticipant(athleteProfiles[uid], record && record.palpites, uid);
+        });
+        Object.keys(visitorPicks).forEach(function (visitorId) {
+            var record = visitorPicks[visitorId]; var profile = visitorProfiles[visitorId];
+            if (!profile || record.apelido !== profile.apelido || record.playerKey !== profile.playerKey) throw new Error('Um palpite de visitante não corresponde ao perfil local salvo.');
+            addParticipant(profile, record.palpites, visitorId);
         });
         var updates = {};
         updates[PATHS.revelados + '/' + rid] = Object.keys(revealed).length ? revealed : null;
@@ -747,7 +820,7 @@
         Object.keys(ownPredictionUnsubs).forEach(function (key) { ownPredictionUnsubs[key](); delete ownPredictionUnsubs[key]; });
         if (profileUnsubscribe) { profileUnsubscribe(); profileUnsubscribe = null; }
         if (authUnsubscribe) { authUnsubscribe(); authUnsubscribe = null; }
-        view.profileUid = ''; view.profile = null; view.ownPredictions = Object.create(null); view.ownPredictionsLoaded = Object.create(null);
+        view.profileUid = ''; view.profileKind = ''; view.profile = null; view.ownPredictions = Object.create(null); view.ownPredictionsLoaded = Object.create(null);
         view.palpitesRevelados = {}; view.resultadosPublicos = {}; publicListenersStarted = false;
     }
 
