@@ -124,6 +124,9 @@
             ".read": "((auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)) || root.child('bolao/public/rodadas/' + $roundId + '/resultadoRevelado').val() === true)",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             ".validate": "newData.hasChildren(['partidas']) && newData.child('partidas').hasChildren()",
+            "partidas": {
+              ".validate": "newData.hasChildren()"
+            },
             "$other": {
               ".validate": false
             }
@@ -191,6 +194,12 @@
             ".read": "auth != null && (auth.uid === $uid || auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true)",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth != null && auth.token.email_verified === true && auth.uid === $uid && !data.exists())",
             ".validate": "newData.hasChildren(['apelido', 'playerKey']) && newData.child('apelido').isString() && newData.child('apelido').val().length >= 2 && newData.child('apelido').val().length <= 40 && newData.child('apelido').val() !== $uid && newData.child('playerKey').isString() && newData.child('playerKey').val().length === 20 && newData.child('playerKey').val() !== $uid",
+            "apelido": {
+              ".validate": "newData.isString()"
+            },
+            "playerKey": {
+              ".validate": "newData.isString()"
+            },
             "$other": {
               ".validate": false
             }
@@ -203,6 +212,12 @@
             ".read": "auth === null && $visitorId.length === 32 || (auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true))",
             ".write": "auth != null && (auth.uid === '38bRRVjvfnQwjp2HyMGq3ExLs2C3' || root.child('baba/roles/admins/' + auth.uid).val() === true) || (auth === null && $visitorId.length === 32 && !data.exists())",
             ".validate": "newData.hasChildren(['apelido', 'playerKey']) && newData.child('apelido').isString() && newData.child('apelido').val().length >= 2 && newData.child('apelido').val().length <= 40 && newData.child('apelido').val() !== $visitorId && newData.child('playerKey').isString() && newData.child('playerKey').val().length === 20 && newData.child('playerKey').val() !== $visitorId",
+            "apelido": {
+              ".validate": "newData.isString()"
+            },
+            "playerKey": {
+              ".validate": "newData.isString()"
+            },
             "$other": {
               ".validate": false
             }
