@@ -1799,6 +1799,12 @@
                 }
             }
 
+            // Congela a referência desta gravação; listeners podem receber novos snapshots
+            // enquanto a transação está em andamento, mas isso não deve mascarar conflito.
+            const expectedSnapshots = Object.fromEntries(
+                requiredKeys.map(key => [key, cloneAdminSaveValue(adminSaveSnapshots[key].value)])
+            );
+
             let conflictDetected = false;
             const result = await window.dbRef.transaction(currentValue => {
                 const nextRoot = cloneAdminSaveValue(currentValue) || {};
@@ -1808,7 +1814,7 @@
                         currentBranch = currentBranch && typeof currentBranch === 'object' ? currentBranch[part] : undefined;
                     }
                     if (currentBranch === undefined) currentBranch = null;
-                    if (canonicalAdminSaveValue(currentBranch) !== canonicalAdminSaveValue(adminSaveSnapshots[key].value)) {
+                    if (canonicalAdminSaveValue(currentBranch) !== canonicalAdminSaveValue(expectedSnapshots[key])) {
                         conflictDetected = true;
                         return;
                     }
@@ -2113,7 +2119,7 @@
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onFinance = snapshot => {
-                setAdminSaveSnapshot('privateFinance', snapshot.val());
+                setAdminSaveSnapshot('privateFinance', snapshot.val(), true);
                 window.privateFinanceCache = snapshot.val() || {};
                 window.gastosCache = window.privateFinanceCache.gastos || [];
                 window.sociosCache = window.privateFinanceCache.socios || [];
@@ -2275,12 +2281,17 @@
             
             const revisionPunicoesSalva = window.punicoesRevision || 0;
             const salvarPunicoesPrivadas = Boolean(window.punicoesDirty && window.disciplineLoaded);
-            const atualizacoes = {
-                'public/data': dataPublica,
-                'private/athletes': atletasPrivados,
-                'private/finance': dadosFinanceirosPrivados
-            };
-            const baselinesNecessarios = ['publicData', 'privateAthletes', 'privateFinance'];
+            const salvarSomenteFinanceiro = Boolean(opcoes.somenteFinanceiro && !salvarPunicoesPrivadas);
+            const atualizacoes = salvarSomenteFinanceiro
+                ? {'private/finance': dadosFinanceirosPrivados}
+                : {
+                    'public/data': dataPublica,
+                    'private/athletes': atletasPrivados,
+                    'private/finance': dadosFinanceirosPrivados
+                };
+            const baselinesNecessarios = salvarSomenteFinanceiro
+                ? ['privateFinance']
+                : ['publicData', 'privateAthletes', 'privateFinance'];
             if (salvarPunicoesPrivadas) {
                 atualizacoes['private/discipline/records'] = window.punicoesCache || [];
                 baselinesNecessarios.push('privateDiscipline');
@@ -3451,7 +3462,7 @@
             window.patrociniosCache.push({ id: 'pat_' + Date.now(), nome, destino, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas') });
             document.getElementById('form-patrocinio')?.reset();
             window.mostrarToast("Patrocínio adicionado!");
-            window.salvarNoStorage();
+            window.salvarNoStorage({ somenteFinanceiro: true });
         };
         
         window.cadastrarSocio = function(e) {
@@ -3463,14 +3474,14 @@
             window.sociosCache.push({ id: 'socio_' + Date.now(), nome, mes, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas') });
             document.getElementById('form-socio')?.reset();
             window.mostrarToast("Sócio lançado!");
-            window.salvarNoStorage();
+            window.salvarNoStorage({ somenteFinanceiro: true });
         };
         
         window.excluirReceitaExterna = async function(id, tipo) {
             if (await window.confirmarAcao('Remover esta receita?', { confirmText: 'Remover', destructive: true })) {
                 if(tipo === 'socio') window.sociosCache = window.sociosCache.filter(s => s.id !== id);
                 else if(tipo === 'pat') window.patrociniosCache = window.patrociniosCache.filter(p => p.id !== id);
-                window.salvarNoStorage();
+                window.salvarNoStorage({ somenteFinanceiro: true });
                 window.mostrarToast('Receita removida!');
             }
         };
@@ -3530,7 +3541,7 @@
             });
             document.getElementById('form-gasto')?.reset();
             window.mostrarToast("Despesa registrada!");
-            window.salvarNoStorage();
+            window.salvarNoStorage({ somenteFinanceiro: true });
         };
 
         // =====================================================
@@ -4498,7 +4509,7 @@
             if (await window.confirmarAcao('Excluir esta despesa?', { confirmText: 'Excluir', destructive: true })) {
                 window.gastosCache = window.gastosCache.filter(g => g.id !== id);
                 window.mostrarToast('Despesa removida!');
-                window.salvarNoStorage();
+                window.salvarNoStorage({ somenteFinanceiro: true });
             }
         };
         
