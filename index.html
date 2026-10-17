@@ -1634,6 +1634,11 @@
         let toastTimeout = null;
         let syncEmAndamento = false;
         let renderFinanceiroAtletasTimeout = null;
+        let financeLocalRevision = 0;
+        let financePersistedRevision = 0;
+        let pendingFinanceSnapshot = null;
+        let queuedAdminSaveOptions = null;
+        let queuedAdminSaveTimer = null;
         // Guarda o último snapshot lido para bloquear gravações antigas entre administradores.
         const adminSaveSnapshots = {
             publicData: {loaded: false, value: null},
@@ -1666,6 +1671,65 @@
             ['privateAthletes', 'privateFinance'].forEach(key => {
                 adminSaveSnapshots[key] = {loaded: false, value: null};
             });
+        }
+
+        function captureFinanceSnapshot() {
+            return cloneAdminSaveValue({
+                gastos: window.gastosCache || [],
+                socios: window.sociosCache || [],
+                patrocinios: window.patrociniosCache || []
+            });
+        }
+
+        function hasPendingFinanceChanges() {
+            return pendingFinanceSnapshot !== null && financeLocalRevision !== financePersistedRevision;
+        }
+
+        function markFinanceChangesPending() {
+            const current = captureFinanceSnapshot();
+            if (!hasPendingFinanceChanges() || canonicalAdminSaveValue(current) !== canonicalAdminSaveValue(pendingFinanceSnapshot)) {
+                financeLocalRevision += 1;
+            }
+            pendingFinanceSnapshot = current;
+        }
+
+        function enqueueAdminSaveOptions(opcoes) {
+            const options = opcoes || {};
+            if (!queuedAdminSaveOptions) {
+                queuedAdminSaveOptions = {
+                    ...options,
+                    somenteFinanceiro: Boolean(options.somenteFinanceiro),
+                    silencioso: Boolean(options.silencioso)
+                };
+                return;
+            }
+            queuedAdminSaveOptions = {
+                ...queuedAdminSaveOptions,
+                ...options,
+                somenteFinanceiro: Boolean(queuedAdminSaveOptions.somenteFinanceiro && options.somenteFinanceiro),
+                silencioso: Boolean(queuedAdminSaveOptions.silencioso && options.silencioso)
+            };
+        }
+
+        function drainQueuedAdminSave() {
+            if (syncEmAndamento || !queuedAdminSaveOptions || queuedAdminSaveTimer !== null) return;
+            queuedAdminSaveTimer = setTimeout(() => {
+                queuedAdminSaveTimer = null;
+                if (syncEmAndamento || !queuedAdminSaveOptions) return;
+                const nextOptions = queuedAdminSaveOptions;
+                queuedAdminSaveOptions = null;
+                if (nextOptions.somenteFinanceiro && !hasPendingFinanceChanges()) return;
+                window.salvarNoStorage(nextOptions);
+            }, 0);
+        }
+
+        function resetPendingFinanceSaveState() {
+            if (queuedAdminSaveTimer !== null) clearTimeout(queuedAdminSaveTimer);
+            queuedAdminSaveTimer = null;
+            queuedAdminSaveOptions = null;
+            financeLocalRevision = 0;
+            financePersistedRevision = 0;
+            pendingFinanceSnapshot = null;
         }
 
         function adminSaveError(code, message) {
@@ -1902,6 +1966,9 @@
                     });
                 }
                 window.authRef.onAuthStateChanged(async (user) => {
+                    const uidAnterior = window.firebaseUser?.uid || null;
+                    const uidAtual = user?.uid || null;
+                    if (uidAnterior !== uidAtual) resetPendingFinanceSaveState();
                     window.firebaseUser = user || null;
                     window.isAdminLogado = false;
                     window.isAtletaLogado = false;
@@ -2036,11 +2103,13 @@
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onFinance = snapshot => {
-                setAdminSaveSnapshot('privateFinance', snapshot.val(), true);
-                window.privateFinanceCache = snapshot.val() || {};
-                window.gastosCache = window.privateFinanceCache.gastos || [];
-                window.sociosCache = window.privateFinanceCache.socios || [];
-                window.patrociniosCache = window.privateFinanceCache.patrocinios || [];
+                const remoteFinance = snapshot.val() || {};
+                if (hasPendingFinanceChanges()) return;
+                setAdminSaveSnapshot('privateFinance', remoteFinance, true);
+                window.privateFinanceCache = remoteFinance;
+                window.gastosCache = remoteFinance.gastos || [];
+                window.sociosCache = remoteFinance.socios || [];
+                window.patrociniosCache = remoteFinance.patrocinios || [];
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             athletesRef.on('value', onAthletes);
@@ -2100,6 +2169,7 @@
                 if (!syncEmAndamento) window.renderizarTudo();
             };
             const onFinance = snapshot => {
+                if (hasPendingFinanceChanges()) return;
                 window.privateFinanceCache = snapshot.val() || {};
                 window.gastosCache = window.privateFinanceCache.gastos || [];
                 window.sociosCache = window.privateFinanceCache.socios || [];
@@ -2113,24 +2183,29 @@
         };
 
         window.salvarNoStorage = function(opcoes = {}) {
+            const salvarSomenteFinanceiro = Boolean(opcoes.somenteFinanceiro);
+            if (salvarSomenteFinanceiro) markFinanceChangesPending();
             if (!window.firebaseInicializado || !window.dbRef) {
                 if (!inicializarFirebase()) {
                     window.mostrarToast('Sem conexão com banco!', true);
                     return;
                 }
             }
-            if (!window.babaExigirConexao?.(Boolean(opcoes.silencioso))) return;
-            
             if (syncEmAndamento) {
-                setTimeout(() => window.salvarNoStorage(opcoes), 500);
+                enqueueAdminSaveOptions(opcoes);
                 return;
             }
+            if (!window.babaExigirConexao?.(Boolean(opcoes.silencioso))) return;
             if (!window.isAdminLogado || !window.firebaseUser) {
                 window.mostrarToast('Apenas um administrador autenticado pode salvar alterações.', true);
                 return;
             }
             
             syncEmAndamento = true;
+            const financeRevisionAtStart = financeLocalRevision;
+            const dadosFinanceirosPrivados = hasPendingFinanceChanges()
+                ? cloneAdminSaveValue(pendingFinanceSnapshot)
+                : captureFinanceSnapshot();
             if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.remove('hidden');
             
             // Salvar estado dos acordeões antes de renderizar
@@ -2155,13 +2230,7 @@
                 ultimaAtualizacao: new Date().toISOString(),
                 public_access: window.publicAccess
             };
-            const dadosFinanceirosPrivados = {
-                gastos: window.gastosCache,
-                socios: window.sociosCache,
-                patrocinios: window.patrociniosCache
-            };
-            
-            const salvarSomenteFinanceiro = Boolean(opcoes.somenteFinanceiro);
+
             const atualizacoes = salvarSomenteFinanceiro
                 ? {'private/finance': dadosFinanceirosPrivados}
                 : {
@@ -2175,6 +2244,11 @@
             (async () => {
                 try {
                     await window.commitAdminDataWithGuard(atualizacoes, baselinesNecessarios);
+                    if (financeRevisionAtStart === financeLocalRevision) {
+                        financePersistedRevision = financeRevisionAtStart;
+                        pendingFinanceSnapshot = null;
+                        window.privateFinanceCache = cloneAdminSaveValue(dadosFinanceirosPrivados) || {};
+                    }
                     console.log('Dados salvos atomicamente');
                     if (!opcoes.silencioso) window.renderizarTudo();
 
@@ -2202,6 +2276,7 @@
                 } finally {
                     syncEmAndamento = false;
                     if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.add('hidden');
+                    drainQueuedAdminSave();
                 }
             })();
         };
