@@ -1640,6 +1640,7 @@
         let queuedAdminSaveOptions = null;
         let queuedAdminSaveTimer = null;
         let financeOperationQueue = Promise.resolve();
+        let scoutOperationQueue = Promise.resolve();
         // Guarda o último snapshot lido para bloquear gravações antigas entre administradores.
         const adminSaveSnapshots = {
             publicData: {loaded: false, value: null},
@@ -1806,6 +1807,136 @@
             financeOperationQueue = task.then(() => undefined, () => undefined);
             return task;
         };
+
+        function normalizeScoutAthletes(value) {
+            return Array.isArray(value) ? value.slice() : value && typeof value === 'object' ? Object.values(value) : [];
+        }
+
+        function applyPublicScoutSnapshot(rawData) {
+            const data = rawData && typeof rawData === 'object' ? rawData : {};
+            window.latestPublicDataSnapshot = cloneAdminSaveValue(rawData);
+            window.hasPublicDataSnapshot = true;
+            setAdminSaveSnapshot('publicData', rawData, true);
+            window.publicAthletesCache = normalizeScoutAthletes(data.atletas).filter(atleta => atleta && typeof atleta === 'object');
+            aplicarCachePrivado();
+        }
+
+        function applyPrivateScoutSnapshot(rawAthletes) {
+            const athletes = rawAthletes && typeof rawAthletes === 'object' ? rawAthletes : {};
+            setAdminSaveSnapshot('privateAthletes', rawAthletes, true);
+            window.privateAthletesCache = athletes;
+            if (window.isAtletaLogado) {
+                const financialCache = window.financialAthleteCache || {};
+                const ids = new Set([...Object.keys(financialCache), String(window.currentAthleteId || '')].filter(Boolean));
+                ids.forEach(id => {
+                    const privateAthlete = athletes[id];
+                    if (!privateAthlete) {
+                        delete financialCache[id];
+                        return;
+                    }
+                    const movements = financialCache[id] || {};
+                    ['pagamentos', 'abatimentos'].forEach(field => {
+                        if (Object.prototype.hasOwnProperty.call(privateAthlete, field)) {
+                            movements[field] = cloneAdminSaveValue(privateAthlete[field]);
+                        } else {
+                            delete movements[field];
+                        }
+                    });
+                    if (Object.keys(movements).length) financialCache[id] = movements;
+                    else delete financialCache[id];
+                });
+                window.financialAthleteCache = financialCache;
+            }
+            aplicarCachePrivado();
+        }
+
+        function showScoutMutationAbort(reason) {
+            if (reason === 'athlete_missing') window.mostrarToast('Erro: Atleta não encontrado.', true);
+            else if (reason === 'fine_missing') window.mostrarToast('Esta multa não está mais disponível. Atualize a lista.', true);
+            else if (reason === 'fine_not_paid') window.mostrarToast('Marque como paga primeiro!', true);
+            else if (reason === 'no_cards') window.mostrarToast('Sem cartões no limite (3 am. ou 1 ver.) para arquivar.', true);
+        }
+
+        function findScoutFineIndex(multas, reference) {
+            if (!Array.isArray(multas)) return -1;
+            const token = String(reference ?? '');
+            if (token.startsWith('id:')) {
+                let id = token.slice(3);
+                try { id = decodeURIComponent(id); } catch (_) {}
+                return multas.findIndex(multa => String(multa?.id) === id);
+            }
+            const index = Number(token.startsWith('idx:') ? token.slice(4) : token);
+            return Number.isInteger(index) && index >= 0 && index < multas.length ? index : -1;
+        }
+
+        async function executeScoutTransaction(target, updateFn, ownerUid) {
+            if (!window.firebaseInicializado || !window.dbRef) {
+                if (!inicializarFirebase()) {
+                    window.mostrarToast('Sem conexão com banco!', true);
+                    return false;
+                }
+            }
+            if (!window.babaExigirConexao?.(false)) return false;
+            if (!window.isAdminLogado || !window.firebaseUser || window.firebaseUser.uid !== ownerUid || !window.authRef?.currentUser) {
+                window.mostrarToast('Apenas um administrador autenticado pode salvar alterações.', true);
+                return false;
+            }
+
+            while (syncEmAndamento) await new Promise(resolve => setTimeout(resolve, 25));
+            if (!window.babaExigirConexao?.(false)) return false;
+            if (!window.isAdminLogado || !window.firebaseUser || window.firebaseUser.uid !== ownerUid || !window.authRef?.currentUser) {
+                window.mostrarToast('A sessão administrativa mudou antes de salvar. Tente novamente.', true);
+                return false;
+            }
+            const reference = target === 'public'
+                ? window.publicRef?.child('data')
+                : target === 'private' ? window.privateRef?.child('athletes') : null;
+            if (!reference) {
+                window.mostrarToast('Não foi possível acessar os dados dos scouts. Recarregue a página e tente novamente.', true);
+                return false;
+            }
+
+            syncEmAndamento = true;
+            let lastOutcome = null;
+            try {
+                const result = await reference.transaction(currentValue => {
+                    lastOutcome = null;
+                    const outcome = updateFn(currentValue);
+                    lastOutcome = outcome || {abort: true};
+                    if (lastOutcome.abort) return;
+                    return lastOutcome.value;
+                }, undefined, false);
+
+                if (!result?.committed) {
+                    if (lastOutcome?.reason) {
+                        showScoutMutationAbort(lastOutcome.reason);
+                        return false;
+                    }
+                    window.mostrarToast('Não consegui confirmar a gravação dos scouts. Confira a lista antes de repetir.', true);
+                    return false;
+                }
+
+                const committedValue = result.snapshot?.val();
+                if (target === 'public') applyPublicScoutSnapshot(committedValue);
+                else applyPrivateScoutSnapshot(committedValue);
+                return true;
+            } catch (error) {
+                console.error('Falha ao gravar scouts:', error?.code || '');
+                if (!window.babaPodeGravarOnline?.()) window.babaAtualizarAvisoConexao?.();
+                window.mostrarToast('Não consegui confirmar a gravação dos scouts. Confira a lista antes de repetir.', true);
+                return false;
+            } finally {
+                syncEmAndamento = false;
+                drainQueuedAdminSave();
+            }
+        }
+
+        function enqueueScoutTransaction(target, updateFn) {
+            const ownerUid = window.firebaseUser?.uid || null;
+            const task = scoutOperationQueue.then(() => executeScoutTransaction(target, updateFn, ownerUid));
+            scoutOperationQueue = task.then(() => undefined, () => undefined);
+            return task;
+        }
 
         function adminSaveError(code, message) {
             const error = new Error(message);
@@ -3223,120 +3354,150 @@
             requestAnimationFrame(() => window.scrollTo(0, y));
         }
 
-        window.alterarNumero = function(id, campo, valor) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-            const novo = (a[campo] || 0) + valor;
-            if (novo < 0) return; // Não permite negativo para nada
-            if (campo === 'amarelos' && novo > 3) return;
-            if (campo === 'vermelho' && novo > 1) return;
-            a[campo] = novo;
-            const valorNaTela = document.getElementById(`scout-stat-${campo}-${id}`);
-            if (valorNaTela) valorNaTela.textContent = novo;
-            atualizarResumosAposScout();
-            window.salvarNoStorage({ silencioso: true });
+        window.alterarNumero = async function(id, campo, valor) {
+            if (!['gols', 'amarelos', 'vermelho'].includes(campo) || ![-1, 1].includes(Number(valor))) return;
+            const salvo = await enqueueScoutTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const atletas = normalizeScoutAthletes(nextData.atletas);
+                const atleta = atletas.find(item => item && String(item.id) === String(id));
+                if (!atleta) return {abort: true, reason: 'athlete_missing'};
+                const novo = (parseInt(atleta[campo] || 0, 10) || 0) + Number(valor);
+                if (novo < 0 || (campo === 'amarelos' && novo > 3) || (campo === 'vermelho' && novo > 1)) {
+                    return {abort: true, reason: 'limit'};
+                }
+                atleta[campo] = novo;
+                nextData.atletas = atletas;
+                return {value: nextData};
+            });
+            if (salvo) atualizarScoutsSemPerderPosicao();
         };
         
-        window.salvarHistoricoCartao = function(id) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-            
-            let arquivouAlgo = false;
-            let novosAmarelos = parseInt(a.amarelos || 0);
-            let novosVermelhos = parseInt(a.vermelho || 0);
-            
-            // Regra: Arquivar somente se atingir o máximo
-            // Amarelos: Max 3. Se tiver 4 ou 5, tira 3 e deixa o resto.
-            if (novosAmarelos >= 3) {
-                a.histAmarelos = (parseInt(a.histAmarelos || 0)) + 3;
-                novosAmarelos = novosAmarelos - 3;
-                arquivouAlgo = true;
-            }
-            
-            // Vermelho: Max 1. Se tiver mais de 1 (raro), tira 1.
-            if (novosVermelhos >= 1) {
-                a.histVermelhos = (parseInt(a.histVermelhos || 0)) + 1;
-                novosVermelhos = novosVermelhos - 1;
-                arquivouAlgo = true;
-            }
-            
-            if (arquivouAlgo) {
-                a.amarelos = novosAmarelos;
-                a.vermelho = novosVermelhos;
-                window.mostrarToast("Cartões arquivados!");
-                window.salvarNoStorage({ silencioso: true });
+        window.salvarHistoricoCartao = async function(id) {
+            const salvo = await enqueueScoutTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const atletas = normalizeScoutAthletes(nextData.atletas);
+                const atleta = atletas.find(item => item && String(item.id) === String(id));
+                if (!atleta) return {abort: true, reason: 'athlete_missing'};
+
+                let novosAmarelos = parseInt(atleta.amarelos || 0, 10) || 0;
+                let novosVermelhos = parseInt(atleta.vermelho || 0, 10) || 0;
+                let arquivouAlgo = false;
+                if (novosAmarelos >= 3) {
+                    atleta.histAmarelos = (parseInt(atleta.histAmarelos || 0, 10) || 0) + 3;
+                    novosAmarelos -= 3;
+                    arquivouAlgo = true;
+                }
+                if (novosVermelhos >= 1) {
+                    atleta.histVermelhos = (parseInt(atleta.histVermelhos || 0, 10) || 0) + 1;
+                    novosVermelhos -= 1;
+                    arquivouAlgo = true;
+                }
+                if (!arquivouAlgo) return {abort: true, reason: 'no_cards'};
+                atleta.amarelos = novosAmarelos;
+                atleta.vermelho = novosVermelhos;
+                nextData.atletas = atletas;
+                return {value: nextData};
+            });
+            if (salvo) {
+                window.mostrarToast('Cartões arquivados!');
                 atualizarScoutsSemPerderPosicao();
-            } else {
-                window.mostrarToast("Sem cartões no limite (3 am. ou 1 ver.) para arquivar.", true);
             }
         };
 
-        window.aplicarMultaAtleta = function(id) {
-            const motivoInput = document.getElementById(`motivo-${id}`);
-            const valorInput = document.getElementById(`vmulta-${id}`);
-            const motivo = motivoInput?.value?.trim();
-            const valor = parseFloat(valorInput?.value);
-            
-            if (!motivo || isNaN(valor) || valor <= 0) { 
-                window.mostrarToast('Preencha motivo e valor corretamente!', true); 
-                return; 
+        window.aplicarMultaAtleta = async function(id, button) {
+            if (button?.disabled) return;
+            if (button) button.disabled = true;
+            try {
+                const motivoInput = document.getElementById(`motivo-${id}`);
+                const valorInput = document.getElementById(`vmulta-${id}`);
+                const motivo = motivoInput?.value?.trim();
+                const valor = parseFloat(valorInput?.value);
+                if (!motivo || isNaN(valor) || valor <= 0) {
+                    window.mostrarToast('Preencha motivo e valor corretamente!', true);
+                    return;
+                }
+                const mesAtual = window.getMesAtual();
+                const anoAtual = window.getAnoAtual();
+                const multa = {
+                    motivo, valor, paga: false,
+                    id: 'multa_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9)
+                };
+                const salvo = await enqueueScoutTransaction('private', currentValue => {
+                    const nextAthletes = cloneAdminSaveValue(currentValue) || {};
+                    const atleta = nextAthletes[String(id)];
+                    if (!atleta || typeof atleta !== 'object') return {abort: true, reason: 'athlete_missing'};
+                    const pagamentos = atleta.pagamentos && typeof atleta.pagamentos === 'object' ? atleta.pagamentos : {};
+                    const entradaPagamento = window.obterDadosPagamento(pagamentos, anoAtual, mesAtual);
+                    const chavePagamento = window.chavePagamentoAnual(anoAtual, mesAtual);
+                    if (!pagamentos[chavePagamento] || typeof pagamentos[chavePagamento] !== 'object') {
+                        pagamentos[chavePagamento] = entradaPagamento.dados
+                            ? cloneAdminSaveValue(entradaPagamento.dados)
+                            : {pago: false, multas: []};
+                        if (entradaPagamento.chave !== chavePagamento && entradaPagamento.dados) delete pagamentos[entradaPagamento.chave];
+                    }
+                    if (!Array.isArray(pagamentos[chavePagamento].multas)) pagamentos[chavePagamento].multas = [];
+                    pagamentos[chavePagamento].multas.push(cloneAdminSaveValue(multa));
+                    atleta.pagamentos = pagamentos;
+                    nextAthletes[String(id)] = atleta;
+                    return {value: nextAthletes};
+                });
+                if (!salvo) return;
+                if (motivoInput?.value?.trim() === motivo) motivoInput.value = '';
+                if (valorInput && parseFloat(valorInput.value) === valor) valorInput.value = '';
+                window.mostrarToast('Multa aplicada!');
+                atualizarScoutsSemPerderPosicao();
+            } finally {
+                if (button) button.disabled = false;
             }
-            
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) {
-                window.mostrarToast('Erro: Atleta não encontrado.', true);
-                return;
-            }
-            
-            const mesAtual = window.getMesAtual();
-            const anoAtual = window.getAnoAtual();
-            if (!a.pagamentos) a.pagamentos = {};
-            const entradaPagamento = window.obterDadosPagamento(a.pagamentos, anoAtual, mesAtual);
-            const chavePagamento = window.chavePagamentoAnual(anoAtual, mesAtual);
-            if (!a.pagamentos[chavePagamento]) {
-                a.pagamentos[chavePagamento] = entradaPagamento.dados ? JSON.parse(JSON.stringify(entradaPagamento.dados)) : { pago: false, multas: [] };
-                if (entradaPagamento.chave !== chavePagamento && entradaPagamento.dados) delete a.pagamentos[entradaPagamento.chave];
-            }
-            if (!a.pagamentos[chavePagamento].multas) a.pagamentos[chavePagamento].multas = [];
-            
-            a.pagamentos[chavePagamento].multas.push({ 
-                motivo: motivo, 
-                valor: valor, 
-                paga: false,
-                id: 'multa_' + Date.now()
+        };
+        
+        window.toggleStatusMulta = async function(atletaId, mes, multaRef, isChecked) {
+            await enqueueScoutTransaction('private', currentValue => {
+                const nextAthletes = cloneAdminSaveValue(currentValue) || {};
+                const atleta = nextAthletes[String(atletaId)];
+                if (!atleta || typeof atleta !== 'object') return {abort: true, reason: 'athlete_missing'};
+                const multas = atleta.pagamentos?.[mes]?.multas;
+                const idx = findScoutFineIndex(multas, multaRef);
+                if (idx < 0) return {abort: true, reason: 'fine_missing'};
+                if (Boolean(multas[idx].paga) === Boolean(isChecked)) return {abort: true, reason: 'unchanged'};
+                multas[idx].paga = Boolean(isChecked);
+                return {value: nextAthletes};
             });
-            
-            // Limpar campos
-            if (motivoInput) motivoInput.value = '';
-            if (valorInput) valorInput.value = '';
-            
-            window.mostrarToast("Multa aplicada!");
-            window.salvarNoStorage({ silencioso: true });
             atualizarScoutsSemPerderPosicao();
         };
         
-        window.toggleStatusMulta = function(atletaId, mes, idx, isChecked) {
-            const a = window.atletasCache.find(j => j.id === atletaId);
-            if (a?.pagamentos?.[mes]?.multas?.[idx]) {
-                a.pagamentos[mes].multas[idx].paga = isChecked;
-                window.salvarNoStorage({ silencioso: true });
+        window.cancelarMulta = async function(atletaId, mes, multaRef) {
+            const atletaAtual = window.atletasCache.find(j => String(j.id) === String(atletaId));
+            const multaIndex = findScoutFineIndex(atletaAtual?.pagamentos?.[mes]?.multas, multaRef);
+            if (multaIndex < 0) return;
+            if (!atletaAtual.pagamentos[mes].multas[multaIndex].paga) {
+                window.mostrarToast('Marque como paga primeiro!', true);
+                return;
             }
-        };
-        
-        window.cancelarMulta = async function(atletaId, mes, idx) {
-            const a = window.atletasCache.find(j => j.id === atletaId);
-            if (!a?.pagamentos?.[mes]?.multas?.[idx]) return;
-            if (!a.pagamentos[mes].multas[idx].paga) { window.mostrarToast('Marque como paga primeiro!', true); return; }
             if (await window.confirmarAcao('Arquivar esta multa?', { confirmText: 'Arquivar' })) {
-                if (!a.pagamentos[mes].multasArquivadasHistorico) a.pagamentos[mes].multasArquivadasHistorico = [];
-                const multa = a.pagamentos[mes].multas[idx];
-                a.pagamentos[mes].multasArquivadasHistorico.push({
-                    valor: parseFloat(multa.valor),
-                    motivo: multa.motivo || 'Arquivado'
+                const salvo = await enqueueScoutTransaction('private', currentValue => {
+                    const nextAthletes = cloneAdminSaveValue(currentValue) || {};
+                    const atleta = nextAthletes[String(atletaId)];
+                    if (!atleta || typeof atleta !== 'object') return {abort: true, reason: 'athlete_missing'};
+                    const pagamentos = atleta.pagamentos && typeof atleta.pagamentos === 'object' ? atleta.pagamentos : {};
+                    const multas = pagamentos[mes]?.multas;
+                    const idx = findScoutFineIndex(multas, multaRef);
+                    if (idx < 0) return {abort: true, reason: 'fine_missing'};
+                    const multa = multas[idx];
+                    if (!multa.paga) return {abort: true, reason: 'fine_not_paid'};
+                    if (!Array.isArray(pagamentos[mes].multasArquivadasHistorico)) pagamentos[mes].multasArquivadasHistorico = [];
+                    pagamentos[mes].multasArquivadasHistorico.push({
+                        valor: parseFloat(multa.valor),
+                        motivo: multa.motivo || 'Arquivado'
+                    });
+                    multas.splice(idx, 1);
+                    pagamentos[mes].multas = multas;
+                    atleta.pagamentos = pagamentos;
+                    nextAthletes[String(atletaId)] = atleta;
+                    return {value: nextAthletes};
                 });
-                a.pagamentos[mes].multas.splice(idx, 1);
+                if (!salvo) return;
                 window.mostrarToast('Multa arquivada!');
-                window.salvarNoStorage({ silencioso: true });
                 atualizarScoutsSemPerderPosicao();
             }
         };
@@ -3369,10 +3530,13 @@
                     if (a.pagamentos) {
                         Object.keys(a.pagamentos).forEach(m => {
                             a.pagamentos[m].multas?.forEach((multa, idx) => {
+                                const multaRef = multa?.id !== undefined && multa?.id !== null
+                                    ? `id:${encodeURIComponent(String(multa.id)).replace(/'/g, '%27')}`
+                                    : `idx:${idx}`;
                                 multasAtivas += `<span class="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] ${multa.paga ? 'line-through text-emerald-500 bg-emerald-900/20' : 'text-red-300 bg-red-900/20'}">
                                     ${multa.motivo} R$${multa.valor.toFixed(0)}
-                                    <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}',${idx},this.checked)" class="accent-emerald-500 scale-75">
-                                    <button onclick="window.cancelarMulta('${a.id}','${m}',${idx})" class="${multa.paga ? 'text-amber-400' : 'text-stone-500'}"><i class="fa-solid fa-box-archive"></i></button>
+                                    <input type="checkbox" ${multa.paga ? 'checked' : ''} onchange="window.toggleStatusMulta('${a.id}','${m}', '${multaRef}',this.checked)" class="accent-emerald-500 scale-75">
+                                    <button onclick="window.cancelarMulta('${a.id}','${m}', '${multaRef}')" class="${multa.paga ? 'text-amber-400' : 'text-stone-500'}"><i class="fa-solid fa-box-archive"></i></button>
                                 </span>`;
                             });
                             a.pagamentos[m].aportes?.forEach((ap, idx) => {
@@ -3408,7 +3572,7 @@
                                 <div class="flex items-center gap-0.5 shrink-0 ml-auto">
                                     <input type="text" id="motivo-${a.id}" placeholder="motivo" class="w-10 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
                                     <input type="number" id="vmulta-${a.id}" placeholder="R$" class="w-8 bg-stone-800 border border-stone-700 p-0.5 rounded text-[8px] text-white outline-none">
-                                    <button onclick="window.aplicarMultaAtleta('${a.id}')" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
+                                    <button onclick="window.aplicarMultaAtleta('${a.id}', this)" class="bg-red-600 hover:bg-red-500 text-white px-1 py-0.5 rounded text-[8px] font-black">OK</button>
                                 </div>
                             </div>
                             ${multasAtivas ? `
