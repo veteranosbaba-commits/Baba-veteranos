@@ -2280,8 +2280,8 @@
             };
             
             const revisionPunicoesSalva = window.punicoesRevision || 0;
-            const salvarPunicoesPrivadas = Boolean(window.punicoesDirty && window.disciplineLoaded);
-            const salvarSomenteFinanceiro = Boolean(opcoes.somenteFinanceiro && !salvarPunicoesPrivadas);
+            const salvarSomenteFinanceiro = Boolean(opcoes.somenteFinanceiro);
+            const salvarPunicoesPrivadas = Boolean(!salvarSomenteFinanceiro && window.punicoesDirty && window.disciplineLoaded);
             const atualizacoes = salvarSomenteFinanceiro
                 ? {'private/finance': dadosFinanceirosPrivados}
                 : {
