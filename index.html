@@ -1640,7 +1640,7 @@
         let queuedAdminSaveOptions = null;
         let queuedAdminSaveTimer = null;
         let financeOperationQueue = Promise.resolve();
-        let scoutOperationQueue = Promise.resolve();
+        let adminOperationQueue = Promise.resolve();
         // Guarda o último snapshot lido para bloquear gravações antigas entre administradores.
         const adminSaveSnapshots = {
             publicData: {loaded: false, value: null},
@@ -1808,20 +1808,27 @@
             return task;
         };
 
-        function normalizeScoutAthletes(value) {
+        function normalizeAdminRows(value) {
             return Array.isArray(value) ? value.slice() : value && typeof value === 'object' ? Object.values(value) : [];
         }
 
-        function applyPublicScoutSnapshot(rawData) {
+        function applyPublicDataSnapshot(rawData) {
             const data = rawData && typeof rawData === 'object' ? rawData : {};
             window.latestPublicDataSnapshot = cloneAdminSaveValue(rawData);
             window.hasPublicDataSnapshot = true;
             setAdminSaveSnapshot('publicData', rawData, true);
-            window.publicAthletesCache = normalizeScoutAthletes(data.atletas).filter(atleta => atleta && typeof atleta === 'object');
+            window.publicAthletesCache = normalizeAdminRows(data.atletas).filter(row => row && typeof row === 'object');
+            window.sumulasCache = normalizeAdminRows(data.sumulas).filter(row => row && typeof row === 'object');
+            window.historicoPlacares = normalizeAdminRows(data.historicoPlacares).filter(row => row && typeof row === 'object');
+            window.partidaEstatisticas = data.partidaEstatisticas && typeof data.partidaEstatisticas === 'object'
+                ? cloneAdminSaveValue(data.partidaEstatisticas)
+                : {placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0};
+            window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
+            window.publicDataLoaded = true;
             aplicarCachePrivado();
         }
 
-        function applyPrivateScoutSnapshot(rawAthletes) {
+        function applyPrivateAthletesSnapshot(rawAthletes) {
             const athletes = rawAthletes && typeof rawAthletes === 'object' ? rawAthletes : {};
             setAdminSaveSnapshot('privateAthletes', rawAthletes, true);
             window.privateAthletesCache = athletes;
@@ -1836,11 +1843,8 @@
                     }
                     const movements = financialCache[id] || {};
                     ['pagamentos', 'abatimentos'].forEach(field => {
-                        if (Object.prototype.hasOwnProperty.call(privateAthlete, field)) {
-                            movements[field] = cloneAdminSaveValue(privateAthlete[field]);
-                        } else {
-                            delete movements[field];
-                        }
+                        if (Object.prototype.hasOwnProperty.call(privateAthlete, field)) movements[field] = cloneAdminSaveValue(privateAthlete[field]);
+                        else delete movements[field];
                     });
                     if (Object.keys(movements).length) financialCache[id] = movements;
                     else delete financialCache[id];
@@ -1850,11 +1854,29 @@
             aplicarCachePrivado();
         }
 
-        function showScoutMutationAbort(reason) {
-            if (reason === 'athlete_missing') window.mostrarToast('Erro: Atleta não encontrado.', true);
-            else if (reason === 'fine_missing') window.mostrarToast('Esta multa não está mais disponível. Atualize a lista.', true);
-            else if (reason === 'fine_not_paid') window.mostrarToast('Marque como paga primeiro!', true);
-            else if (reason === 'no_cards') window.mostrarToast('Sem cartões no limite (3 am. ou 1 ver.) para arquivar.', true);
+        function applyAdminRootSnapshot(rawRoot) {
+            const root = rawRoot && typeof rawRoot === 'object' ? rawRoot : {};
+            applyPublicDataSnapshot(root.public?.data ?? null);
+            applyPrivateAthletesSnapshot(root.private?.athletes ?? null);
+            applyFinanceSnapshotToCaches(root.private?.finance ?? null);
+        }
+
+        function showAdminMutationAbort(outcome) {
+            const messages = {
+                athlete_missing: 'Atleta não encontrado. Atualize a lista e tente novamente.',
+                fine_missing: 'Esta multa não está mais disponível. Atualize a lista.',
+                fine_not_paid: 'Marque como paga primeiro!',
+                no_cards: 'Sem cartões no limite (3 amarelos ou 1 vermelho) para arquivar.',
+                duplicate_round: 'Já existe um resultado para essa data. Atualize o histórico.',
+                round_missing: 'A rodada não está mais disponível. Atualize o histórico.',
+                sumula_missing: 'A súmula não está mais disponível. Atualize a lista.',
+                sumula_duplicate: 'Não foi possível identificar uma nova súmula com segurança. Tente novamente.',
+                archive_missing: 'O item arquivado não está mais disponível. Atualize a lista.',
+                archive_changed: 'Esse item foi alterado em outra sessão. Atualize a lista antes de excluir.',
+                nothing_to_clear: 'Não há itens arquivados para excluir.'
+            };
+            const message = outcome?.message || messages[outcome?.reason];
+            if (message) window.mostrarToast(message, true);
         }
 
         function findScoutFineIndex(multas, reference) {
@@ -1869,7 +1891,7 @@
             return Number.isInteger(index) && index >= 0 && index < multas.length ? index : -1;
         }
 
-        async function executeScoutTransaction(target, updateFn, ownerUid) {
+        async function executeAdminTransaction(target, updateFn, ownerUid) {
             if (!window.firebaseInicializado || !window.dbRef) {
                 if (!inicializarFirebase()) {
                     window.mostrarToast('Sem conexão com banco!', true);
@@ -1890,9 +1912,10 @@
             }
             const reference = target === 'public'
                 ? window.publicRef?.child('data')
-                : target === 'private' ? window.privateRef?.child('athletes') : null;
+                : target === 'private' ? window.privateRef?.child('athletes')
+                : target === 'root' ? window.dbRef : null;
             if (!reference) {
-                window.mostrarToast('Não foi possível acessar os dados dos scouts. Recarregue a página e tente novamente.', true);
+                window.mostrarToast('Não foi possível acessar os dados. Recarregue a página e tente novamente.', true);
                 return false;
             }
 
@@ -1908,22 +1931,23 @@
                 }, undefined, false);
 
                 if (!result?.committed) {
-                    if (lastOutcome?.reason) {
-                        showScoutMutationAbort(lastOutcome.reason);
+                    if (lastOutcome?.reason || lastOutcome?.message) {
+                        showAdminMutationAbort(lastOutcome);
                         return false;
                     }
-                    window.mostrarToast('Não consegui confirmar a gravação dos scouts. Confira a lista antes de repetir.', true);
+                    window.mostrarToast('Não consegui confirmar a gravação. Confira os dados antes de repetir.', true);
                     return false;
                 }
 
                 const committedValue = result.snapshot?.val();
-                if (target === 'public') applyPublicScoutSnapshot(committedValue);
-                else applyPrivateScoutSnapshot(committedValue);
+                if (target === 'public') applyPublicDataSnapshot(committedValue);
+                else if (target === 'private') applyPrivateAthletesSnapshot(committedValue);
+                else applyAdminRootSnapshot(committedValue);
                 return true;
             } catch (error) {
-                console.error('Falha ao gravar scouts:', error?.code || '');
+                console.error('Falha ao gravar dados administrativos:', error?.code || '');
                 if (!window.babaPodeGravarOnline?.()) window.babaAtualizarAvisoConexao?.();
-                window.mostrarToast('Não consegui confirmar a gravação dos scouts. Confira a lista antes de repetir.', true);
+                window.mostrarToast('Não consegui confirmar a gravação. Confira os dados antes de repetir.', true);
                 return false;
             } finally {
                 syncEmAndamento = false;
@@ -1931,12 +1955,16 @@
             }
         }
 
-        function enqueueScoutTransaction(target, updateFn) {
+        function enqueueAdminTransaction(target, updateFn) {
             const ownerUid = window.firebaseUser?.uid || null;
-            const task = scoutOperationQueue.then(() => executeScoutTransaction(target, updateFn, ownerUid));
-            scoutOperationQueue = task.then(() => undefined, () => undefined);
+            const task = adminOperationQueue.then(() => executeAdminTransaction(target, updateFn, ownerUid));
+            adminOperationQueue = task.then(() => undefined, () => undefined);
             return task;
         }
+
+        // Compatibilidad con los nombres usados por las acciones de Scouts ya publicadas.
+        function normalizeScoutAthletes(value) { return normalizeAdminRows(value); }
+        function enqueueScoutTransaction(target, updateFn) { return enqueueAdminTransaction(target, updateFn); }
 
         function adminSaveError(code, message) {
             const error = new Error(message);
@@ -2888,11 +2916,28 @@
             }
         };
         
-        window.atualizarPlacarGeral = function() {
+        function montarEstatisticasPartidas(historico, atuais) {
+            let vitoriasFlu = 0, vitoriasBota = 0;
+            (historico || []).forEach(rodada => {
+                const golsFlu = parseInt(rodada?.golsFlu, 10) || 0;
+                const golsBota = parseInt(rodada?.golsBota, 10) || 0;
+                if (golsFlu > golsBota) vitoriasFlu++;
+                else if (golsBota > golsFlu) vitoriasBota++;
+            });
+            const ultima = historico?.[0];
+            return {
+                ...(atuais && typeof atuais === 'object' ? atuais : {}),
+                placarFlu: ultima?.golsFlu ?? 0,
+                placarBota: ultima?.golsBota ?? 0,
+                vitFlu: vitoriasFlu,
+                vitBota: vitoriasBota
+            };
+        }
+
+        window.atualizarPlacarGeral = async function() {
             const fluVal = document.getElementById('adm-placar-flu')?.value;
             const botaVal = document.getElementById('adm-placar-bota')?.value;
             const dataInput = document.getElementById('adm-placar-data')?.value;
-            
             if (!fluVal || !botaVal) { window.mostrarToast('Preencha os placares!', true); return; }
             if (!dataInput) { window.mostrarToast('Selecione a data da partida!', true); return; }
             const hojeISO = obterDataLocalISO();
@@ -2902,43 +2947,43 @@
                 window.mostrarToast('Não é possível registrar um placar para uma data futura.', true);
                 return;
             }
-            
-            const placarFlu = parseInt(fluVal);
-            const placarBota = parseInt(botaVal);
+            const placarFlu = parseInt(fluVal, 10);
+            const placarBota = parseInt(botaVal, 10);
             if (isNaN(placarFlu) || isNaN(placarBota)) { window.mostrarToast('Valores inválidos!', true); return; }
-            
-            // Converte YYYY-MM-DD para DD/MM/YYYY
-            const partes = dataInput.split('-');
-            const dataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
-            
-            if (window.historicoPlacares?.some(r => r.data === dataStr)) {
-                window.mostrarToast(`Já existe resultado para esta data (${dataStr}). Remova no histórico primeiro.`, true);
-                return;
-            }
-            
-            window.partidaEstatisticas.placarFlu = placarFlu;
-            window.partidaEstatisticas.placarBota = placarBota;
-            
-            window.historicoPlacares.unshift({ id: 'rodada_' + Date.now(), data: dataStr, golsFlu: placarFlu, golsBota: placarBota });
-            recalcularClassificacaoGeral();
-            window.salvarNoStorage();
-            window.mostrarToast("Placar salvo!");
+            const [ano, mes, dia] = dataInput.split('-');
+            const dataStr = `${dia}/${mes}/${ano}`;
+            const rodada = {
+                id: 'rodada_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8),
+                data: dataStr, golsFlu: placarFlu, golsBota: placarBota
+            };
+            const salvo = await enqueueAdminTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const historico = normalizeAdminRows(nextData.historicoPlacares);
+                if (historico.some(item => item?.data === dataStr)) return {abort: true, reason: 'duplicate_round'};
+                historico.unshift(cloneAdminSaveValue(rodada));
+                nextData.historicoPlacares = historico;
+                nextData.partidaEstatisticas = montarEstatisticasPartidas(historico, nextData.partidaEstatisticas);
+                return {value: nextData};
+            });
+            if (!salvo) return;
+            window.renderizarTudo();
+            window.mostrarToast('Placar salvo!');
         };
         
         window.excluirRodadaHistorico = async function(id) {
-            if (await window.confirmarAcao('Apagar esta rodada?', { confirmText: 'Excluir', destructive: true })) {
-                window.historicoPlacares = window.historicoPlacares.filter(r => r.id !== id);
-                if(window.historicoPlacares.length) {
-                    window.partidaEstatisticas.placarFlu = window.historicoPlacares[0].golsFlu;
-                    window.partidaEstatisticas.placarBota = window.historicoPlacares[0].golsBota;
-                } else {
-                    window.partidaEstatisticas.placarFlu = 0;
-                    window.partidaEstatisticas.placarBota = 0;
-                }
-                recalcularClassificacaoGeral();
-                window.salvarNoStorage();
-                window.mostrarToast('Rodada removida!');
-            }
+            if (!await window.confirmarAcao('Apagar esta rodada?', { confirmText: 'Excluir', destructive: true })) return;
+            const salvo = await enqueueAdminTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const historico = normalizeAdminRows(nextData.historicoPlacares);
+                const filtrado = historico.filter(rodada => String(rodada?.id) !== String(id));
+                if (filtrado.length === historico.length) return {abort: true, reason: 'round_missing'};
+                nextData.historicoPlacares = filtrado;
+                nextData.partidaEstatisticas = montarEstatisticasPartidas(filtrado, nextData.partidaEstatisticas);
+                return {value: nextData};
+            });
+            if (!salvo) return;
+            window.renderizarTudo();
+            window.mostrarToast('Rodada removida!');
         };
         
         function renderHistoricoPlacares() {
@@ -3310,11 +3355,29 @@
         };
 
         window.excluirAtleta = async function(id) {
-            if (await window.confirmarAcao('Remover este atleta?', { confirmText: 'Remover', destructive: true })) {
-                window.atletasCache = window.atletasCache.filter(a => a.id !== id);
-                window.mostrarToast('Atleta removido!');
-                window.salvarNoStorage();
-            }
+            if (!await window.confirmarAcao('Remover este atleta?', { confirmText: 'Remover', destructive: true })) return;
+            const athleteId = String(id);
+            const salvo = await enqueueAdminTransaction('root', currentValue => {
+                const nextRoot = cloneAdminSaveValue(currentValue) || {};
+                const publicNode = nextRoot.public && typeof nextRoot.public === 'object' ? nextRoot.public : {};
+                const publicData = publicNode.data && typeof publicNode.data === 'object' ? publicNode.data : {};
+                const atletas = normalizeAdminRows(publicData.atletas);
+                const publicExistia = atletas.some(atleta => String(atleta?.id) === athleteId);
+                const privateNode = nextRoot.private && typeof nextRoot.private === 'object' ? nextRoot.private : {};
+                const atletasPrivados = privateNode.athletes && typeof privateNode.athletes === 'object' ? privateNode.athletes : {};
+                const privadoExistia = Object.prototype.hasOwnProperty.call(atletasPrivados, athleteId);
+                if (!publicExistia && !privadoExistia) return {abort: true, reason: 'athlete_missing'};
+                publicData.atletas = atletas.filter(atleta => String(atleta?.id) !== athleteId);
+                delete atletasPrivados[athleteId];
+                publicNode.data = publicData;
+                privateNode.athletes = atletasPrivados;
+                nextRoot.public = publicNode;
+                nextRoot.private = privateNode;
+                return {value: nextRoot};
+            });
+            if (!salvo) return;
+            window.renderizarTudo();
+            window.mostrarToast('Atleta removido!');
         };
         
         function renderAdminAtletas() { 
@@ -3725,49 +3788,62 @@
             return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
         }
 
-        window.salvarNovaSumula = function(e) {
+        window.salvarNovaSumula = async function(e) {
             e.preventDefault();
-            const data = document.getElementById('sum-data').value;
-            const pb = document.getElementById('sum-placar-bota').value;
-            const pf = document.getElementById('sum-placar-flu').value;
-            
-            const botaGols = document.getElementById('sum-bota-gols').value;
-            const botaAm = document.getElementById('sum-bota-amarelos').value;
-            const botaVer = document.getElementById('sum-bota-vermelhos').value;
-            const fluGols = document.getElementById('sum-flu-gols').value;
-            const fluAm = document.getElementById('sum-flu-amarelos').value;
-            const fluVer = document.getElementById('sum-flu-vermelhos').value;
-            const obs = document.getElementById('sum-obs').value;
+            const form = e.currentTarget || e.target;
+            if (form?.dataset.saving === 'true') return;
+            if (form) form.dataset.saving = 'true';
+            const submitButton = form?.querySelector('button[type="submit"]');
+            if (submitButton) submitButton.disabled = true;
+            try {
+                const data = document.getElementById('sum-data').value;
+                const pb = document.getElementById('sum-placar-bota').value;
+                const pf = document.getElementById('sum-placar-flu').value;
+                const botaGols = document.getElementById('sum-bota-gols').value;
+                const botaAm = document.getElementById('sum-bota-amarelos').value;
+                const botaVer = document.getElementById('sum-bota-vermelhos').value;
+                const fluGols = document.getElementById('sum-flu-gols').value;
+                const fluAm = document.getElementById('sum-flu-amarelos').value;
+                const fluVer = document.getElementById('sum-flu-vermelhos').value;
+                const obs = document.getElementById('sum-obs').value;
+                if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
 
-            if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
-            const idSumula = window.editandoSumulaId || 'sum_' + Date.now();
-            const sumulaExistente = window.editandoSumulaId ? window.sumulasCache.find(s => s.id === window.editandoSumulaId) : null;
+                const editId = window.editandoSumulaId ? String(window.editandoSumulaId) : null;
+                const idSumula = editId || 'sum_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+                const proposta = {
+                    id: idSumula, data, placarBota: pb, placarFlu: pf,
+                    bota: {gols: botaGols, am: botaAm, ver: botaVer},
+                    flu: {gols: fluGols, am: fluAm, ver: fluVer}, obs
+                };
+                const salvo = await enqueueAdminTransaction('public', currentValue => {
+                    const nextData = cloneAdminSaveValue(currentValue) || {};
+                    const sumulas = normalizeAdminRows(nextData.sumulas);
+                    if (editId) {
+                        const indice = sumulas.findIndex(sumula => String(sumula?.id) === editId);
+                        if (indice < 0) return {abort: true, reason: 'sumula_missing'};
+                        sumulas[indice] = {...sumulas[indice], ...cloneAdminSaveValue(proposta)};
+                    } else {
+                        if (sumulas.some(sumula => String(sumula?.id) === idSumula)) return {abort: true, reason: 'sumula_duplicate'};
+                        sumulas.unshift(cloneAdminSaveValue(proposta));
+                    }
+                    nextData.sumulas = sumulas;
+                    return {value: nextData};
+                });
+                if (!salvo) return;
 
-            const novaSumula = {
-                ...(sumulaExistente || {}),
-                id: idSumula,
-                data,
-                placarBota: pb,
-                placarFlu: pf,
-                bota: { gols: botaGols, am: botaAm, ver: botaVer },
-                flu: { gols: fluGols, am: fluAm, ver: fluVer },
-                obs
-            };
-
-            if (window.editandoSumulaId) {
-                const indice = window.sumulasCache.findIndex(s => s.id === window.editandoSumulaId);
-                if (indice !== -1) window.sumulasCache[indice] = novaSumula;
-                window.editandoSumulaId = null;
-                document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula';
-                e.target.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Publicar Súmula';
-                window.mostrarToast("Súmula atualizada!");
-            } else {
-                window.sumulasCache.unshift(novaSumula);
-                window.mostrarToast("Súmula publicada!");
+                if (editId) {
+                    window.editandoSumulaId = null;
+                    const titulo = document.getElementById('titulo-form-sumula');
+                    if (titulo) titulo.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Registrar Nova Súmula';
+                    if (submitButton) submitButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Publicar Súmula';
+                }
+                form?.reset();
+                window.renderSumulasAdmin();
+                window.mostrarToast(editId ? 'Súmula atualizada!' : 'Súmula publicada!');
+            } finally {
+                if (form) form.dataset.saving = 'false';
+                if (submitButton) submitButton.disabled = false;
             }
-            window.salvarNoStorage();
-            e.target.reset();
-            window.renderSumulasAdmin();
         };
 
         window.editarSumula = function(id) {
@@ -3793,12 +3869,18 @@
         };
 
         window.excluirSumula = async function(id) {
-            if (await window.confirmarAcao('Deseja excluir esta súmula?', { confirmText: 'Excluir', destructive: true })) {
-                window.sumulasCache = window.sumulasCache.filter(s => s.id !== id);
-                window.salvarNoStorage();
-                window.renderSumulasAdmin();
-                window.mostrarToast('Súmula removida!');
-            }
+            if (!await window.confirmarAcao('Deseja excluir esta súmula?', { confirmText: 'Excluir', destructive: true })) return;
+            const salvo = await enqueueAdminTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const sumulas = normalizeAdminRows(nextData.sumulas);
+                const filtradas = sumulas.filter(sumula => String(sumula?.id) !== String(id));
+                if (filtradas.length === sumulas.length) return {abort: true, reason: 'sumula_missing'};
+                nextData.sumulas = filtradas;
+                return {value: nextData};
+            });
+            if (!salvo) return;
+            window.renderSumulasAdmin();
+            window.mostrarToast('Súmula removida!');
         };
 
         window.renderSumulasAdmin = function() {
@@ -4851,24 +4933,26 @@
         
         
         window.excluirCartoesHistorico = async function(id, cor) {
-            const a = window.atletasCache.find(j => j.id === id);
-            if (!a) return;
-
-            if (cor === 'amarelo' && a.histAmarelos > 0) {
-                if (await window.confirmarAcao('Remover 1 cartão amarelo do histórico?', { confirmText: 'Remover', destructive: true })) {
-                    a.histAmarelos--;
-                    window.salvarNoStorage();
-                    window.renderArquivados();
-                    window.mostrarToast('1 Amarelo removido!');
-                }
-            } else if (cor === 'vermelho' && a.histVermelhos > 0) {
-                if (await window.confirmarAcao('Remover 1 cartão vermelho do histórico?', { confirmText: 'Remover', destructive: true })) {
-                    a.histVermelhos--;
-                    window.salvarNoStorage();
-                    window.renderArquivados();
-                    window.mostrarToast('1 Vermelho removido!');
-                }
-            }
+            const atletaAtual = window.atletasCache.find(j => String(j.id) === String(id));
+            const campo = cor === 'amarelo' ? 'histAmarelos' : cor === 'vermelho' ? 'histVermelhos' : null;
+            if (!atletaAtual || !campo || Number(atletaAtual[campo] || 0) <= 0) return;
+            const mensagem = cor === 'amarelo' ? 'Remover 1 cartão amarelo do histórico?' : 'Remover 1 cartão vermelho do histórico?';
+            if (!await window.confirmarAcao(mensagem, { confirmText: 'Remover', destructive: true })) return;
+            const salvo = await enqueueAdminTransaction('public', currentValue => {
+                const nextData = cloneAdminSaveValue(currentValue) || {};
+                const atletas = normalizeAdminRows(nextData.atletas);
+                const atleta = atletas.find(row => String(row?.id) === String(id));
+                if (!atleta) return {abort: true, reason: 'athlete_missing'};
+                const quantidade = parseInt(atleta[campo] || 0, 10) || 0;
+                if (quantidade <= 0) return {abort: true, reason: 'archive_missing'};
+                atleta[campo] = quantidade - 1;
+                nextData.atletas = atletas;
+                return {value: nextData};
+            });
+            if (!salvo) return;
+            window.renderizarTudo();
+            window.renderArquivados();
+            window.mostrarToast(cor === 'amarelo' ? '1 Amarelo removido!' : '1 Vermelho removido!');
         };
 
         window.renderArquivados = function() {
@@ -4938,18 +5022,38 @@
         };
 
         window.excluirMultaHistorica = async function(atletaId, mes, idx) {
-            if (await window.confirmarAcao('Excluir esta multa do histórico permanentemente?', { confirmText: 'Excluir', destructive: true })) {
-                const a = window.atletasCache.find(j => j.id === atletaId);
-                if(a && a.pagamentos && a.pagamentos[mes] && a.pagamentos[mes].multasArquivadasHistorico) {
-                    a.pagamentos[mes].multasArquivadasHistorico.splice(idx, 1);
-                    if(a.pagamentos[mes].multasArquivadasHistorico.length === 0) {
-                        delete a.pagamentos[mes].multasArquivadasHistorico;
-                    }
-                    window.salvarNoStorage();
-                    window.renderArquivados();
-                    window.mostrarToast('Multa removida!');
-                }
+            const athleteId = String(atletaId);
+            const atletaAtual = window.atletasCache.find(j => String(j.id) === athleteId);
+            const historicoAtual = atletaAtual?.pagamentos?.[mes]?.multasArquivadasHistorico;
+            const indiceEsperado = Number(idx);
+            if (!Array.isArray(historicoAtual) || !Number.isInteger(indiceEsperado) || indiceEsperado < 0 || indiceEsperado >= historicoAtual.length) {
+                window.mostrarToast('O item arquivado não está mais disponível. Atualize a lista.', true);
+                return;
             }
+            const expectedItem = cloneAdminSaveValue(historicoAtual[indiceEsperado]);
+            if (!await window.confirmarAcao('Excluir esta multa do histórico permanentemente?', { confirmText: 'Excluir', destructive: true })) return;
+            const salvo = await enqueueAdminTransaction('private', currentValue => {
+                const nextAthletes = cloneAdminSaveValue(currentValue) || {};
+                const atleta = nextAthletes[athleteId];
+                const pagamentos = atleta?.pagamentos;
+                const historico = pagamentos?.[mes]?.multasArquivadasHistorico;
+                const index = Number(idx);
+                if (!atleta || !Array.isArray(historico) || !Number.isInteger(index) || index < 0 || index >= historico.length) {
+                    return {abort: true, reason: 'archive_missing'};
+                }
+                if (canonicalAdminSaveValue(historico[index]) !== canonicalAdminSaveValue(expectedItem)) {
+                    return {abort: true, reason: 'archive_changed'};
+                }
+                historico.splice(index, 1);
+                if (!historico.length) delete pagamentos[mes].multasArquivadasHistorico;
+                atleta.pagamentos = pagamentos;
+                nextAthletes[athleteId] = atleta;
+                return {value: nextAthletes};
+            });
+            if (!salvo) return;
+            window.renderizarTudo();
+            window.renderArquivados();
+            window.mostrarToast('Multa removida!');
         };
 
         window.gerarPDFRelatorio = function() {
@@ -5222,6 +5326,7 @@
                 if (erro) { erro.textContent = mensagem; erro.classList.remove('hidden'); }
                 if (input) { input.value = ''; input.focus(); }
             };
+            const liberarBotao = () => { if (botao) { botao.disabled = false; botao.textContent = 'Confirmar exclusão'; } };
 
             if (!window.isAdminLogado || !user || !user.email) {
                 exibirErro('Sua sessão administrativa não está válida. Entre novamente; nada foi excluído.');
@@ -5244,31 +5349,69 @@
             try {
                 const credencial = firebase.auth.EmailAuthProvider.credential(user.email, password);
                 await user.reauthenticateWithCredential(credencial);
-                if (!window.isAdminLogado || window.authRef?.currentUser?.uid !== user.uid) {
-                    throw new Error('session-changed');
-                }
-
-                window.atletasCache.forEach(atleta => {
-                    atleta.histAmarelos = 0;
-                    atleta.histVermelhos = 0;
-                    if (atleta.pagamentos) {
-                        Object.keys(atleta.pagamentos).forEach(mes => {
-                            delete atleta.pagamentos[mes].multasArquivadasHistorico;
-                            delete atleta.pagamentos[mes].aportesArquivadosHistorico;
-                        });
-                    }
-                });
-                window.cancelarExclusaoArquivados();
-                window.renderArquivados();
-                window.salvarNoStorage();
-                window.mostrarToast('Histórico arquivado excluído.');
             } catch (error) {
                 const senhaIncorreta = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error?.code);
                 exibirErro(senhaIncorreta
                     ? 'Senha incorreta. Nenhum item foi excluído.'
                     : 'Não foi possível confirmar a senha. Nenhum item foi excluído.');
-                if (botao) { botao.disabled = false; botao.textContent = 'Confirmar exclusão'; }
+                liberarBotao();
+                return;
             }
+            if (!window.isAdminLogado || window.authRef?.currentUser?.uid !== user.uid) {
+                exibirErro('Sua sessão administrativa mudou. Entre novamente; nada foi excluído.');
+                liberarBotao();
+                return;
+            }
+
+            if (botao) botao.textContent = 'Excluindo…';
+            const salvo = await enqueueAdminTransaction('root', currentValue => {
+                const nextRoot = cloneAdminSaveValue(currentValue) || {};
+                const publicNode = nextRoot.public && typeof nextRoot.public === 'object' ? nextRoot.public : {};
+                const publicData = publicNode.data && typeof publicNode.data === 'object' ? publicNode.data : {};
+                const atletas = normalizeAdminRows(publicData.atletas);
+                const privateNode = nextRoot.private && typeof nextRoot.private === 'object' ? nextRoot.private : {};
+                const atletasPrivados = privateNode.athletes && typeof privateNode.athletes === 'object' ? privateNode.athletes : {};
+                let changed = false;
+
+                atletas.forEach(atleta => {
+                    if (!atleta || typeof atleta !== 'object') return;
+                    if (Number(atleta.histAmarelos || 0) !== 0 || Number(atleta.histVermelhos || 0) !== 0) changed = true;
+                    atleta.histAmarelos = 0;
+                    atleta.histVermelhos = 0;
+                });
+                Object.values(atletasPrivados).forEach(atleta => {
+                    const pagamentos = atleta?.pagamentos;
+                    if (!pagamentos || typeof pagamentos !== 'object') return;
+                    Object.values(pagamentos).forEach(periodo => {
+                        if (!periodo || typeof periodo !== 'object') return;
+                        if (Object.prototype.hasOwnProperty.call(periodo, 'multasArquivadasHistorico')) {
+                            delete periodo.multasArquivadasHistorico;
+                            changed = true;
+                        }
+                        if (Object.prototype.hasOwnProperty.call(periodo, 'aportesArquivadosHistorico')) {
+                            delete periodo.aportesArquivadosHistorico;
+                            changed = true;
+                        }
+                    });
+                });
+                if (!changed) return {abort: true, reason: 'nothing_to_clear'};
+                publicData.atletas = atletas;
+                publicNode.data = publicData;
+                privateNode.athletes = atletasPrivados;
+                nextRoot.public = publicNode;
+                nextRoot.private = privateNode;
+                return {value: nextRoot};
+            });
+            if (!salvo) {
+                exibirErro('A exclusão não foi confirmada. Atualize a tela e confira os itens antes de tentar novamente.');
+                liberarBotao();
+                return;
+            }
+
+            window.cancelarExclusaoArquivados();
+            window.renderizarTudo();
+            window.renderArquivados();
+            window.mostrarToast('Histórico arquivado excluído.');
         };
 
         function switchAdminSubTab(subTabId) {
@@ -6098,85 +6241,119 @@
             btn.onclick = function() { window.confirmarDisparo(tipo, alvos); };
         };
         
-        window.confirmarDisparo = function(tipo, alvos) {
+        window.confirmarDisparo = async function(tipo, alvos) {
             if (!window.babaExigirConexao?.()) return;
-            const customTextEl = document.getElementById('notif-custom-text');
-            const mensagemGeral = customTextEl ? customTextEl.value : '';
-            
-            // Gera notificações no app para cada alvo
-            let tituloNotif = '';
-            let msgNotif = '';
-            let detalhes = null;
-            
-            if (tipo === 'pendentes') {
-                tituloNotif = '📢 Cobrança de Mensalidade';
-                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
-                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
-                msgNotif = `Mensalidade pendente para: ${nomes}${resto}.`;
-                detalhes = alvos.map(a => ({ nome: a.nome, camisa: a.camisa, time: a.time, motivo: 'Mensalidade', status: '🔴 Pendente' }));
-            } else if (tipo === 'multas') {
-                tituloNotif = '💰 Cobrança de Multas';
-                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
-                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
-                msgNotif = `Multas registradas para: ${nomes}${resto}. Verifique os detalhes.`;
-                detalhes = alvos.map(a => {
-                    let total = 0;
-                    Object.values(a.pagamentos || {}).forEach(p => {
-                        if (p.multas) p.multas.forEach(m => { if (!m.paga) total += Number(m.valor); });
+            if (!window.isAdminLogado || !window.firebaseUser || !window.publicRef) {
+                window.mostrarToast('Sessão administrativa ou conexão com o banco indisponível.', true);
+                return;
+            }
+            const botao = document.getElementById('notif-confirmar-btn');
+            const textoBotaoOriginal = botao?.textContent || 'Confirmar envio';
+            if (botao?.disabled) return;
+            if (botao) { botao.disabled = true; botao.textContent = 'Enviando…'; }
+            let manterPrevia = true;
+            try {
+                const destinatarios = Array.isArray(alvos) ? alvos : [];
+                const customTextEl = document.getElementById('notif-custom-text');
+                const mensagemGeral = customTextEl ? customTextEl.value : '';
+                let tituloNotif = '';
+                let msgNotif = '';
+                let detalhes = null;
+
+                if (tipo === 'pendentes') {
+                    tituloNotif = '📢 Cobrança de Mensalidade';
+                    const nomes = destinatarios.slice(0, 3).map(a => a.nome).join(', ');
+                    const resto = destinatarios.length > 3 ? ` e mais ${destinatarios.length - 3}` : '';
+                    msgNotif = `Mensalidade pendente para: ${nomes}${resto}.`;
+                    detalhes = destinatarios.map(a => ({nome: a.nome, camisa: a.camisa, time: a.time, motivo: 'Mensalidade', status: '🔴 Pendente'}));
+                } else if (tipo === 'multas') {
+                    tituloNotif = '💰 Cobrança de Multas';
+                    const nomes = destinatarios.slice(0, 3).map(a => a.nome).join(', ');
+                    const resto = destinatarios.length > 3 ? ` e mais ${destinatarios.length - 3}` : '';
+                    msgNotif = `Multas registradas para: ${nomes}${resto}. Verifique os detalhes.`;
+                    detalhes = destinatarios.map(a => {
+                        let total = 0;
+                        Object.values(a.pagamentos || {}).forEach(p => {
+                            if (p.multas) p.multas.forEach(m => { if (!m.paga) total += Number(m.valor); });
+                        });
+                        return {nome: a.nome, camisa: a.camisa, time: a.time, valor: total, status: `💰 R$ ${total.toFixed(2)}`};
                     });
-                    return { nome: a.nome, camisa: a.camisa, time: a.time, valor: total, status: `💰 R$ ${total.toFixed(2)}` };
-                });
-            } else if (tipo === 'suspensos') {
-                tituloNotif = '⚠️ Aviso de Suspensão';
-                const nomes = alvos.slice(0, 3).map(a => a.nome).join(', ');
-                const resto = alvos.length > 3 ? ` e mais ${alvos.length - 3}` : '';
-                msgNotif = `Atenção aos atletas suspensos: ${nomes}${resto}.`;
-            } else if (tipo === 'geral') {
-                tituloNotif = '📣 Comunicado Geral';
-                msgNotif = mensagemGeral || 'Novo comunicado importante da diretoria do Baba.';
-            }
-            
-            // Registra no Firebase para o Zapia disparar os links de WhatsApp (só quem tem número)
-            const alvosWpp = alvos.filter(a => a.whatsapp);
-            if (alvosWpp.length > 0) {
-                const disparoId = 'disparo_' + Date.now();
-                const dadosDisparo = {
-                    tipo: tipo,
-                    data: new Date().toISOString(),
-                    alvos: alvosWpp.map(a => ({ id: a.id, nome: a.nome, whatsapp: a.whatsapp })),
-                    mensagem: msgNotif,
-                    status: 'pendente'
-                };
-                if (window.privateRef && window.isAdminLogado && window.firebaseUser) {
-                    window.privateRef.child('notificacoes_pendentes/' + disparoId).set(dadosDisparo);
+                } else if (tipo === 'suspensos') {
+                    tituloNotif = '⚠️ Aviso de Suspensão';
+                    const nomes = destinatarios.slice(0, 3).map(a => a.nome).join(', ');
+                    const resto = destinatarios.length > 3 ? ` e mais ${destinatarios.length - 3}` : '';
+                    msgNotif = `Atenção aos atletas suspensos: ${nomes}${resto}.`;
+                } else if (tipo === 'geral') {
+                    tituloNotif = '📣 Comunicado Geral';
+                    msgNotif = mensagemGeral || 'Novo comunicado importante da diretoria do Baba.';
+                } else {
+                    window.mostrarToast('Tipo de notificação inválido.', true);
+                    return;
                 }
-            }
-            
-            // Publica no Firebase para que os demais aparelhos recebam em tempo real.
-            const notificacaoRemota = {
-                titulo: tituloNotif,
-                mensagem: msgNotif,
-                tipo: tipo === 'geral' ? 'info' : tipo,
-                link: '',
-                detalhes: detalhes || null,
-                data: new Date().toISOString()
-            };
-            if (window.publicRef && window.isAdminLogado && window.firebaseUser) {
+
+                const notificacaoRemota = {
+                    titulo: tituloNotif,
+                    mensagem: msgNotif,
+                    tipo: tipo === 'geral' ? 'info' : tipo,
+                    link: '', detalhes: detalhes || null,
+                    data: new Date().toISOString()
+                };
+                const jobs = [];
+                const alvosWpp = destinatarios.filter(a => a.whatsapp);
+                if (alvosWpp.length) {
+                    if (!window.privateRef) {
+                        window.mostrarToast('Não foi possível registrar a fila de mensagens. Confira a conexão antes de tentar novamente.', true);
+                        return;
+                    }
+                    const disparoRef = window.privateRef.child('notificacoes_pendentes').push();
+                    const dadosDisparo = {
+                        tipo, data: new Date().toISOString(),
+                        alvos: alvosWpp.map(a => ({id: a.id, nome: a.nome, whatsapp: a.whatsapp})),
+                        mensagem: msgNotif, status: 'pendente'
+                    };
+                    jobs.push({tipo: 'whatsapp', write: () => disparoRef.set(dadosDisparo)});
+                }
+
                 const novaRef = window.publicRef.child('notificacoes_remotas').push();
                 const chaveRemota = novaRef.key;
-                novaRef.set(notificacaoRemota);
                 if (chaveRemota && window._notificacoesRemotasVistas) {
                     window._notificacoesRemotasVistas[chaveRemota] = Date.now();
-                    localStorage.setItem('baba_notificacoes_remotas_vistas', JSON.stringify(window._notificacoesRemotasVistas));
+                    try { localStorage.setItem('baba_notificacoes_remotas_vistas', JSON.stringify(window._notificacoesRemotasVistas)); } catch (_) {}
                 }
-            }
+                jobs.push({tipo: 'publica', write: () => novaRef.set(notificacaoRemota)});
+                const resultados = await Promise.allSettled(jobs.map(job => Promise.resolve().then(job.write)));
+                const falhas = resultados.some(result => result.status === 'rejected');
+                const houveConfirmacao = resultados.some(result => result.status === 'fulfilled');
+                const publicaSalva = resultados.some((result, index) => jobs[index].tipo === 'publica' && result.status === 'fulfilled');
+                if (!publicaSalva && chaveRemota && window._notificacoesRemotasVistas) {
+                    delete window._notificacoesRemotasVistas[chaveRemota];
+                    try { localStorage.setItem('baba_notificacoes_remotas_vistas', JSON.stringify(window._notificacoesRemotasVistas)); } catch (_) {}
+                }
 
-            // Adiciona também neste aparelho, sem esperar o Firebase.
-            window.adicionarNotificacao(tituloNotif, msgNotif, tipo === 'geral' ? 'info' : tipo, '', detalhes, true);
-            
-            window.mostrarToast("✅ Notificação enviada com sucesso!");
-            document.getElementById('notificacao-preview').classList.add('hidden');
-            window._disparoPendente = null;
+                if (publicaSalva) {
+                    try { window.adicionarNotificacao(tituloNotif, msgNotif, tipo === 'geral' ? 'info' : tipo, '', detalhes, true); }
+                    catch (error) { console.warn('Notificação local não pôde ser atualizada.'); }
+                }
+                if (falhas) {
+                    manterPrevia = false;
+                    document.getElementById('notificacao-preview')?.classList.add('hidden');
+                    window._disparoPendente = null;
+                    window.mostrarToast(houveConfirmacao
+                        ? 'Parte do envio foi registrada. Confira antes de tentar novamente para evitar duplicações.'
+                        : 'Não consegui confirmar o envio. Confira antes de tentar novamente.', true);
+                    return;
+                }
+
+                window.mostrarToast('✅ Notificação enviada com sucesso!');
+                document.getElementById('notificacao-preview')?.classList.add('hidden');
+                window._disparoPendente = null;
+                manterPrevia = false;
+            } catch (error) {
+                console.error('Falha ao enviar notificação:', error?.code || '');
+                window.mostrarToast('Não foi possível confirmar o envio. Confira antes de tentar novamente.', true);
+            } finally {
+                if (botao && manterPrevia) { botao.disabled = false; botao.textContent = textoBotaoOriginal; }
+            }
         };
         
         window.cancelarDisparo = function() {
