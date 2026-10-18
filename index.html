@@ -739,6 +739,7 @@
                             <tr class="bg-stone-800 text-gray-400 uppercase tracking-wider border-b border-stone-700">
                                 <th class="p-3">Doador</th>
                                 <th class="p-3 text-center">Destinação</th>
+                                <th class="p-3 text-center">Data</th>
                                 <th class="p-3 text-right">Valor</th>
                             </tr>
                         </thead>
@@ -1155,8 +1156,18 @@
                         <form id="form-socio" onsubmit="window.cadastrarSocio(event)" class="space-y-3">
                             <input type="text" id="socio-nome" placeholder="Nome" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             <div class="grid grid-cols-2 gap-2">
-                                <select id="socio-mes" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none"></select>
-                                <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                <div class="space-y-1">
+                                    <label for="socio-mes" class="text-[9px] text-stone-400 uppercase font-bold">Mês de referência</label>
+                                    <select id="socio-mes" required aria-label="Mês de referência" class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none"></select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label for="socio-valor" class="text-[9px] text-stone-400 uppercase font-bold">Valor</label>
+                                    <input type="number" step="0.01" id="socio-valor" placeholder="Valor (R$)" required class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label for="socio-data" class="text-[9px] text-stone-400 uppercase font-bold">Data do recebimento</label>
+                                <input type="date" id="socio-data" required aria-label="Data do recebimento do sócio" class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
                             <button type="submit" class="w-full bg-teal-500 text-black font-black p-2 rounded-lg text-xs uppercase transition">Lançar</button>
                         </form>
@@ -1169,6 +1180,10 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="text" id="pat-destino" placeholder="Destino" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                                 <input type="number" step="0.01" id="pat-valor" placeholder="Valor (R$)" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="pat-data" class="text-[9px] text-stone-400 uppercase font-bold">Data do recebimento</label>
+                                <input type="date" id="pat-data" required aria-label="Data do recebimento do patrocínio" class="w-full bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-white outline-none">
                             </div>
                             <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-2 rounded-lg text-xs uppercase transition">Computar</button>
                         </form>
@@ -3129,6 +3144,7 @@
             window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === anoSelecionado).forEach(p => {
                 patHtml += `<tr><td class="p-3 font-bold"><i class="fa-solid fa-handshake text-amber-400 mr-2"></i>${p.nome}</td>
                     <td class="p-3 text-center text-stone-400">${p.destino}</td>
+                    <td class="p-3 text-center text-stone-400">${p.dataStr || '—'}</td>
                     <td class="p-3 text-right text-emerald-400 font-mono">R$ ${Number(p.valor).toFixed(2)}</td></tr>`;
             });
             const patEl = document.getElementById('publico-patrocinio-tabela');
@@ -3140,7 +3156,7 @@
                 const mes = String(s.mes || '').padStart(2, '0');
                 if (!mes) return;
                 if (!sociosPorMes[mes]) sociosPorMes[mes] = [];
-                sociosPorMes[mes].push({ nome: s.nome, valor: Number(s.valor || 0) });
+                sociosPorMes[mes].push({ nome: s.nome, valor: Number(s.valor || 0), dataStr: s.dataStr || '' });
             });
             const socioAcordeao = document.getElementById('financeiro-socios-acordeao');
             if (socioAcordeao) {
@@ -3155,7 +3171,7 @@
                         const uid = 'socio-mes-' + mes;
                         html += acordeaoItem(mesesNomes[mes], total, uid, items.map(i =>
                             `<div class="flex justify-between px-4 py-1.5 text-[10px] text-stone-400">
-                                <span><i class="fa-solid fa-star text-teal-500 mr-1.5"></i>${i.nome}</span>
+                                <span><i class="fa-solid fa-star text-teal-500 mr-1.5"></i>${i.nome}${i.dataStr ? `<span class="block pl-4 text-[9px] text-stone-500">Recebido em ${i.dataStr}</span>` : ''}</span>
                                 <span class="text-emerald-400 font-mono">R$ ${i.valor.toFixed(2)}</span>
                             </div>`
                         ).join(''));
@@ -3695,10 +3711,12 @@
             const nome = document.getElementById('pat-nome')?.value?.trim();
             const destino = document.getElementById('pat-destino')?.value?.trim();
             const valor = parseFloat(document.getElementById('pat-valor')?.value);
-            if (!nome || !destino || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
+            const data = document.getElementById('pat-data')?.value;
+            if (!nome || !destino || !data || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha nome, destino, data e valor corretamente!', true); return; }
+            const [ano, mes, dia] = data.split('-');
             const registro = {
                 id: 'pat_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9),
-                nome, destino, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas')
+                nome, destino, valor, data, dataStr: `${dia}/${mes}/${ano}`, mes, ano: Number(ano)
             };
             if (form) form.dataset.saving = 'true';
             try {
@@ -3717,10 +3735,13 @@
             const nome = document.getElementById('socio-nome')?.value?.trim();
             const mes = document.getElementById('socio-mes')?.value;
             const valor = parseFloat(document.getElementById('socio-valor')?.value);
-            if (!nome || !mes || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha corretamente!', true); return; }
+            const data = document.getElementById('socio-data')?.value;
+            if (!nome || !mes || !data || isNaN(valor) || valor <= 0) { window.mostrarToast('Preencha nome, mês de referência, data e valor corretamente!', true); return; }
+            const [dataAno, dataMes, dia] = data.split('-');
             const registro = {
                 id: 'socio_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9),
-                nome, mes, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas')
+                nome, mes, valor, ano: window.anoFinanceiroSelecionado('adm-ano-receitas'),
+                data, dataStr: `${dia}/${dataMes}/${dataAno}`
             };
             if (form) form.dataset.saving = 'true';
             try {
@@ -3745,12 +3766,13 @@
             const ano = window.anoFinanceiroSelecionado('adm-ano-receitas');
             let html = '';
             window.sociosCache.filter(s => window.obterAnoFinanceiroRegistro(s) === ano).forEach(s => {
-                html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio</td>
+                const mesRef = `${window.mesesPtbr?.[String(s.mes || '').padStart(2, '0')] || s.mes || '—'}/${ano}`;
+                html += `<tr><td class="p-2 font-bold">${s.nome}</td><td class="p-2 text-center text-stone-400">Sócio<div class="text-[9px] text-stone-500">Ref. ${mesRef}${s.dataStr ? ` · recebido ${s.dataStr}` : ''}</div></td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(s.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${s.id}','socio')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
             window.patrociniosCache.filter(p => window.obterAnoFinanceiroRegistro(p) === ano).forEach(p => {
-                html += `<tr><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio</td>
+                html += `<tr><td class="p-2 font-bold">${p.nome}</td><td class="p-2 text-center text-amber-400">Patrocínio<div class="text-[9px] text-stone-500">${p.dataStr || 'Data não informada'}</div></td>
                     <td class="p-2 text-right text-emerald-400">R$ ${Number(p.valor).toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="window.excluirReceitaExterna('${p.id}','pat')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             });
@@ -5193,13 +5215,18 @@
             // Pagamentos de sócios.
             (window.sociosCache || []).forEach(socio => {
                 if (!pertenceAoPeriodo(socio.mes, false, socio.ano)) return;
-                adicionarLinha('SOCIOS', socio.nome, 'Pagamento de sócio', periodoDoRegistro(socio.mes, socio.ano), socio.valor);
+                const periodoReferencia = periodoDoRegistro(socio.mes, socio.ano);
+                const periodo = socio.dataStr ? `${periodoReferencia} · recebido ${socio.dataStr}` : periodoReferencia;
+                adicionarLinha('SOCIOS', socio.nome, 'Pagamento de sócio', periodo, socio.valor);
             });
 
-            // Patrocínios sem competência são gerais; aparecem também no PDF mensal identificados como gerais.
+            // Novos patrocínios usam a data escolhida; registros legados sem data continuam gerais.
             (window.patrociniosCache || []).forEach(patrocinio => {
-                if (!pertenceAoPeriodo(patrocinio.mes, true, patrocinio.ano)) return;
-                const periodo = patrocinio.mes ? periodoDoRegistro(patrocinio.mes, patrocinio.ano) : `Geral (${patrocinio.ano || window.ANO_LEGADO_FINANCEIRO})`;
+                const referencia = patrocinio.data || patrocinio.mes;
+                if (!pertenceAoPeriodo(referencia, true, patrocinio.ano)) return;
+                const periodo = patrocinio.dataStr || (patrocinio.mes
+                    ? periodoDoRegistro(patrocinio.mes, patrocinio.ano)
+                    : `Geral (${patrocinio.ano || window.ANO_LEGADO_FINANCEIRO})`);
                 adicionarLinha('PATROCINIOS', patrocinio.nome, patrocinio.destino || 'Clube', periodo, patrocinio.valor);
             });
 
