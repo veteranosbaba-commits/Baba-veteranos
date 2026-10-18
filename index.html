@@ -2906,7 +2906,7 @@
                             <p class="text-[10px] font-black text-stone-500 uppercase">Situação Financeira</p>
                             
                             <div class="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-stone-800/50">
-                                <span class="text-stone-300">Mensalidade (Jun):</span>
+                                <span class="text-stone-300">Mensalidade (${window.mesesPtbr?.[mesAtual]?.slice(0, 3) || mesAtual}):</span>
                                 <span class="font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'} font-mono">${pagoMes ? 'PAGA' : 'PENDENTE R$ ' + formatarValorMensalidade()}</span>
                             </div>
                             
