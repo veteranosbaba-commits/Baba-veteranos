@@ -1922,18 +1922,23 @@
             syncEmAndamento = true;
             let lastOutcome = null;
             try {
-                // A transação na raiz cobre dados públicos e privados. Carrega primeiro o snapshot completo
-                // do servidor para não abortar com um cache local parcial (por exemplo, sem /baba carregado).
+                // A transação na raiz cobre dados públicos e privados. O callback pode receber primeiro
+                // um cache local parcial; usa-se o snapshot lido do servidor como base da primeira tentativa.
+                let rootSeed;
                 if (target === 'root') {
-                    await reference.once('value');
+                    const rootSnapshot = await reference.once('value');
+                    rootSeed = cloneAdminSaveValue(rootSnapshot.val());
                     if (!window.isAdminLogado || !window.firebaseUser || window.firebaseUser.uid !== ownerUid || !window.authRef?.currentUser) {
                         window.mostrarToast('A sessão administrativa mudou antes de salvar. Tente novamente.', true);
                         return false;
                     }
                 }
+                let rootSeedPending = target === 'root';
                 const result = await reference.transaction(currentValue => {
                     lastOutcome = null;
-                    const outcome = updateFn(currentValue);
+                    const transactionValue = rootSeedPending ? rootSeed : currentValue;
+                    rootSeedPending = false;
+                    const outcome = updateFn(transactionValue);
                     lastOutcome = outcome || {abort: true};
                     if (lastOutcome.abort) return;
                     return lastOutcome.value;
