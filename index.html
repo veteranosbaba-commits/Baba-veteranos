@@ -894,7 +894,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 58</span>
+                <span class="font-bold">Versão 59</span>
             </footer>
         </div>
 
@@ -1455,7 +1455,7 @@
             <button onclick="switchTab('artilharia-ver')" id="nav-artilharia-ver" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500" title="Gols e Artilharia">
                 <i class="fa-solid fa-soccer-ball text-lg"></i>
             </button>
-            <button onclick="switchTab('alertas-ver')" id="nav-alertas" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
+            <button onclick="switchTab('alertas-ver')" id="nav-alertas" class="bottom-nav-button hidden flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
             </button>
             <button onclick="switchTab('busca-ver')" id="nav-busca-ver" class="bottom-nav-button flex flex-col items-center justify-center w-12 hover:text-stone-200 transition text-stone-500">
@@ -2193,7 +2193,7 @@
         function atualizarAcessoFinanceiro() {
             const permitido = usuarioPodeVerSituacaoFinanceira();
             const somenteLeitura = permitido && !window.isAdminLogado;
-            ['nav-financeiro', 'sidebar-financeiro-link', 'financeiro-ver', 'dashboard-finance-summary', 'alertas-inadimplentes'].forEach(id => {
+            ['nav-financeiro', 'sidebar-financeiro-link', 'financeiro-ver', 'dashboard-finance-summary', 'alertas-inadimplentes', 'nav-alertas'].forEach(id => {
                 document.getElementById(id)?.classList.toggle('hidden', !permitido);
             });
             document.getElementById('finance-readonly-notice')?.classList.toggle('hidden', !somenteLeitura);
