@@ -1922,22 +1922,23 @@
             syncEmAndamento = true;
             let lastOutcome = null;
             try {
-                // A transação na raiz cobre dados públicos e privados. O callback pode receber primeiro
-                // um cache local parcial; usa-se o snapshot lido do servidor como base da primeira tentativa.
-                let rootSeed;
-                if (target === 'root') {
-                    const rootSnapshot = await reference.once('value');
-                    rootSeed = cloneAdminSaveValue(rootSnapshot.val());
+                // Raiz e atletas privados podem não estar inteiros no cache local. Usa-se o snapshot
+                // recém-lido do servidor como base da primeira chamada do callback; conflitos ainda são reavaliados.
+                let transactionSeed;
+                const requiresServerSeed = target === 'root' || target === 'private';
+                if (requiresServerSeed) {
+                    const seedSnapshot = await reference.once('value');
+                    transactionSeed = cloneAdminSaveValue(seedSnapshot.val());
                     if (!window.isAdminLogado || !window.firebaseUser || window.firebaseUser.uid !== ownerUid || !window.authRef?.currentUser) {
                         window.mostrarToast('A sessão administrativa mudou antes de salvar. Tente novamente.', true);
                         return false;
                     }
                 }
-                let rootSeedPending = target === 'root';
+                let seedPending = requiresServerSeed;
                 const result = await reference.transaction(currentValue => {
                     lastOutcome = null;
-                    const transactionValue = rootSeedPending ? rootSeed : currentValue;
-                    rootSeedPending = false;
+                    const transactionValue = seedPending ? transactionSeed : currentValue;
+                    seedPending = false;
                     const outcome = updateFn(transactionValue);
                     lastOutcome = outcome || {abort: true};
                     if (lastOutcome.abort) return;
@@ -3499,10 +3500,19 @@
                     motivo, valor, paga: false,
                     id: 'multa_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9)
                 };
+                const atletaId = String(id);
+                const existeNaListaPublica = (window.publicAthletesCache || []).some(atleta => String(atleta?.id) === atletaId);
+                if (!existeNaListaPublica) {
+                    window.mostrarToast('Atleta não encontrado. Atualize a lista e tente novamente.', true);
+                    return;
+                }
                 const salvo = await enqueueScoutTransaction('private', currentValue => {
                     const nextAthletes = cloneAdminSaveValue(currentValue) || {};
-                    const atleta = nextAthletes[String(id)];
-                    if (!atleta || typeof atleta !== 'object') return {abort: true, reason: 'athlete_missing'};
+                    const registroPrivado = nextAthletes[atletaId];
+                    if (registroPrivado !== undefined && (!registroPrivado || typeof registroPrivado !== 'object' || Array.isArray(registroPrivado))) {
+                        return {abort: true, reason: 'athlete_missing'};
+                    }
+                    const atleta = registroPrivado || {pagamentos: {}};
                     const pagamentos = atleta.pagamentos && typeof atleta.pagamentos === 'object' ? atleta.pagamentos : {};
                     const entradaPagamento = window.obterDadosPagamento(pagamentos, anoAtual, mesAtual);
                     const chavePagamento = window.chavePagamentoAnual(anoAtual, mesAtual);
@@ -3515,7 +3525,7 @@
                     if (!Array.isArray(pagamentos[chavePagamento].multas)) pagamentos[chavePagamento].multas = [];
                     pagamentos[chavePagamento].multas.push(cloneAdminSaveValue(multa));
                     atleta.pagamentos = pagamentos;
-                    nextAthletes[String(id)] = atleta;
+                    nextAthletes[atletaId] = atleta;
                     return {value: nextAthletes};
                 });
                 if (!salvo) return;
