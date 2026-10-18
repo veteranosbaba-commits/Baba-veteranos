@@ -1922,6 +1922,15 @@
             syncEmAndamento = true;
             let lastOutcome = null;
             try {
+                // A transação na raiz cobre dados públicos e privados. Carrega primeiro o snapshot completo
+                // do servidor para não abortar com um cache local parcial (por exemplo, sem /baba carregado).
+                if (target === 'root') {
+                    await reference.once('value');
+                    if (!window.isAdminLogado || !window.firebaseUser || window.firebaseUser.uid !== ownerUid || !window.authRef?.currentUser) {
+                        window.mostrarToast('A sessão administrativa mudou antes de salvar. Tente novamente.', true);
+                        return false;
+                    }
+                }
                 const result = await reference.transaction(currentValue => {
                     lastOutcome = null;
                     const outcome = updateFn(currentValue);
