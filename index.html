@@ -714,7 +714,7 @@
                             <th class="p-2 text-center w-12">#</th>
                             <th class="p-2">Nome</th>
                             <th class="p-2 text-center w-20">Condição</th>
-                            <th class="p-2 text-center w-20">Mês</th>
+                            <th id="lista-jogadores-mensalidade-header" class="hidden p-2 text-center w-20">Mês</th>
                         </tr>
                     </thead>
                     <tbody id="lista-jogadores-corpo"></tbody>
@@ -2186,13 +2186,19 @@
         // FUNÇÕES DO FIREBASE
         // =====================================================
         
+        function usuarioPodeVerSituacaoFinanceira() {
+            return Boolean(window.firebaseUser && (window.isAdminLogado || (window.isAtletaLogado && window.firebaseUser.emailVerified)));
+        }
+
         function atualizarAcessoFinanceiro() {
-            const permitido = Boolean(window.firebaseUser && (window.isAdminLogado || (window.isAtletaLogado && window.firebaseUser.emailVerified)));
+            const permitido = usuarioPodeVerSituacaoFinanceira();
             const somenteLeitura = permitido && !window.isAdminLogado;
             ['nav-financeiro', 'sidebar-financeiro-link', 'financeiro-ver', 'dashboard-finance-summary', 'alertas-inadimplentes'].forEach(id => {
                 document.getElementById(id)?.classList.toggle('hidden', !permitido);
             });
             document.getElementById('finance-readonly-notice')?.classList.toggle('hidden', !somenteLeitura);
+            if (typeof renderListaJogadoresPublica === 'function') renderListaJogadoresPublica();
+            window.searchPlayer?.();
             if (!permitido) {
                 const saldo = document.getElementById('dash-saldo-total');
                 const gastos = document.getElementById('dash-saldo-gastos');
@@ -2810,19 +2816,24 @@
         };
         
         function renderListaJogadoresPublica() {
+            const mostrarMensalidade = usuarioPodeVerSituacaoFinanceira();
+            document.getElementById('lista-jogadores-mensalidade-header')?.classList.toggle('hidden', !mostrarMensalidade);
             const filtrados = window.atletasCache.filter(a => a.time === window.timeFiltroAtual);
             let html = '';
             filtrados.forEach(a => {
                 const suspenso = (a.amarelos || 0) >= 3 || (a.vermelho || 0) >= 1;
-                const pagoMes = window.verificarPago(a.pagamentos, window.getMesAtual(), a);
+                const pagoMes = mostrarMensalidade && window.verificarPago(a.pagamentos, window.getMesAtual(), a);
+                const statusHtml = mostrarMensalidade
+                    ? `<td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>`
+                    : '';
                 html += `<td class="p-1.5 font-mono font-bold text-stone-500">#${a.camisa || 'N/A'}</td>
                     <td class="p-1.5 font-bold text-stone-200 text-left truncate">${a.nome || 'Sem nome'}</td>
                     <td class="p-1.5 text-[11px] font-bold">${suspenso ? '❌ N/A' : '✅ OK'}</td>
-                    <td class="p-1.5 text-[10px] font-black ${pagoMes ? 'text-emerald-400' : 'text-red-500'}">${pagoMes ? 'PAGO' : 'PEND'}</td>
+                    ${statusHtml}
                 </tr>`;
             });
             const corpo = document.getElementById('lista-jogadores-corpo');
-            if (corpo) corpo.innerHTML = html || '<tr><td colspan="4" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>';
+            if (corpo) corpo.innerHTML = html || `<tr><td colspan="${mostrarMensalidade ? 4 : 3}" class="p-2 text-center text-stone-500 italic">Sem atletas.</td></tr>`;
         }
         
                 window.searchPlayer = function() {
@@ -2838,7 +2849,8 @@
                 let html = '';
                 achados.forEach(a => {
                     const mesAtual = window.getMesAtual();
-                    const pagoMes = window.verificarPago(a.pagamentos, mesAtual, a);
+                    const mostrarSituacaoFinanceira = usuarioPodeVerSituacaoFinanceira();
+                    const pagoMes = mostrarSituacaoFinanceira && window.verificarPago(a.pagamentos, mesAtual, a);
                     
                     let multasHtml = "";
                     let totalMultasAberto = 0;
@@ -2896,11 +2908,11 @@
                                 <p class="font-black text-stone-100 text-sm">${a.nome}</p>
                                 <p class="text-[9px] text-stone-500 font-bold uppercase tracking-wider">${a.time} | CAMISA #${a.camisa}</p>
                             </div>
-                            <div class="text-right">
+                            ${mostrarSituacaoFinanceira ? `<div class="text-right">
                                 <span class="px-2 py-0.5 rounded text-[9px] font-black ${pagoMes ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'}">
                                     ${pagoMes ? 'ADIMPLENTE' : 'INADIMPLENTE'}
                                 </span>
-                            </div>
+                            </div>` : ''}
                         </div>
 
                         <div class="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-stone-800 pt-2 text-stone-300">
@@ -2917,7 +2929,7 @@
                             </div>
                         </div>
 
-                        <div class="border-t border-stone-800 pt-2 space-y-2">
+                        ${mostrarSituacaoFinanceira ? `<div class="border-t border-stone-800 pt-2 space-y-2">
                             <p class="text-[10px] font-black text-stone-500 uppercase">Situação Financeira</p>
                             
                             <div class="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-stone-800/50">
@@ -2934,8 +2946,7 @@
                                     ${multasHtml || '<p class="text-[9px] text-stone-600 italic">Sem multas</p>'}
                                 </div>
                             </div>
-
-                        </div>
+                        </div>` : ''}
                     </div>`;
                 });
                 resultBox.innerHTML = html;
