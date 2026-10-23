@@ -30,7 +30,6 @@
     var aliasFormBound = false;
     var bolaoTabObserver = null;
     var bolaoAdminTabObserver = null;
-    var newMatchCounter = 0;
 
     var view = {
         config: null,
@@ -602,17 +601,8 @@
         return {startAt: start, endAt: end};
     }
 
-    function validateMatches(matches) {
-        if (!Array.isArray(matches) || !matches.length || matches.length > 100) throw new TypeError('Cadastre de 1 a 100 partidas.');
-        var result = {};
-        matches.forEach(function (match, index) {
-            var mandante = String((match && match.mandante) || '').trim();
-            var visitante = String((match && match.visitante) || '').trim();
-            if (!mandante || !visitante || mandante.length > 80 || visitante.length > 80) throw new TypeError('Preencha os times de cada partida (até 80 caracteres).');
-            var id = 'partida_' + (index + 1);
-            result[id] = {id: id, mandante: mandante, visitante: visitante};
-        });
-        return result;
+    function getFixedRoundMatches() {
+        return {partida_1: {id: 'partida_1', mandante: 'Botafogo', visitante: 'Fluminense'}};
     }
 
     async function adminOpenBolao(titulo) {
@@ -631,7 +621,7 @@
         var schedule = validateSchedule(input.inicioPalpites, input.fimPalpites);
         var config = await readPath(PATHS.config);
         if (!config || !config.bolaoId) throw new Error('Abra um Bolão antes de cadastrar rodadas.');
-        var matches = validateMatches(input.partidas);
+        var matches = getFixedRoundMatches();
         var ref = getRef(PATHS.rodadas).push();
         await ref.set({titulo: title, bolaoId: config.bolaoId, partidas: matches, inicioPalpites: schedule.startAt, fimPalpites: schedule.endAt, status: 'aberta', encerrada: false, resultadoRevelado: false});
         return ref.key;
@@ -731,22 +721,6 @@
         status.className = 'min-h-5 text-xs ' + (isError ? 'text-red-300' : 'text-emerald-300');
     }
 
-    function addNewMatchRow() {
-        var container = document.getElementById('bolao-admin-novas-partidas');
-        if (!container) return;
-        newMatchCounter += 1;
-        var row = makeText('div', 'grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto] items-center gap-2 rounded-xl border border-stone-800 bg-stone-950/60 p-3', '');
-        row.dataset.newMatch = 'true';
-        var home = document.createElement('input'); home.type = 'text'; home.required = true; home.maxLength = 80; home.placeholder = 'Nome do time'; home.className = 'w-full min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; home.dataset.mandante = 'true'; home.setAttribute('aria-label', 'Nome do primeiro time da partida ' + newMatchCounter);
-        var homeField = document.createElement('label'); homeField.className = 'block min-w-0'; homeField.appendChild(makeText('span', 'mb-1 block text-[9px] font-bold uppercase text-stone-400', 'Botafogo')); homeField.appendChild(home);
-        var divider = makeText('span', 'hidden sm:block text-center text-stone-500', '×');
-        var away = document.createElement('input'); away.type = 'text'; away.required = true; away.maxLength = 80; away.placeholder = 'Nome do time'; away.className = 'w-full min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; away.dataset.visitante = 'true'; away.setAttribute('aria-label', 'Nome do segundo time da partida ' + newMatchCounter);
-        var awayField = document.createElement('label'); awayField.className = 'block min-w-0'; awayField.appendChild(makeText('span', 'mb-1 block text-[9px] font-bold uppercase text-stone-400', 'Fluminense')); awayField.appendChild(away);
-        var remove = makeText('button', 'rounded-lg border border-red-900/60 px-3 py-2 text-xs font-bold text-red-300', 'Remover');
-        remove.type = 'button'; remove.addEventListener('click', function () { if (container.querySelectorAll('[data-new-match]').length > 1) row.remove(); });
-        row.appendChild(homeField); row.appendChild(divider); row.appendChild(awayField); row.appendChild(remove); container.appendChild(row);
-    }
-
     function bindNewBolaoForm() {
         var form = document.getElementById('bolao-admin-novo-bolao');
         if (!form || newBolaoFormBound) return;
@@ -764,24 +738,17 @@
 
     function bindAdminCreateForm() {
         var form = document.getElementById('bolao-admin-nova-rodada');
-        var addButton = document.getElementById('bolao-admin-add-match');
-        var container = document.getElementById('bolao-admin-novas-partidas');
-        if (!form || !container || adminFormBound) return;
+        if (!form || adminFormBound) return;
         adminFormBound = true;
-        if (!container.children.length) addNewMatchRow();
-        if (addButton) addButton.addEventListener('click', addNewMatchRow);
         form.addEventListener('submit', async function (event) {
             event.preventDefault(); setAdminStatus('', false);
             try {
-                var rows = Array.from(container.querySelectorAll('[data-new-match]'));
-                var matches = rows.map(function (row) { return {mandante: row.querySelector('[data-mandante]').value, visitante: row.querySelector('[data-visitante]').value}; });
                 var id = await adminCreateRound({
                     titulo: document.getElementById('bolao-admin-titulo-novo').value,
                     inicioPalpites: Date.parse(document.getElementById('bolao-admin-inicio-novo').value),
-                    fimPalpites: Date.parse(document.getElementById('bolao-admin-fim-novo').value),
-                    partidas: matches
+                    fimPalpites: Date.parse(document.getElementById('bolao-admin-fim-novo').value)
                 });
-                form.reset(); container.replaceChildren(); newMatchCounter = 0; addNewMatchRow();
+                form.reset();
                 setAdminStatus('Rodada cadastrada: ' + id, false);
             } catch (error) { setAdminStatus(error && error.message ? error.message : 'Não foi possível abrir a rodada.', true); }
         });
@@ -969,7 +936,6 @@
         bindNewBolaoForm(); bindAdminCreateForm(); startAdminListeners(); renderAdminPanel();
     };
     window.bolaoAdminVoltar = function () { window.bolaoAbrir(); };
-    window.bolaoAdminAdicionarPartida = addNewMatchRow;
     window.bolaoAbrir = function () {
         if (typeof window.switchTab === 'function') window.switchTab('bolao-ver');
         var title = document.getElementById('page-title-text'); if (title) title.textContent = 'BOLÃO';
