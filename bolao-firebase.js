@@ -172,7 +172,7 @@
             assertKey(id, 'ID da partida');
             if (expected.indexOf(id) === -1) throw new TypeError('O placar contém uma partida que não pertence à rodada.');
             var score = assertObject(scores[id], 'O placar');
-            if (Object.keys(score).length !== 2) throw new TypeError('Cada placar deve conter somente mandante e visitante.');
+            if (Object.keys(score).length !== 2) throw new TypeError('Cada placar deve conter somente os gols dos dois times.');
             ['mandante', 'visitante'].forEach(function (side) {
                 if (!Number.isInteger(score[side]) || score[side] < 0 || score[side] > 100) {
                     throw new TypeError('Informe gols inteiros entre 0 e 100.');
@@ -274,17 +274,22 @@
             var matchId = String((entry[1] && entry[1].id) || entry[0]);
             var match = entry[1] || {};
             var row = makeText('div', 'rounded-xl border border-stone-800 bg-stone-950/70 p-3', '');
-            row.appendChild(makeText('p', 'mb-3 text-xs font-bold text-stone-200', String(match.mandante || 'Mandante') + ' × ' + String(match.visitante || 'Visitante')));
-            var fields = makeText('div', 'grid grid-cols-[1fr_auto_1fr] items-center gap-2', '');
-            [['mandante', 'Gols do mandante'], ['visitante', 'Gols do visitante']].forEach(function (sideInfo, index) {
+            var botafogoName = String(match.mandante || 'Botafogo');
+            var fluminenseName = String(match.visitante || 'Fluminense');
+            row.appendChild(makeText('p', 'mb-3 text-xs font-bold text-stone-200', botafogoName + ' × ' + fluminenseName));
+            var fields = makeText('div', 'grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2', '');
+            [['mandante', botafogoName], ['visitante', fluminenseName]].forEach(function (sideInfo, index) {
+                var label = makeText('label', 'block min-w-0 text-center', '');
+                label.appendChild(makeText('span', 'mb-1 block truncate text-[9px] font-bold uppercase text-stone-400', sideInfo[1]));
                 var input = document.createElement('input');
                 input.type = 'number'; input.min = '0'; input.max = '100'; input.step = '1'; input.required = true; input.inputMode = 'numeric';
-                input.dataset.matchId = matchId; input.dataset.side = sideInfo[0]; input.setAttribute('aria-label', sideInfo[1]);
+                input.dataset.matchId = matchId; input.dataset.side = sideInfo[0]; input.setAttribute('aria-label', 'Gols do ' + sideInfo[1]);
                 input.className = 'w-full rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-white';
                 var savedScore = existing && existing.palpites && existing.palpites[matchId];
                 if (savedScore && savedScore[sideInfo[0]] !== undefined) input.value = String(savedScore[sideInfo[0]]);
-                if (index === 0) fields.appendChild(input);
-                else { fields.appendChild(makeText('span', 'text-center text-stone-500', '—')); fields.appendChild(input); }
+                label.appendChild(input);
+                if (index === 0) fields.appendChild(label);
+                else { fields.appendChild(makeText('span', 'text-center text-stone-500', '×')); fields.appendChild(label); }
             });
             row.appendChild(fields); form.appendChild(row);
         });
@@ -482,7 +487,7 @@
             matches.forEach(function (entry) {
                 var matchId = String((entry[1] && entry[1].id) || entry[0]);
                 var score = player.palpites[matchId]; var match = entry[1] || {};
-                if (score) item.appendChild(makeText('p', 'text-[11px] text-stone-300', String(match.mandante || 'Mandante') + ' ' + score.mandante + ' × ' + score.visitante + ' ' + String(match.visitante || 'Visitante')));
+                if (score) item.appendChild(makeText('p', 'text-[11px] text-stone-300', String(match.mandante || 'Botafogo') + ' ' + score.mandante + ' × ' + score.visitante + ' ' + String(match.visitante || 'Fluminense')));
             });
             card.appendChild(item);
         });
@@ -510,13 +515,13 @@
     function renderBolao() {
         var host = document.getElementById('bolao-rodadas-lista');
         var loginPrompt = document.getElementById('bolao-login-prompt');
-        var status = document.getElementById('bolao-status');
         var adminButton = document.getElementById('bolao-admin-open');
         var poolTitle = document.getElementById('bolao-titulo-atual');
         if (poolTitle) poolTitle.textContent = view.config && view.config.titulo ? String(view.config.titulo) : '';
         if (adminButton) adminButton.classList.toggle('hidden', !window.isAdminLogado);
         updateAliasPanel();
         if (!host) return;
+        var finalizedAccordionOpen = Boolean(host.querySelector('[data-bolao-finalized-accordion]')?.open);
         var user = currentUser();
         var canGuess = !user || user.emailVerified === true;
         if (loginPrompt) loginPrompt.classList.toggle('hidden', !user || user.emailVerified === true);
@@ -532,13 +537,29 @@
         }
         var rounds = toEntries(view.rodadas).filter(function (entry) { return entry[1] && entry[1].bolaoId === activeBolaoId; });
         var displayNames = buildDisplayNames();
-        if (!rounds.length) host.appendChild(makeText('p', 'rounded-xl border border-stone-700 bg-stone-900 p-4 text-sm text-stone-300', 'Ainda não há rodadas cadastradas para este Bolão.'));
+        var activeRounds = [];
+        var finalizedRounds = [];
+        var nowForGrouping = Date.now();
         rounds.forEach(function (entry) {
+            var round = entry[1] || {};
+            var endAt = Number(round.fimPalpites);
+            var deadlinePassed = Number.isFinite(endAt) && endAt > 0 && nowForGrouping > endAt;
+            var finalized = round.resultadoRevelado === true || round.encerrada === true || round.status === 'encerrada' || deadlinePassed;
+            if (finalized) finalizedRounds.push(entry);
+            else activeRounds.push(entry);
+        });
+        if (!rounds.length) host.appendChild(makeText('p', 'rounded-xl border border-stone-700 bg-stone-900 p-4 text-sm text-stone-300', 'Ainda não há rodadas cadastradas para este Bolão.'));
+
+        function buildRoundCard(entry) {
             var roundId = entry[0]; var round = entry[1] || {};
             var card = makeText('section', 'rounded-2xl border border-stone-700 bg-stone-900 p-4 space-y-4', '');
             card.appendChild(makeText('h3', 'font-black text-emerald-300 uppercase tracking-wide', String(round.titulo || ('Rodada ' + roundId))));
+
             var matches = toEntries(round.partidas);
-            if (!matches.length) { card.appendChild(makeText('p', 'text-sm text-stone-400', 'Esta rodada ainda não tem partidas cadastradas.')); host.appendChild(card); return; }
+            if (!matches.length) {
+                card.appendChild(makeText('p', 'text-sm text-stone-400', 'Esta rodada ainda não tem partidas cadastradas.'));
+                return card;
+            }
             var now = Date.now(); var startAt = Number(round.inicioPalpites); var endAt = Number(round.fimPalpites);
             var open = round.status === 'aberta' && round.encerrada !== true && round.resultadoRevelado !== true && Number.isFinite(startAt) && Number.isFinite(endAt) && now >= startAt && now <= endAt;
             if (round.resultadoRevelado === true) {
@@ -557,8 +578,21 @@
                 card.appendChild(form);
             }
             appendRevealedPredictions(card, roundId, round, displayNames);
-            host.appendChild(card);
-        });
+            return card;
+        }
+
+        activeRounds.forEach(function (entry) { host.appendChild(buildRoundCard(entry)); });
+        if (finalizedRounds.length) {
+            var accordion = document.createElement('details');
+            accordion.dataset.bolaoFinalizedAccordion = 'true';
+            accordion.open = finalizedAccordionOpen;
+            accordion.className = 'rounded-2xl border border-stone-700 bg-stone-900 p-4';
+            accordion.appendChild(makeText('summary', 'cursor-pointer font-black uppercase tracking-wide text-stone-200', 'Rodadas finalizadas (' + finalizedRounds.length + ')'));
+            var finalizedList = makeText('div', 'mt-4 space-y-4', '');
+            finalizedRounds.forEach(function (entry) { finalizedList.appendChild(buildRoundCard(entry)); });
+            accordion.appendChild(finalizedList);
+            host.appendChild(accordion);
+        }
         renderPublicRanking(displayNames);
     }
 
@@ -703,12 +737,14 @@
         newMatchCounter += 1;
         var row = makeText('div', 'grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto] items-center gap-2 rounded-xl border border-stone-800 bg-stone-950/60 p-3', '');
         row.dataset.newMatch = 'true';
-        var home = document.createElement('input'); home.type = 'text'; home.required = true; home.maxLength = 80; home.placeholder = 'Time mandante'; home.className = 'min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; home.dataset.mandante = 'true'; home.setAttribute('aria-label', 'Time mandante da partida ' + newMatchCounter);
+        var home = document.createElement('input'); home.type = 'text'; home.required = true; home.maxLength = 80; home.placeholder = 'Nome do time'; home.className = 'w-full min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; home.dataset.mandante = 'true'; home.setAttribute('aria-label', 'Nome do primeiro time da partida ' + newMatchCounter);
+        var homeField = document.createElement('label'); homeField.className = 'block min-w-0'; homeField.appendChild(makeText('span', 'mb-1 block text-[9px] font-bold uppercase text-stone-400', 'Botafogo')); homeField.appendChild(home);
         var divider = makeText('span', 'hidden sm:block text-center text-stone-500', '×');
-        var away = document.createElement('input'); away.type = 'text'; away.required = true; away.maxLength = 80; away.placeholder = 'Time visitante'; away.className = 'min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; away.dataset.visitante = 'true'; away.setAttribute('aria-label', 'Time visitante da partida ' + newMatchCounter);
+        var away = document.createElement('input'); away.type = 'text'; away.required = true; away.maxLength = 80; away.placeholder = 'Nome do time'; away.className = 'w-full min-w-0 rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white'; away.dataset.visitante = 'true'; away.setAttribute('aria-label', 'Nome do segundo time da partida ' + newMatchCounter);
+        var awayField = document.createElement('label'); awayField.className = 'block min-w-0'; awayField.appendChild(makeText('span', 'mb-1 block text-[9px] font-bold uppercase text-stone-400', 'Fluminense')); awayField.appendChild(away);
         var remove = makeText('button', 'rounded-lg border border-red-900/60 px-3 py-2 text-xs font-bold text-red-300', 'Remover');
         remove.type = 'button'; remove.addEventListener('click', function () { if (container.querySelectorAll('[data-new-match]').length > 1) row.remove(); });
-        row.appendChild(home); row.appendChild(divider); row.appendChild(away); row.appendChild(remove); container.appendChild(row);
+        row.appendChild(homeField); row.appendChild(divider); row.appendChild(awayField); row.appendChild(remove); container.appendChild(row);
     }
 
     function bindNewBolaoForm() {
@@ -779,13 +815,18 @@
         matches.forEach(function (entry) {
             var id = String((entry[1] && entry[1].id) || entry[0]); var match = entry[1] || {}; var score = storedScores[id] || {};
             var row = makeText('div', 'rounded-lg border border-stone-800 p-3', '');
-            row.appendChild(makeText('p', 'mb-2 text-xs font-bold text-stone-200', String(match.mandante || 'Mandante') + ' × ' + String(match.visitante || 'Visitante')));
-            var fields = makeText('div', 'grid grid-cols-[1fr_auto_1fr] items-center gap-2', '');
-            [['mandante', score.mandante], ['visitante', score.visitante]].forEach(function (side, index) {
+            var botafogoName = String(match.mandante || 'Botafogo');
+            var fluminenseName = String(match.visitante || 'Fluminense');
+            row.appendChild(makeText('p', 'mb-2 text-xs font-bold text-stone-200', botafogoName + ' × ' + fluminenseName));
+            var fields = makeText('div', 'grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2', '');
+            [['mandante', score.mandante, botafogoName], ['visitante', score.visitante, fluminenseName]].forEach(function (side, index) {
+                var label = makeText('label', 'block min-w-0 text-center', '');
+                label.appendChild(makeText('span', 'mb-1 block truncate text-[9px] font-bold uppercase text-stone-400', side[2]));
                 var input = document.createElement('input'); input.type = 'number'; input.min = '0'; input.max = '100'; input.step = '1'; input.required = true;
-                input.className = 'w-full rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-white'; input.dataset.matchId = id; input.dataset.side = side[0]; input.setAttribute('aria-label', 'Resultado oficial: gols ' + side[0]);
+                input.className = 'w-full rounded-lg border border-stone-700 bg-stone-800 p-2 text-center text-white'; input.dataset.matchId = id; input.dataset.side = side[0]; input.setAttribute('aria-label', 'Resultado oficial: gols do ' + side[2]);
                 if (side[1] !== undefined && side[1] !== null) input.value = String(side[1]);
-                if (index === 0) fields.appendChild(input); else { fields.appendChild(makeText('span', 'text-center text-stone-500', '—')); fields.appendChild(input); }
+                label.appendChild(input);
+                if (index === 0) fields.appendChild(label); else { fields.appendChild(makeText('span', 'text-center text-stone-500', '×')); fields.appendChild(label); }
             });
             row.appendChild(fields); resultForm.appendChild(row);
         });
