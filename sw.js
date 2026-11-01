@@ -1,1 +1,142 @@
-Ly8gU2VydmljZSBXb3JrZXIgLSBCYWJhIFZldGVyYW5vcyB2Njk6IGFwcCBzaGVsbCBlIGRlcGVuZMOqbmNpYXMgbG9jYWlzIG9mZmxpbmUuCmNvbnN0IENBQ0hFX05BTUUgPSAnYmFiYS12ZXRlcmFub3MtdjY5JzsKY29uc3QgQkFTRV9VUkwgPSBuZXcgVVJMKCcuLycsIHNlbGYucmVnaXN0cmF0aW9uLnNjb3BlKTsKY29uc3QgQVBQX1JPT1QgPSBCQVNFX1VSTC5wYXRobmFtZTsKY29uc3QgSU5ERVhfVVJMID0gbmV3IFVSTCgnaW5kZXguaHRtbCcsIEJBU0VfVVJMKS5ocmVmOwpjb25zdCBJTkRFWF9QQVRITkFNRSA9IG5ldyBVUkwoJ2luZGV4Lmh0bWwnLCBCQVNFX1VSTCkucGF0aG5hbWU7CmNvbnN0IE9GRkxJTkVfVVJMID0gbmV3IFVSTCgnb2ZmbGluZS5odG1sJywgQkFTRV9VUkwpLmhyZWY7CmNvbnN0IENPUkVfRklMRVMgPSBbCiAgJy4vJywKICAnaW5kZXguaHRtbCcsCiAgJ2JvbGFvLWZpcmViYXNlLmpzJywKICAnb2ZmbGluZS5odG1sJywKICAnbWFuaWZlc3Qud2VibWFuaWZlc3QnLAogICdhcHBsZS10b3VjaC1pY29uLnBuZycsCiAgJ2ljb24tMTkyLnBuZycsCiAgJ2ljb24tNTEyLnBuZycsCiAgJ3ZlbmRvci9qc3BkZi9qc3BkZi51bWQubWluLmpzJywKICAndmVuZG9yL2pzcGRmL2pzcGRmLnBsdWdpbi5hdXRvdGFibGUubWluLmpzJywKICAndmVuZG9yL2ZpcmViYXNlL2ZpcmViYXNlLWFwcC1jb21wYXQuanMnLAogICd2ZW5kb3IvZmlyZWJhc2UvZmlyZWJhc2UtZGF0YWJhc2UtY29tcGF0LmpzJywKICAndmVuZG9yL2ZpcmViYXNlL2ZpcmViYXNlLWF1dGgtY29tcGF0LmpzJywKICAndmVuZG9yL3RhaWx3aW5kL3RhaWx3aW5kLmJyb3dzZXIuanMnLAogICd2ZW5kb3IvZm9udGF3ZXNvbWUvY3NzL2FsbC5taW4uY3NzJywKICAndmVuZG9yL2ZvbnRhd2Vzb21lL3dlYmZvbnRzL2ZhLWJyYW5kcy00MDAudHRmJywKICAndmVuZG9yL2ZvbnRhd2Vzb21lL3dlYmZvbnRzL2ZhLWJyYW5kcy00MDAud29mZjInLAogICd2ZW5kb3IvZm9udGF3ZXNvbWUvd2ViZm9udHMvZmEtcmVndWxhci00MDAudHRmJywKICAndmVuZG9yL2ZvbnRhd2Vzb21lL3dlYmZvbnRzL2ZhLXJlZ3VsYXItNDAwLndvZmYyJywKICAndmVuZG9yL2ZvbnRhd2Vzb21lL3dlYmZvbnRzL2ZhLXNvbGlkLTkwMC50dGYnLAogICd2ZW5kb3IvZm9udGF3ZXNvbWUvd2ViZm9udHMvZmEtc29saWQtOTAwLndvZmYyJywKICAndmVuZG9yL2ZvbnRhd2Vzb21lL3dlYmZvbnRzL2ZhLXY0Y29tcGF0aWJpbGl0eS50dGYnLAogICd2ZW5kb3IvZm9udGF3ZXNvbWUvd2ViZm9udHMvZmEtdjRjb21wYXRpYmlsaXR5LndvZmYyJwpdLm1hcChwYXRoID0+IG5ldyBVUkwocGF0aCwgQkFTRV9VUkwpLmhyZWYpOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4gewogIGV2ZW50LndhaXRVbnRpbCgoYXN5bmMgKCkgPT4gewogICAgY29uc3QgY2FjaGUgPSBhd2FpdCBjYWNoZXMub3BlbihDQUNIRV9OQU1FKTsKICAgIGF3YWl0IGNhY2hlLmFkZEFsbChDT1JFX0ZJTEVTKTsKICAgIGF3YWl0IHNlbGYuc2tpcFdhaXRpbmcoKTsKICB9KSgpKTsKfSk7CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2FjdGl2YXRlJywgZXZlbnQgPT4gewogIGV2ZW50LndhaXRVbnRpbCgoYXN5bmMgKCkgPT4gewogICAgY29uc3QgbmFtZXMgPSBhd2FpdCBjYWNoZXMua2V5cygpOwogICAgYXdhaXQgUHJvbWlzZS5hbGwobmFtZXMKICAgICAgLmZpbHRlcihuYW1lID0+IG5hbWUuc3RhcnRzV2l0aCgnYmFiYS12ZXRlcmFub3MtJykgJiYgbmFtZSAhPT0gQ0FDSEVfTkFNRSkKICAgICAgLm1hcChuYW1lID0+IGNhY2hlcy5kZWxldGUobmFtZSkpKTsKICAgIGF3YWl0IHNlbGYuY2xpZW50cy5jbGFpbSgpOwogIH0pKCkpOwp9KTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCBldmVudCA9PiB7CiAgY29uc3QgcmVxdWVzdCA9IGV2ZW50LnJlcXVlc3Q7CiAgaWYgKHJlcXVlc3QubWV0aG9kICE9PSAnR0VUJykgcmV0dXJuOwogIGNvbnN0IHJlcXVlc3RVcmwgPSBuZXcgVVJMKHJlcXVlc3QudXJsKTsKCiAgaWYgKHJlcXVlc3QubW9kZSA9PT0gJ25hdmlnYXRlJykgewogICAgZXZlbnQucmVzcG9uZFdpdGgoKGFzeW5jICgpID0+IHsKICAgICAgdHJ5IHsKICAgICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKHJlcXVlc3QpOwogICAgICAgIGlmIChyZXNwb25zZSAmJiByZXNwb25zZS5vayAmJiByZXF1ZXN0VXJsLm9yaWdpbiA9PT0gc2VsZi5sb2NhdGlvbi5vcmlnaW4gJiYgcmVxdWVzdFVybC5wYXRobmFtZS5zdGFydHNXaXRoKEFQUF9ST09UKSkgewogICAgICAgICAgY29uc3QgY2FjaGUgPSBhd2FpdCBjYWNoZXMub3BlbihDQUNIRV9OQU1FKTsKICAgICAgICAgIGF3YWl0IGNhY2hlLnB1dChyZXF1ZXN0LCByZXNwb25zZS5jbG9uZSgpKTsKICAgICAgICAgIGlmIChyZXF1ZXN0VXJsLnBhdGhuYW1lID09PSBBUFBfUk9PVCB8fCByZXF1ZXN0VXJsLnBhdGhuYW1lID09PSBJTkRFWF9QQVRITkFNRSkgewogICAgICAgICAgICBhd2FpdCBjYWNoZS5wdXQoSU5ERVhfVVJMLCByZXNwb25zZS5jbG9uZSgpKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgcmV0dXJuIHJlc3BvbnNlOwogICAgICB9IGNhdGNoIChfKSB7CiAgICAgICAgcmV0dXJuIChhd2FpdCBjYWNoZXMubWF0Y2gocmVxdWVzdCwgeyBpZ25vcmVTZWFyY2g6IHRydWUgfSkpCiAgICAgICAgICB8fCAoYXdhaXQgY2FjaGVzLm1hdGNoKElOREVYX1VSTCkpCiAgICAgICAgICB8fCAoYXdhaXQgY2FjaGVzLm1hdGNoKE9GRkxJTkVfVVJMKSk7CiAgICAgIH0KICAgIH0pKCkpOwogICAgcmV0dXJuOwogIH0KCiAgaWYgKHJlcXVlc3RVcmwub3JpZ2luID09PSBzZWxmLmxvY2F0aW9uLm9yaWdpbiAmJiByZXF1ZXN0VXJsLnBhdGhuYW1lLnN0YXJ0c1dpdGgoQVBQX1JPT1QpKSB7CiAgICBldmVudC5yZXNwb25kV2l0aCgoYXN5bmMgKCkgPT4gewogICAgICBjb25zdCBjYWNoZWQgPSBhd2FpdCBjYWNoZXMubWF0Y2gocmVxdWVzdCwgeyBpZ25vcmVTZWFyY2g6IHRydWUgfSk7CiAgICAgIGlmIChjYWNoZWQpIHJldHVybiBjYWNoZWQ7CiAgICAgIHRyeSB7CiAgICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaChyZXF1ZXN0KTsKICAgICAgICBpZiAocmVzcG9uc2UgJiYgcmVzcG9uc2Uub2spIHsKICAgICAgICAgIGNvbnN0IGNhY2hlID0gYXdhaXQgY2FjaGVzLm9wZW4oQ0FDSEVfTkFNRSk7CiAgICAgICAgICBhd2FpdCBjYWNoZS5wdXQocmVxdWVzdCwgcmVzcG9uc2UuY2xvbmUoKSk7CiAgICAgICAgfQogICAgICAgIHJldHVybiByZXNwb25zZTsKICAgICAgfSBjYXRjaCAoXykgewogICAgICAgIHJldHVybiBuZXcgUmVzcG9uc2UoJ1JlY3Vyc28gaW5kaXNwb27DrXZlbCBzZW0gY29uZXjDo28uJywgewogICAgICAgICAgc3RhdHVzOiA1MDMsCiAgICAgICAgICBzdGF0dXNUZXh0OiAnT2ZmbGluZScsCiAgICAgICAgICBoZWFkZXJzOiB7ICdDb250ZW50LVR5cGUnOiAndGV4dC9wbGFpbjsgY2hhcnNldD11dGYtOCcgfQogICAgICAgIH0pOwogICAgICB9CiAgICB9KSgpKTsKICB9Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdwdXNoJywgZXZlbnQgPT4gewogIGlmICghZXZlbnQuZGF0YSkgcmV0dXJuOwogIHRyeSB7CiAgICBjb25zdCBkYXRhID0gZXZlbnQuZGF0YS5qc29uKCk7CiAgICBjb25zdCBvcHRpb25zID0gewogICAgICBib2R5OiBkYXRhLmJvZHkgfHwgJ05vdmEgbm90aWZpY2HDp8OjbyBkbyBCYWJhIFZldGVyYW5vcycsCiAgICAgIGljb246IG5ldyBVUkwoJ2ljb24tMTkyLnBuZycsIEJBU0VfVVJMKS5ocmVmLAogICAgICBiYWRnZTogbmV3IFVSTCgnaWNvbi0xOTIucG5nJywgQkFTRV9VUkwpLmhyZWYsCiAgICAgIHZpYnJhdGU6IFsyMDAsIDEwMCwgMjAwXSwKICAgICAgc2lsZW50OiBmYWxzZSwKICAgICAgZGF0YTogeyB1cmw6IGRhdGEudXJsIHx8IEJBU0VfVVJMLmhyZWYgfQogICAgfTsKICAgIGV2ZW50LndhaXRVbnRpbChzZWxmLnJlZ2lzdHJhdGlvbi5zaG93Tm90aWZpY2F0aW9uKGRhdGEudGl0bGUgfHwgJ+KavSBCYWJhIFZldGVyYW5vcycsIG9wdGlvbnMpKTsKICB9IGNhdGNoIChfKSB7fQp9KTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignbWVzc2FnZScsIGV2ZW50ID0+IHsKICBpZiAoIWV2ZW50LmRhdGEgfHwgZXZlbnQuZGF0YS50eXBlICE9PSAnU0hPV19OT1RJRklDQVRJT04nKSByZXR1cm47CiAgY29uc3Qgb3B0aW9ucyA9IHsKICAgIGJvZHk6IGV2ZW50LmRhdGEuYm9keSB8fCAnJywKICAgIGljb246IG5ldyBVUkwoJ2ljb24tMTkyLnBuZycsIEJBU0VfVVJMKS5ocmVmLAogICAgYmFkZ2U6IG5ldyBVUkwoJ2ljb24tMTkyLnBuZycsIEJBU0VfVVJMKS5ocmVmLAogICAgdmlicmF0ZTogWzIwMCwgMTAwLCAyMDBdLAogICAgc2lsZW50OiBmYWxzZSwKICAgIHRhZzogZXZlbnQuZGF0YS50YWcgfHwgJ2JhYmEtbm90aWZpY2F0aW9uJywKICAgIGRhdGE6IHsgdXJsOiBldmVudC5kYXRhLnVybCB8fCBCQVNFX1VSTC5ocmVmIH0KICB9OwogIHNlbGYucmVnaXN0cmF0aW9uLnNob3dOb3RpZmljYXRpb24oZXZlbnQuZGF0YS50aXRsZSB8fCAn4pq9IEJhYmEgVmV0ZXJhbm9zJywgb3B0aW9ucyk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdub3RpZmljYXRpb25jbGljaycsIGV2ZW50ID0+IHsKICBldmVudC5ub3RpZmljYXRpb24uY2xvc2UoKTsKICBjb25zdCB1cmwgPSBldmVudC5ub3RpZmljYXRpb24uZGF0YT8udXJsIHx8IEJBU0VfVVJMLmhyZWY7CiAgZXZlbnQud2FpdFVudGlsKHNlbGYuY2xpZW50cy5tYXRjaEFsbCh7IHR5cGU6ICd3aW5kb3cnIH0pLnRoZW4od2luZG93Q2xpZW50cyA9PiB7CiAgICBjb25zdCBjbGllbnQgPSB3aW5kb3dDbGllbnRzLmZpbmQoaXRlbSA9PiBpdGVtLnVybC5pbmNsdWRlcyhBUFBfUk9PVCkpOwogICAgaWYgKGNsaWVudCkgewogICAgICBjbGllbnQuZm9jdXMoKTsKICAgICAgY2xpZW50LnBvc3RNZXNzYWdlKHsgdHlwZTogJ05PVElGSUNBVElPTl9DTElDS0VEJywgdGFnOiBldmVudC5ub3RpZmljYXRpb24udGFnIH0pOwogICAgfSBlbHNlIHsKICAgICAgc2VsZi5jbGllbnRzLm9wZW5XaW5kb3codXJsKTsKICAgIH0KICB9KSk7Cn0pOwo=
+// Service Worker - Baba Veteranos v69: app shell e dependências locais offline.
+const CACHE_NAME = 'baba-veteranos-v69';
+const BASE_URL = new URL('./', self.registration.scope);
+const APP_ROOT = BASE_URL.pathname;
+const INDEX_URL = new URL('index.html', BASE_URL).href;
+const INDEX_PATHNAME = new URL('index.html', BASE_URL).pathname;
+const OFFLINE_URL = new URL('offline.html', BASE_URL).href;
+const CORE_FILES = [
+  './',
+  'index.html',
+  'bolao-firebase.js',
+  'offline.html',
+  'manifest.webmanifest',
+  'apple-touch-icon.png',
+  'icon-192.png',
+  'icon-512.png',
+  'vendor/jspdf/jspdf.umd.min.js',
+  'vendor/jspdf/jspdf.plugin.autotable.min.js',
+  'vendor/firebase/firebase-app-compat.js',
+  'vendor/firebase/firebase-database-compat.js',
+  'vendor/firebase/firebase-auth-compat.js',
+  'vendor/tailwind/tailwind.browser.js',
+  'vendor/fontawesome/css/all.min.css',
+  'vendor/fontawesome/webfonts/fa-brands-400.ttf',
+  'vendor/fontawesome/webfonts/fa-brands-400.woff2',
+  'vendor/fontawesome/webfonts/fa-regular-400.ttf',
+  'vendor/fontawesome/webfonts/fa-regular-400.woff2',
+  'vendor/fontawesome/webfonts/fa-solid-900.ttf',
+  'vendor/fontawesome/webfonts/fa-solid-900.woff2',
+  'vendor/fontawesome/webfonts/fa-v4compatibility.ttf',
+  'vendor/fontawesome/webfonts/fa-v4compatibility.woff2'
+].map(path => new URL(path, BASE_URL).href);
+
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(CORE_FILES);
+    await self.skipWaiting();
+  })());
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names
+      .filter(name => name.startsWith('baba-veteranos-') && name !== CACHE_NAME)
+      .map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const requestUrl = new URL(request.url);
+
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response && response.ok && requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith(APP_ROOT)) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, response.clone());
+          if (requestUrl.pathname === APP_ROOT || requestUrl.pathname === INDEX_PATHNAME) {
+            await cache.put(INDEX_URL, response.clone());
+          }
+        }
+        return response;
+      } catch (_) {
+        return (await caches.match(request, { ignoreSearch: true }))
+          || (await caches.match(INDEX_URL))
+          || (await caches.match(OFFLINE_URL));
+      }
+    })());
+    return;
+  }
+
+  if (requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith(APP_ROOT)) {
+    event.respondWith((async () => {
+      const cached = await caches.match(request, { ignoreSearch: true });
+      if (cached) return cached;
+      try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, response.clone());
+        }
+        return response;
+      } catch (_) {
+        return new Response('Recurso indisponível sem conexão.', {
+          status: 503,
+          statusText: 'Offline',
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }
+    })());
+  }
+});
+
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body || 'Nova notificação do Baba Veteranos',
+      icon: new URL('icon-192.png', BASE_URL).href,
+      badge: new URL('icon-192.png', BASE_URL).href,
+      vibrate: [200, 100, 200],
+      silent: false,
+      data: { url: data.url || BASE_URL.href }
+    };
+    event.waitUntil(self.registration.showNotification(data.title || '⚽ Baba Veteranos', options));
+  } catch (_) {}
+});
+
+self.addEventListener('message', event => {
+  if (!event.data || event.data.type !== 'SHOW_NOTIFICATION') return;
+  const options = {
+    body: event.data.body || '',
+    icon: new URL('icon-192.png', BASE_URL).href,
+    badge: new URL('icon-192.png', BASE_URL).href,
+    vibrate: [200, 100, 200],
+    silent: false,
+    tag: event.data.tag || 'baba-notification',
+    data: { url: event.data.url || BASE_URL.href }
+  };
+  self.registration.showNotification(event.data.title || '⚽ Baba Veteranos', options);
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data?.url || BASE_URL.href;
+  event.waitUntil(self.clients.matchAll({ type: 'window' }).then(windowClients => {
+    const client = windowClients.find(item => item.url.includes(APP_ROOT));
+    if (client) {
+      client.focus();
+      client.postMessage({ type: 'NOTIFICATION_CLICKED', tag: event.notification.tag });
+    } else {
+      self.clients.openWindow(url);
+    }
+  }));
+});
