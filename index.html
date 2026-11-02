@@ -628,18 +628,6 @@
                 </div>
             </div>
 
-            <!-- SALDO GERAL CALCULADO PELAS SÚMULAS OFICIAIS -->
-            <div class="bg-stone-900/95 p-4 rounded-2xl border border-stone-700 shadow-xl text-center">
-                <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-3">Saldo de gols acumulado (súmulas)</h4>
-                <div class="flex justify-center items-center gap-3 sm:gap-5 flex-wrap">
-                    <span class="font-black text-white text-xs sm:text-sm">BOTAFOGO</span>
-                    <span id="saldo-gols-bota" class="text-xl font-mono font-black text-white">0</span>
-                    <span class="text-stone-600 font-black">·</span>
-                    <span id="saldo-gols-flu" class="text-xl font-mono font-black text-emerald-400">0</span>
-                    <span class="font-black text-emerald-400 text-xs sm:text-sm">FLUMINENSE</span>
-                </div>
-            </div>
-
             <!-- CLASSIFICAÇÃO -->
             <div class="bg-stone-900/95 p-5 rounded-2xl border border-stone-700 shadow-xl text-center">
                 <h4 class="font-black text-gray-200 uppercase tracking-wider text-xs mb-4 flex justify-center items-center gap-2 border-b border-stone-800 pb-2">
@@ -906,7 +894,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 62</span>
+                <span class="font-bold">Versão 63</span>
             </footer>
         </div>
 
@@ -1435,6 +1423,20 @@
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Placar
                         </button>
                     </div>
+                </div>
+
+                <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
+                    <h4 class="font-bold text-amber-500 text-xs uppercase mb-3">
+                        <i class="fa-solid fa-chart-line mr-1"></i> Saldo de Gols Geral
+                    </h4>
+                    <div class="flex items-center justify-center gap-4 rounded-xl border border-stone-800 bg-black/40 p-4">
+                        <span class="text-xs font-black text-white">BOTAFOGO</span>
+                        <span id="adm-saldo-gols-bota" class="text-2xl font-mono font-black text-white">0</span>
+                        <span class="font-black text-stone-600">·</span>
+                        <span id="adm-saldo-gols-flu" class="text-2xl font-mono font-black text-emerald-400">0</span>
+                        <span class="text-xs font-black text-emerald-400">FLUMINENSE</span>
+                    </div>
+                    <p class="mt-2 text-center text-[9px] text-stone-500">Calculado pelos placares registrados no histórico de partidas.</p>
                 </div>
 
                 <div class="bg-stone-900/95 rounded-2xl p-5 border border-stone-700 shadow-xl">
@@ -2644,14 +2646,14 @@
 
             let totalGolsBota = 0;
             let totalGolsFlu = 0;
-            (window.sumulasCache || []).forEach(sumula => {
-                const golsBota = Number.parseInt(sumula?.placarBota ?? sumula?.bota?.gols, 10);
-                const golsFlu = Number.parseInt(sumula?.placarFlu ?? sumula?.flu?.gols, 10);
+            (window.historicoPlacares || []).forEach(rodada => {
+                const golsBota = Number.parseInt(rodada?.golsBota, 10);
+                const golsFlu = Number.parseInt(rodada?.golsFlu, 10);
                 if (Number.isFinite(golsBota) && golsBota >= 0) totalGolsBota += golsBota;
                 if (Number.isFinite(golsFlu) && golsFlu >= 0) totalGolsFlu += golsFlu;
             });
-            const saldoBota = document.getElementById('saldo-gols-bota');
-            const saldoFlu = document.getElementById('saldo-gols-flu');
+            const saldoBota = document.getElementById('adm-saldo-gols-bota');
+            const saldoFlu = document.getElementById('adm-saldo-gols-flu');
             if (saldoBota) saldoBota.textContent = String(totalGolsBota - totalGolsFlu);
             if (saldoFlu) saldoFlu.textContent = String(totalGolsFlu - totalGolsBota);
             
