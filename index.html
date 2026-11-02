@@ -640,6 +640,16 @@
                     <span id="placar-temporada-bota" class="text-xl sm:text-2xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
                     <span class="font-black text-stone-300 text-xs sm:text-sm tracking-wide">BOTAFOGO</span>
                 </div>
+                <div class="mt-3 border-t border-stone-800 pt-3">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">Saldo de gols</p>
+                    <div class="flex justify-center items-center gap-2 sm:gap-4 py-2 bg-black/30 rounded-xl border border-stone-800/70 max-w-md mx-auto flex-wrap">
+                        <span class="font-black text-emerald-400 text-xs sm:text-sm">FLUMINENSE</span>
+                        <span id="dash-saldo-gols-flu" class="text-lg sm:text-xl font-mono font-black text-emerald-400 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                        <span class="text-stone-600 font-black">·</span>
+                        <span id="dash-saldo-gols-bota" class="text-lg sm:text-xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                        <span class="font-black text-stone-300 text-xs sm:text-sm">BOTAFOGO</span>
+                    </div>
+                </div>
             </div>
 
             <!-- HISTÓRICO -->
@@ -894,7 +904,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 63</span>
+                <span class="font-bold">Versão 64</span>
             </footer>
         </div>
 
@@ -2652,10 +2662,13 @@
                 if (Number.isFinite(golsBota) && golsBota >= 0) totalGolsBota += golsBota;
                 if (Number.isFinite(golsFlu) && golsFlu >= 0) totalGolsFlu += golsFlu;
             });
-            const saldoBota = document.getElementById('adm-saldo-gols-bota');
-            const saldoFlu = document.getElementById('adm-saldo-gols-flu');
-            if (saldoBota) saldoBota.textContent = String(totalGolsBota - totalGolsFlu);
-            if (saldoFlu) saldoFlu.textContent = String(totalGolsFlu - totalGolsBota);
+            const diferencaGols = totalGolsFlu - totalGolsBota;
+            const saldoFluTexto = diferencaGols > 0 ? String(diferencaGols) : '0';
+            const saldoBotaTexto = diferencaGols < 0 ? String(Math.abs(diferencaGols)) : '0';
+            const saldoFluIds = ['adm-saldo-gols-flu', 'dash-saldo-gols-flu'];
+            const saldoBotaIds = ['adm-saldo-gols-bota', 'dash-saldo-gols-bota'];
+            saldoFluIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoFluTexto; });
+            saldoBotaIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoBotaTexto; });
             
             const tempFlu = document.getElementById('placar-temporada-flu');
             const tempBota = document.getElementById('placar-temporada-bota');
