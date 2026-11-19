@@ -17,7 +17,7 @@
 <section class="card" aria-labelledby="voiceTitle">
   <h2 id="voiceTitle">Perguntar por voz</h2>
   <button id="mic" class="mic" type="button" aria-describedby="micHint">🎙️ Toque para falar</button>
-  <p id="micHint" class="muted small">O navegador pode pedir permissão para usar o microfone. A fala não é gravada pelo app.</p>
+  <p id="micHint" class="muted small">O navegador pode pedir acesso ao microfone e enviar a fala ao serviço de reconhecimento de voz. Não diga senhas ou dados privados.</p>
   <p id="status" class="status" role="status" aria-live="polite">Pronto para ajudar.</p>
 </section>
 <section class="card">
@@ -35,13 +35,11 @@
  <p class="muted small">Somente o histórico público de placares do projeto Firebase de teste. A consulta é apenas de leitura; não acessa contas, atletas, finanças, senhas ou dados privados e não grava nada.</p>
 </section>
 </main>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 (() => {
   'use strict';
-  const cfg={apiKey:'AIzaSyCgHDw9YYsIjwEGCpeuh8-ndEWl_eWX4Ao',authDomain:'baba-veteranos---teste-auth.firebaseapp.com',databaseURL:'https://baba-veteranos---teste-auth-default-rtdb.firebaseio.com',projectId:'baba-veteranos---teste-auth',storageBucket:'baba-veteranos---teste-auth.firebasestorage.app',messagingSenderId:'693322003433',appId:'1:693322003433:web:23a0bb93a914adf0f3d178'};
-  const $=id=>document.getElementById(id); let db=null,lastAnswer='';
+  const publicHistoryURL='https://baba-veteranos---teste-auth-default-rtdb.firebaseio.com/baba/public/data/historicoPlacares.json';
+  const $=id=>document.getElementById(id); let lastAnswer='';
   function say(text){$('answer').textContent=text;lastAnswer=text;$('readAgain').disabled=!('speechSynthesis'in window);if('speechSynthesis'in window){speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='pt-BR';speechSynthesis.speak(utterance)}}
   function dateKey(value){const m=String(value||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:''}
   function rows(value){return Array.isArray(value)?value.filter(Boolean):value&&typeof value==='object'?Object.values(value).filter(Boolean):[]}
@@ -49,12 +47,11 @@
     const supported=(q.includes('placar')||q.includes('resultado'))&&(q.includes('ultimo')||q.includes('mais recente')||q.includes('atual')||q.includes('jogo'));
     if(!supported){say('Neste teste, ainda só consigo informar o último placar. Pergunte: qual foi o último placar?');return}
     $('status').textContent='Consultando o placar público…';$('ask').disabled=true;$('mic').disabled=true;
-    try{if(!db)throw new Error('firebase-not-initialized');const snap=await db.ref('baba/public/data/historicoPlacares').once('value');const history=rows(snap.val()).filter(x=>x&&x.golsCAP!==undefined&&x.golsCFC!==undefined);history.sort((a,b)=>dateKey(b.data).localeCompare(dateKey(a.data)));if(!history.length){say('Ainda não encontrei placares registrados no histórico público de teste.');$('status').textContent='Consulta concluída.';return}
+    try{const response=await fetch(publicHistoryURL,{cache:'no-store'});if(!response.ok)throw new Error('http-'+response.status);const history=rows(await response.json()).filter(x=>x&&x.golsCAP!==undefined&&x.golsCFC!==undefined&&dateKey(x.data));history.sort((a,b)=>dateKey(b.data).localeCompare(dateKey(a.data)));if(!history.length){say('Ainda não encontrei placares registrados no histórico público de teste.');$('status').textContent='Consulta concluída.';return}
       const r=history[0],date=String(r.data||'');say(`O último placar registrado foi CAP ${r.golsCAP} a ${r.golsCFC} CFC${date?`, em ${date}`:''}.`);$('status').textContent='Consulta concluída.';
     }catch(e){console.error('Falha na consulta pública:',e?.code||e?.message||'erro');say('Não consegui consultar o histórico público de teste. Nenhum dado foi alterado.');$('status').textContent='A consulta não ficou disponível; tente novamente mais tarde.'}
     finally{$('ask').disabled=false;$('mic').disabled=false}
   }
-  try{firebase.initializeApp(cfg);db=firebase.database()}catch(e){$('status').textContent='Não foi possível inicializar o serviço de teste.'}
   $('ask').addEventListener('click',()=>answerQuestion($('question').value));$('question').addEventListener('keydown',e=>{if(e.key==='Enter')answerQuestion($('question').value)});$('readAgain').addEventListener('click',()=>{if(lastAnswer&&'speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(lastAnswer);u.lang='pt-BR';speechSynthesis.speak(u)}});
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRecognition){$('mic').disabled=true;$('mic').textContent='Microfone indisponível neste navegador';$('micHint').textContent='Você ainda pode escrever sua pergunta. Tente um navegador atualizado com suporte a reconhecimento de voz.'}
