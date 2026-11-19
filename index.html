@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
         <meta http-equiv="Pragma" content="no-cache">
         <meta http-equiv="Expires" content="0">
-        <title>BABA VETERANOS - Flu vs Bota</title>
+        <title>BABA VETERANOS - CAP x CFC</title>
     <meta name="description" content="Aplicativo oficial do Baba Veteranos">
     <meta name="theme-color" content="#064e3b">
     <link rel="manifest" href="./manifest.webmanifest">
@@ -347,23 +347,23 @@
 
     <style>
         /* Os nomes internos das classes são preservados para não invalidar preferências locais salvas. */
-        body.theme-botafogo {
+        body.theme-athletico {
             background-color: #c8102e;
             background-image: linear-gradient(135deg, #c8102e 0%, #9e0b22 45%, #111111 45%, #050505 100%);
             background-size: 100% 100%;
             background-attachment: fixed;
         }
-        body.theme-botafogo::before {
+        body.theme-athletico::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.76); z-index: -1;
         }
-        body.theme-fluminense {
+        body.theme-coritiba {
             background-color: #006b3f;
             background-image: linear-gradient(90deg, #006b3f 0%, #087a49 42%, #f7f7f2 42%, #f7f7f2 47%, #006b3f 47%, #006b3f 53%, #f7f7f2 53%, #f7f7f2 58%, #006b3f 58%, #004d2e 100%);
             background-size: 100% 100%;
             background-attachment: fixed;
         }
-        body.theme-fluminense::before {
+        body.theme-coritiba::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 20, 10, 0.78); z-index: -1;
         }
@@ -608,22 +608,22 @@
                 
                 <div class="placar-container mt-8">
                     <div class="placar-time text-center">
-                        <div class="bg-emerald-800 text-white font-black px-3 py-2 rounded-lg text-xs sm:text-sm shadow border border-emerald-600 inline-block">
-                            FLUMINENSE
+                        <div class="bg-red-700 text-white font-black px-3 py-2 rounded-lg text-xs sm:text-sm shadow border border-red-950 inline-block">
+                            CAP
                         </div>
                     </div>
                     <div class="placar-numeros">
                         <div class="placar-numero">
-                            <span id="placar-flu" class="text-3xl sm:text-5xl font-black text-emerald-400">0</span>
+                            <span id="placar-cap" class="text-3xl sm:text-5xl font-black text-red-500">0</span>
                         </div>
                         <span class="text-xl font-bold text-stone-600">X</span>
                         <div class="placar-numero">
-                            <span id="placar-bota" class="text-3xl sm:text-5xl font-black text-white">0</span>
+                            <span id="placar-cfc" class="text-3xl sm:text-5xl font-black text-white">0</span>
                         </div>
                     </div>
                     <div class="placar-time text-center">
                         <div class="bg-stone-800 text-gray-300 font-black px-3 py-2 rounded-lg text-xs sm:text-sm shadow border border-stone-700 inline-block">
-                            BOTAFOGO
+                            CFC
                         </div>
                     </div>
                 </div>
@@ -635,20 +635,20 @@
                     <i class="fa-solid fa-trophy text-amber-500"></i> Classificação da Temporada (Vitórias Gerais)
                 </h4>
                 <div class="flex justify-center items-center gap-2 sm:gap-4 py-3 bg-black/40 rounded-xl border border-stone-800/80 max-w-md mx-auto flex-wrap">
-                    <span class="font-black text-emerald-400 text-xs sm:text-sm tracking-wide">FLUMINENSE</span>
-                    <span id="placar-temporada-flu" class="text-xl sm:text-2xl font-mono font-black text-emerald-400 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                    <span class="font-black text-red-500 text-xs sm:text-sm tracking-wide">CAP</span>
+                    <span id="placar-temporada-cap" class="text-xl sm:text-2xl font-mono font-black text-red-500 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
                     <span class="text-stone-600 font-black text-xs sm:text-sm">X</span>
-                    <span id="placar-temporada-bota" class="text-xl sm:text-2xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
-                    <span class="font-black text-stone-300 text-xs sm:text-sm tracking-wide">BOTAFOGO</span>
+                    <span id="placar-temporada-cfc" class="text-xl sm:text-2xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                    <span class="font-black text-stone-300 text-xs sm:text-sm tracking-wide">CFC</span>
                 </div>
                 <div class="mt-3 border-t border-stone-800 pt-3">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">Saldo de gols</p>
                     <div class="flex justify-center items-center gap-2 sm:gap-4 py-2 bg-black/30 rounded-xl border border-stone-800/70 max-w-md mx-auto flex-wrap">
-                        <span class="font-black text-emerald-400 text-xs sm:text-sm">FLUMINENSE</span>
-                        <span id="dash-saldo-gols-flu" class="text-lg sm:text-xl font-mono font-black text-emerald-400 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                        <span class="font-black text-red-500 text-xs sm:text-sm">CAP</span>
+                        <span id="dash-saldo-gols-cap" class="text-lg sm:text-xl font-mono font-black text-red-500 bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
                         <span class="text-stone-600 font-black">·</span>
-                        <span id="dash-saldo-gols-bota" class="text-lg sm:text-xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
-                        <span class="font-black text-stone-300 text-xs sm:text-sm">BOTAFOGO</span>
+                        <span id="dash-saldo-gols-cfc" class="text-lg sm:text-xl font-mono font-black text-white bg-stone-900 px-3 py-1 rounded-lg border border-stone-800">0</span>
+                        <span class="font-black text-stone-300 text-xs sm:text-sm">CFC</span>
                     </div>
                 </div>
             </div>
@@ -714,8 +714,8 @@
         <!-- JOGADORES -->
         <div id="jogadores" class="tab-content space-y-4 pt-4">
             <div class="flex space-x-3 mb-1">
-                <button onclick="window.filterTimeList('FLUMINENSE')" id="btn-list-flu" class="flex-1 bg-emerald-800 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs">Fluminense FC</button>
-                <button onclick="window.filterTimeList('BOTAFOGO')" id="btn-list-bota" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Botafogo FR</button>
+                <button onclick="window.filterTimeList('CAP')" id="btn-list-cap" class="flex-1 bg-red-700 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-red-950 transition text-xs">Athletico Paranaense</button>
+                <button onclick="window.filterTimeList('CFC')" id="btn-list-cfc" class="flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs">Coritiba</button>
             </div>
 
             <div class="bg-stone-900/95 rounded-2xl border border-stone-700 shadow-xl overflow-x-auto">
@@ -905,7 +905,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 67</span>
+                <span class="font-bold">Versão 68</span>
             </footer>
         </div>
 
@@ -948,8 +948,8 @@
                     </h4>
                     <select id="artilharia-filtro" onchange="window.renderDashArtilharia()" class="text-[10px] bg-stone-800 border border-stone-700 p-1 rounded font-bold text-white outline-none">
                         <option value="geral">Geral</option>
-                        <option value="FLUMINENSE">Fluminense</option>
-                        <option value="BOTAFOGO">Botafogo</option>
+                        <option value="CAP">Athletico Paranaense</option>
+                        <option value="CFC">Coritiba</option>
                     </select>
                 </div>
                 <ol id="dash-artilharia" class="divide-y divide-stone-800/40 text-sm font-medium text-stone-300"></ol>
@@ -996,71 +996,6 @@
         </div>
 
         <!-- ADMIN PANEL -->
-            <div id="bolao-ver" class="tab-content space-y-6 pt-4">
-            <section class="rounded-2xl border border-emerald-800/60 bg-stone-900 p-4 space-y-3">
-                <h2 class="text-sm font-black uppercase tracking-wider text-emerald-300">Bolão</h2>
-                <p id="bolao-titulo-atual" class="text-[11px] text-stone-400"></p>
-                <p class="text-xs text-stone-400">Atletas usam conta confirmada; visitantes só informam um apelido, sem cadastro nem login. Você pode editar o palpite até o encerramento; ele só será revelado depois.</p>
-                <button id="bolao-admin-open" type="button" onclick="window.bolaoAdminAbrir()" class="hidden w-full rounded-xl border border-amber-700/60 bg-amber-950/30 px-3 py-3 text-left text-xs font-black uppercase text-amber-200">Administração do Bolão</button>
-                <div id="bolao-login-prompt" class="hidden rounded-xl border border-amber-800/60 bg-amber-950/30 p-3 text-xs text-amber-200">
-                    Para participar como atleta, confirme o e-mail da conta. Visitantes podem palpitar sem cadastro nem login; se houver uma conta não confirmada aberta, saia dela para continuar como visitante.
-                    <button type="button" onclick="window.toggleAthleteAuth()" class="ml-2 underline font-bold">Entrar</button>
-                </div>
-                <form id="bolao-apelido-form" class="hidden space-y-2 rounded-xl border border-stone-700 bg-stone-950/50 p-3">
-                    <label class="block space-y-1 text-xs font-bold text-stone-300">Seu nome ou apelido público
-                        <input id="bolao-apelido-input" type="text" maxlength="40" minlength="2" required placeholder="Como quer aparecer no Bolão?" class="w-full rounded-lg border border-stone-700 bg-stone-800 px-3 py-2 text-sm text-white">
-                    </label>
-                    <button type="submit" class="rounded-lg bg-stone-700 px-3 py-2 text-xs font-bold text-white">Salvar nome/apelido</button>
-                    <p id="bolao-apelido-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
-                </form>
-                <p id="bolao-apelido-saved" class="hidden text-xs font-bold text-stone-200"></p>
-                <p id="bolao-status" role="status" aria-live="polite" class="min-h-4 text-xs text-emerald-300"></p>
-            </section>
-            <section id="bolao-ranking-publico" class="space-y-2"></section>
-            <div id="bolao-rodadas-lista" class="space-y-4" aria-live="polite"></div>
-        </div>
-
-    <div id="bolao-admin" class="tab-content space-y-6 pt-4">
-        <header class="flex items-center justify-between gap-3 rounded-2xl border border-amber-800/60 bg-stone-950 p-4">
-            <div>
-                <h2 class="text-sm font-black uppercase tracking-wider text-amber-300">Administração do Bolão</h2>
-                <p class="mt-1 text-[10px] text-stone-400">Rodadas, prazos e resultados oficiais</p>
-            </div>
-            <button type="button" onclick="window.bolaoAdminVoltar()" class="shrink-0 rounded-lg bg-stone-800 px-3 py-2 text-[10px] font-black uppercase text-white">Voltar</button>
-        </header>
-        <p id="bolao-admin-status" role="status" aria-live="polite" class="min-h-5 text-xs text-emerald-300"></p>
-        <section class="space-y-3 rounded-2xl border border-red-900/50 bg-stone-900 p-4">
-            <h3 class="text-xs font-black uppercase tracking-wide text-red-200">Novo Bolão</h3>
-            <p id="bolao-admin-bolao-atual" class="text-xs text-stone-400">Nenhum Bolão aberto.</p>
-            <form id="bolao-admin-novo-bolao" class="flex flex-col gap-3 sm:flex-row">
-                <input id="bolao-admin-nome-bolao" type="text" maxlength="80" required placeholder="Nome do novo Bolão" class="min-w-0 flex-1 rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
-                <button type="submit" class="rounded-lg border border-red-800 bg-red-950/50 px-4 py-2 text-xs font-black uppercase text-red-200">Abrir e reiniciar ranking</button>
-            </form>
-        </section>
-
-        <section class="space-y-4 rounded-2xl border border-amber-800/40 bg-stone-900 p-4">
-            <h3 class="text-xs font-black uppercase tracking-wide text-amber-200">Abrir rodada</h3>
-            <form id="bolao-admin-nova-rodada" class="space-y-4">
-                <label class="block space-y-1 text-xs font-bold text-stone-300">Nome da rodada
-                    <input id="bolao-admin-titulo-novo" type="text" maxlength="80" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
-                </label>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label class="block space-y-1 text-xs font-bold text-stone-300">Início dos palpites
-                        <input id="bolao-admin-inicio-novo" type="datetime-local" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
-                    </label>
-                    <label class="block space-y-1 text-xs font-bold text-stone-300">Fim dos palpites
-                        <input id="bolao-admin-fim-novo" type="datetime-local" required class="w-full rounded-lg border border-stone-700 bg-stone-950 px-3 py-2 text-sm text-white">
-                    </label>
-                </div>
-                <button type="submit" class="w-full rounded-xl bg-amber-600 px-4 py-3 text-xs font-black uppercase text-stone-950">Abrir rodada</button>
-            </form>
-        </section>
-        <section class="space-y-3">
-            <h3 class="text-xs font-black uppercase tracking-wide text-stone-300">Rodadas cadastradas</h3>
-            <div id="bolao-admin-rodadas" class="space-y-4" aria-live="polite"></div>
-        </section>
-    </div>
-
     <div id="admin-panel" class="tab-content hidden space-y-6 pt-4">
             <div class="bg-stone-950 border-2 border-amber-500 p-4 rounded-2xl flex justify-between items-center shadow-xl">
                 <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
@@ -1099,8 +1034,8 @@
                         
                         <select id="cad-time" required class="bg-stone-800 border border-stone-600 p-2 rounded-lg text-xs text-stone-300 outline-none">
                             <option value="">Clube...</option>
-                            <option value="FLUMINENSE">Fluminense</option>
-                            <option value="BOTAFOGO">Botafogo</option>
+                            <option value="CAP">Athletico Paranaense</option>
+                            <option value="CFC">Coritiba</option>
                         </select>
                         <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-black font-black p-2 rounded-lg text-xs uppercase transition">Cadastrar</button>
                     </form>
@@ -1242,32 +1177,32 @@
                             <div class="space-y-1">
                                 <label class="text-[10px] text-stone-400 uppercase font-bold">Placar</label>
                                 <div class="flex items-center gap-1 bg-stone-800 border border-stone-600 rounded-lg p-1">
-                                    <input type="number" id="sum-placar-bota" placeholder="0" required class="w-full bg-transparent p-1 text-center text-white font-black outline-none text-sm">
+                                    <input type="number" id="sum-placar-cfc" placeholder="0" required class="w-full bg-transparent p-1 text-center text-white font-black outline-none text-sm">
                                     <span class="text-stone-500 font-bold">X</span>
-                                    <input type="number" id="sum-placar-flu" placeholder="0" required class="w-full bg-transparent p-1 text-center text-emerald-400 font-black outline-none text-sm">
+                                    <input type="number" id="sum-placar-cap" placeholder="0" required class="w-full bg-transparent p-1 text-center text-red-500 font-black outline-none text-sm">
                                 </div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- BOTA -->
+                            <!-- CFC -->
                             <div class="p-3 bg-black/40 rounded-xl border border-stone-800 space-y-3">
                                 <h5 class="text-xs font-black text-white uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
-                                    <i class="fa-solid fa-flag text-white"></i> Botafogo
+                                    <i class="fa-solid fa-flag text-white"></i> Coritiba
                                 </h5>
-                                <input type="text" id="sum-bota-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-bota-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cfc-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cfc-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cfc-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
 
-                            <!-- FLU -->
+                            <!-- CAP -->
                             <div class="p-3 bg-black/40 rounded-xl border border-stone-800 space-y-3">
                                 <h5 class="text-xs font-black text-emerald-500 uppercase flex items-center gap-2 border-b border-stone-800 pb-2">
-                                    <i class="fa-solid fa-flag text-emerald-500"></i> Fluminense
+                                    <i class="fa-solid fa-flag text-emerald-500"></i> Athletico Paranaense
                                 </h5>
-                                <input type="text" id="sum-flu-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
-                                <input type="text" id="sum-flu-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cap-gols" oninput="window.handleMultiInput(this)" placeholder="Gols (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cap-amarelos" oninput="window.handleMultiInput(this)" placeholder="Amarelos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
+                                <input type="text" id="sum-cap-vermelhos" oninput="window.handleMultiInput(this)" placeholder="Vermelhos (Nº e Nome)" class="w-full bg-stone-800 border border-stone-700 p-2 rounded text-xs text-white outline-none">
                             </div>
                         </div>
 
@@ -1420,12 +1355,12 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                                <label class="block font-bold text-emerald-400 uppercase mb-1">Fluminense</label>
-                                <input type="number" id="adm-placar-flu" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none">
+                                <label class="block font-bold text-red-400 uppercase mb-1">Athletico Paranaense</label>
+                                <input type="number" id="adm-placar-cap" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-red-400 focus:ring-1 focus:ring-red-500 outline-none">
                             </div>
                             <div class="bg-black/40 p-4 rounded-xl border border-stone-800 space-y-2 text-center">
-                                <label class="block font-bold text-stone-300 uppercase mb-1">Botafogo</label>
-                                <input type="number" id="adm-placar-bota" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
+                                <label class="block font-bold text-stone-300 uppercase mb-1">Coritiba</label>
+                                <input type="number" id="adm-placar-cfc" class="w-full bg-stone-800 rounded-lg p-2.5 text-center font-black text-lg text-white focus:ring-1 focus:ring-stone-500 outline-none">
                             </div>
                         </div>
                     </div>
@@ -1503,11 +1438,6 @@
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-200"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
                 <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Cobra Neon</span><span class="mt-1 block text-[9px] text-stone-400">Recorde pessoal neste aparelho</span></span>
                 <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-cyan-400" aria-hidden="true"></i>
-            </button>
-            <button type="button" onclick="window.bolaoAbrir()" role="menuitem" class="mt-2 flex w-full items-center gap-3 rounded-xl border border-emerald-800/50 bg-emerald-950/30 p-3 text-left transition hover:border-emerald-500 hover:bg-emerald-900/40">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-200"><i class="fa-solid fa-futbol" aria-hidden="true"></i></span>
-                <span class="min-w-0"><span class="block text-xs font-black uppercase text-white">Bolão</span><span class="mt-1 block text-[9px] text-stone-400">Em breve</span></span>
-                <i class="fa-solid fa-chevron-right ml-auto text-[10px] text-emerald-400" aria-hidden="true"></i>
             </button>
             <div class="mt-2 flex items-center gap-3 rounded-xl border border-stone-800 bg-stone-900/60 p-3 opacity-60" aria-disabled="true">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-800 text-stone-400"><i class="fa-solid fa-dice"></i></span>
@@ -1626,12 +1556,12 @@
         window.publicDataLoaded = false;
         window.historicoPlacares = [];
         window.partidaEstatisticas = { 
-            placarFlu: 0, 
-            placarBota: 0, 
-            vitFlu: 0, 
-            vitBota: 0 
+            placarCAP: 0, 
+            placarCFC: 0, 
+            vitCAP: 0, 
+            vitCFC: 0 
         };
-        window.timeFiltroAtual = 'FLUMINENSE';
+        window.timeFiltroAtual = 'CAP';
         window.isAdminLogado = false;
         window.isAtletaLogado = false;
         window.currentAthleteId = null;
@@ -1843,7 +1773,7 @@
             window.historicoPlacares = normalizeAdminRows(data.historicoPlacares).filter(row => row && typeof row === 'object');
             window.partidaEstatisticas = data.partidaEstatisticas && typeof data.partidaEstatisticas === 'object'
                 ? cloneAdminSaveValue(data.partidaEstatisticas)
-                : {placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0};
+                : {placarCAP: 0, placarCFC: 0, vitCAP: 0, vitCFC: 0};
             window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
             window.publicDataLoaded = true;
             aplicarCachePrivado();
@@ -2481,8 +2411,8 @@
             if (!opcoes.silencioso) document.getElementById('loading-overlay')?.classList.remove('hidden');
             
             // Salvar estado dos acordeões antes de renderizar
-            const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
-            const abertoFlu = !document.getElementById('scouts-list-FLUMINENSE')?.classList.contains('hidden');
+            const abertoCFC = !document.getElementById('scouts-list-CFC')?.classList.contains('hidden');
+            const abertoCAP = !document.getElementById('scouts-list-CAP')?.classList.contains('hidden');
 
             const camposPublicos = ['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos'];
             const atletasPublicos = window.atletasCache.map(a => Object.fromEntries(camposPublicos.filter(k => a[k] !== undefined).map(k => [k, a[k]])));
@@ -2525,13 +2455,13 @@
                     if (!opcoes.silencioso) window.renderizarTudo();
 
                     // Restaurar estado dos acordeões
-                    if (abertoBota) {
-                        document.getElementById('scouts-list-BOTAFOGO')?.classList.remove('hidden');
-                        document.querySelector('[onclick*="BOTAFOGO"] .chevron')?.classList.add('rotate-90');
+                    if (abertoCFC) {
+                        document.getElementById('scouts-list-CFC')?.classList.remove('hidden');
+                        document.querySelector('[onclick*="CFC"] .chevron')?.classList.add('rotate-90');
                     }
-                    if (abertoFlu) {
-                        document.getElementById('scouts-list-FLUMINENSE')?.classList.remove('hidden');
-                        document.querySelector('[onclick*="FLUMINENSE"] .chevron')?.classList.add('rotate-90');
+                    if (abertoCAP) {
+                        document.getElementById('scouts-list-CAP')?.classList.remove('hidden');
+                        document.querySelector('[onclick*="CAP"] .chevron')?.classList.add('rotate-90');
                     }
                 } catch (error) {
                     console.error('Erro ao salvar:', error?.code || '');
@@ -2568,7 +2498,7 @@
                 window.sumulasCache = data.sumulas || [];
                 window.publicDataLoaded = true;
                 window.historicoPlacares = data.historicoPlacares || [];
-                window.partidaEstatisticas = data.partidaEstatisticas || { placarFlu: 0, placarBota: 0, vitFlu: 0, vitBota: 0 };
+                window.partidaEstatisticas = data.partidaEstatisticas || { placarCAP: 0, placarCFC: 0, vitCAP: 0, vitCFC: 0 };
                 window.publicAccess = typeof data.public_access === 'boolean' ? data.public_access : true;
                 aplicarCachePrivado();
                 if (window.isAtletaLogado) window.carregarMovimentacoesFinanceirasAtletas?.();
@@ -2620,47 +2550,47 @@
         };
         
         function recalcularClassificacaoGeral() {
-            let vitoriasFlu = 0, vitoriasBota = 0;
+            let vitoriasCAP = 0, vitoriasCFC = 0;
             
             if (window.historicoPlacares && window.historicoPlacares.length) {
                 window.historicoPlacares.forEach(rodada => {
-                    const golsFlu = parseInt(rodada.golsFlu) || 0;
-                    const golsBota = parseInt(rodada.golsBota) || 0;
-                    if (golsFlu > golsBota) vitoriasFlu++;
-                    else if (golsBota > golsFlu) vitoriasBota++;
+                    const golsCAP = parseInt(rodada.golsCAP) || 0;
+                    const golsCFC = parseInt(rodada.golsCFC) || 0;
+                    if (golsCAP > golsCFC) vitoriasCAP++;
+                    else if (golsCFC > golsCAP) vitoriasCFC++;
                 });
             }
             
-            window.partidaEstatisticas.vitFlu = vitoriasFlu;
-            window.partidaEstatisticas.vitBota = vitoriasBota;
+            window.partidaEstatisticas.vitCAP = vitoriasCAP;
+            window.partidaEstatisticas.vitCFC = vitoriasCFC;
         }
         
         function loadDashboard() {
-            const placarFlu = document.getElementById('placar-flu');
-            const placarBota = document.getElementById('placar-bota');
-            if (placarFlu) placarFlu.innerText = window.partidaEstatisticas.placarFlu ?? 0;
-            if (placarBota) placarBota.innerText = window.partidaEstatisticas.placarBota ?? 0;
+            const placarCAP = document.getElementById('placar-cap');
+            const placarCFC = document.getElementById('placar-cfc');
+            if (placarCAP) placarCAP.innerText = window.partidaEstatisticas.placarCAP ?? 0;
+            if (placarCFC) placarCFC.innerText = window.partidaEstatisticas.placarCFC ?? 0;
 
-            let totalGolsBota = 0;
-            let totalGolsFlu = 0;
+            let totalGolsCFC = 0;
+            let totalGolsCAP = 0;
             (window.historicoPlacares || []).forEach(rodada => {
-                const golsBota = Number.parseInt(rodada?.golsBota, 10);
-                const golsFlu = Number.parseInt(rodada?.golsFlu, 10);
-                if (Number.isFinite(golsBota) && golsBota >= 0) totalGolsBota += golsBota;
-                if (Number.isFinite(golsFlu) && golsFlu >= 0) totalGolsFlu += golsFlu;
+                const golsCFC = Number.parseInt(rodada?.golsCFC, 10);
+                const golsCAP = Number.parseInt(rodada?.golsCAP, 10);
+                if (Number.isFinite(golsCFC) && golsCFC >= 0) totalGolsCFC += golsCFC;
+                if (Number.isFinite(golsCAP) && golsCAP >= 0) totalGolsCAP += golsCAP;
             });
-            const diferencaGols = totalGolsFlu - totalGolsBota;
-            const saldoFluTexto = diferencaGols > 0 ? String(diferencaGols) : '0';
-            const saldoBotaTexto = diferencaGols < 0 ? String(Math.abs(diferencaGols)) : '0';
-            const saldoFluIds = ['dash-saldo-gols-flu'];
-            const saldoBotaIds = ['dash-saldo-gols-bota'];
-            saldoFluIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoFluTexto; });
-            saldoBotaIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoBotaTexto; });
+            const diferencaGols = totalGolsCAP - totalGolsCFC;
+            const saldoCAPTexto = diferencaGols > 0 ? String(diferencaGols) : '0';
+            const saldoCFCTexto = diferencaGols < 0 ? String(Math.abs(diferencaGols)) : '0';
+            const saldoCAPIds = ['dash-saldo-gols-cap'];
+            const saldoCFCIds = ['dash-saldo-gols-cfc'];
+            saldoCAPIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoCAPTexto; });
+            saldoCFCIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = saldoCFCTexto; });
             
-            const tempFlu = document.getElementById('placar-temporada-flu');
-            const tempBota = document.getElementById('placar-temporada-bota');
-            if (tempFlu) tempFlu.innerText = window.partidaEstatisticas.vitFlu || 0;
-            if (tempBota) tempBota.innerText = window.partidaEstatisticas.vitBota || 0;
+            const tempCAP = document.getElementById('placar-temporada-cap');
+            const tempCFC = document.getElementById('placar-temporada-cfc');
+            if (tempCAP) tempCAP.innerText = window.partidaEstatisticas.vitCAP || 0;
+            if (tempCFC) tempCFC.innerText = window.partidaEstatisticas.vitCFC || 0;
             
             const dataEl = document.getElementById('dash-data-ultima-partida');
             if (dataEl && window.historicoPlacares?.length) {
@@ -2669,12 +2599,12 @@
                 dataEl.innerText = "(--/--)";
             }
             
-            const admFlu = document.getElementById('adm-placar-flu');
-            const admBota = document.getElementById('adm-placar-bota');
-            if (admFlu && admBota && !admFlu.dataset.loaded) {
-                admFlu.value = window.partidaEstatisticas.placarFlu ?? 0;
-                admBota.value = window.partidaEstatisticas.placarBota ?? 0;
-                admFlu.dataset.loaded = "true";
+            const admCAP = document.getElementById('adm-placar-cap');
+            const admCFC = document.getElementById('adm-placar-cfc');
+            if (admCAP && admCFC && !admCAP.dataset.loaded) {
+                admCAP.value = window.partidaEstatisticas.placarCAP ?? 0;
+                admCFC.value = window.partidaEstatisticas.placarCFC ?? 0;
+                admCAP.dataset.loaded = "true";
             }
             
             let totalArrecadado = 0, totalGastos = 0;
@@ -2720,7 +2650,7 @@
                             ${medalha}
                             <div class="leading-tight">
                                 <p class="font-black text-xs uppercase text-white">${a.nome}</p>
-                                <p class="text-[9px] font-bold ${a.time === 'FLUMINENSE' ? 'text-emerald-500' : 'text-stone-400'} uppercase tracking-widest">
+                                <p class="text-[9px] font-bold ${a.time === 'CAP' ? 'text-red-500' : 'text-emerald-400'} uppercase tracking-widest">
                                     ${a.time}
                                 </p>
                             </div>
@@ -2812,7 +2742,7 @@
                 return `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center text-sm">
                     <div class="flex items-center">${medalha}<div class="leading-tight">
                         <p class="font-black text-xs uppercase text-white">${a.nome || 'Sem nome'}</p>
-                        <p class="text-[9px] font-bold ${a.time === 'FLUMINENSE' ? 'text-emerald-500' : 'text-stone-400'} uppercase tracking-widest">${a.time || ''}</p>
+                        <p class="text-[9px] font-bold ${a.time === 'CAP' ? 'text-red-500' : 'text-emerald-400'} uppercase tracking-widest">${a.time || ''}</p>
                     </div></div>
                     <span class="text-xs font-black text-white bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-700 flex items-center gap-1.5"><i class="fa-solid fa-soccer-ball text-[10px] text-emerald-400"></i>${a.gols}</span>
                 </li>`;
@@ -2821,17 +2751,17 @@
         
         window.filterTimeList = function(time) {
             window.timeFiltroAtual = time;
-            const fluBtn = document.getElementById('btn-list-flu');
-            const botaBtn = document.getElementById('btn-list-bota');
+            const capBtn = document.getElementById('btn-list-cap');
+            const cfcBtn = document.getElementById('btn-list-cfc');
             
-            if (fluBtn) {
-                fluBtn.className = time === 'FLUMINENSE' 
-                    ? "flex-1 bg-emerald-800 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-emerald-950 transition text-xs"
+            if (capBtn) {
+                capBtn.className = time === 'CAP' 
+                    ? "flex-1 bg-red-700 text-white font-black p-3 rounded-xl shadow uppercase tracking-wider text-center border-b-4 border-red-950 transition text-xs"
                     : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
             }
-            if (botaBtn) {
-                botaBtn.className = time === 'BOTAFOGO'
-                    ? "flex-1 bg-white text-stone-900 font-black p-3 rounded-xl shadow border-b-4 border-stone-400 uppercase tracking-wider text-center transition text-xs"
+            if (cfcBtn) {
+                cfcBtn.className = time === 'CFC'
+                    ? "flex-1 bg-emerald-700 text-white font-black p-3 rounded-xl shadow border-b-4 border-white uppercase tracking-wider text-center transition text-xs"
                     : "flex-1 bg-stone-800 text-gray-500 border border-stone-700 font-black p-3 rounded-xl shadow uppercase tracking-wider text-center transition text-xs";
             }
             renderListaJogadoresPublica();
@@ -2924,7 +2854,7 @@
                         });
                     }
 
-                    html += `<div class="p-4 bg-stone-900 border border-stone-700 rounded-xl border-l-4 ${a.time === 'FLUMINENSE' ? 'border-emerald-500' : 'border-stone-400'} text-xs space-y-3 shadow-xl">
+                    html += `<div class="p-4 bg-stone-900 border border-stone-700 rounded-xl border-l-4 ${a.time === 'CAP' ? 'border-red-500' : 'border-emerald-500'} text-xs space-y-3 shadow-xl">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-black text-stone-100 text-sm">${a.nome}</p>
@@ -2980,28 +2910,28 @@
         };
         
         function montarEstatisticasPartidas(historico, atuais) {
-            let vitoriasFlu = 0, vitoriasBota = 0;
+            let vitoriasCAP = 0, vitoriasCFC = 0;
             (historico || []).forEach(rodada => {
-                const golsFlu = parseInt(rodada?.golsFlu, 10) || 0;
-                const golsBota = parseInt(rodada?.golsBota, 10) || 0;
-                if (golsFlu > golsBota) vitoriasFlu++;
-                else if (golsBota > golsFlu) vitoriasBota++;
+                const golsCAP = parseInt(rodada?.golsCAP, 10) || 0;
+                const golsCFC = parseInt(rodada?.golsCFC, 10) || 0;
+                if (golsCAP > golsCFC) vitoriasCAP++;
+                else if (golsCFC > golsCAP) vitoriasCFC++;
             });
             const ultima = historico?.[0];
             return {
                 ...(atuais && typeof atuais === 'object' ? atuais : {}),
-                placarFlu: ultima?.golsFlu ?? 0,
-                placarBota: ultima?.golsBota ?? 0,
-                vitFlu: vitoriasFlu,
-                vitBota: vitoriasBota
+                placarCAP: ultima?.golsCAP ?? 0,
+                placarCFC: ultima?.golsCFC ?? 0,
+                vitCAP: vitoriasCAP,
+                vitCFC: vitoriasCFC
             };
         }
 
         window.atualizarPlacarGeral = async function() {
-            const fluVal = document.getElementById('adm-placar-flu')?.value;
-            const botaVal = document.getElementById('adm-placar-bota')?.value;
+            const capVal = document.getElementById('adm-placar-cap')?.value;
+            const cfcVal = document.getElementById('adm-placar-cfc')?.value;
             const dataInput = document.getElementById('adm-placar-data')?.value;
-            if (!fluVal || !botaVal) { window.mostrarToast('Preencha os placares!', true); return; }
+            if (!capVal || !cfcVal) { window.mostrarToast('Preencha os placares!', true); return; }
             if (!dataInput) { window.mostrarToast('Selecione a data da partida!', true); return; }
             const hojeISO = obterDataLocalISO();
             const campoData = document.getElementById('adm-placar-data');
@@ -3010,14 +2940,14 @@
                 window.mostrarToast('Não é possível registrar um placar para uma data futura.', true);
                 return;
             }
-            const placarFlu = parseInt(fluVal, 10);
-            const placarBota = parseInt(botaVal, 10);
-            if (isNaN(placarFlu) || isNaN(placarBota)) { window.mostrarToast('Valores inválidos!', true); return; }
+            const placarCAP = parseInt(capVal, 10);
+            const placarCFC = parseInt(cfcVal, 10);
+            if (isNaN(placarCAP) || isNaN(placarCFC)) { window.mostrarToast('Valores inválidos!', true); return; }
             const [ano, mes, dia] = dataInput.split('-');
             const dataStr = `${dia}/${mes}/${ano}`;
             const rodada = {
                 id: 'rodada_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8),
-                data: dataStr, golsFlu: placarFlu, golsBota: placarBota
+                data: dataStr, golsCAP: placarCAP, golsCFC: placarCFC
             };
             const salvo = await enqueueAdminTransaction('public', currentValue => {
                 const nextData = cloneAdminSaveValue(currentValue) || {};
@@ -3055,9 +2985,9 @@
                 html += `<li class="flex justify-between py-1.5 border-b border-stone-800/40 items-center">
                     <span class="text-stone-500 font-mono text-[11px]"><i class="fa-solid fa-calendar-day mr-1"></i>${item.data}</span>
                     <div class="flex items-center gap-2 font-mono">
-                        <span class="text-emerald-400 font-black">FLU ${item.golsFlu}</span>
+                        <span class="text-red-500 font-black">CAP ${item.golsCAP}</span>
                         <span class="text-stone-600 text-[10px]">X</span>
-                        <span class="text-white font-black">${item.golsBota} BOTA</span>
+                        <span class="text-white font-black">${item.golsCFC} CFC</span>
                     </div>
                 </li>`;
             });
@@ -3098,7 +3028,7 @@
                 grupo.rodadas.forEach(item => {
                     tabelaHtml += `<tr class="border-b border-stone-800 text-center text-xs">
                         <td class="p-2 text-stone-400 font-mono">${item.data}</td>
-                        <td class="p-2 font-mono">FLU <strong class="text-emerald-400">${item.golsFlu}</strong> x <strong class="text-white">${item.golsBota}</strong> BOTA</td>
+                        <td class="p-2 font-mono">CAP <strong class="text-red-500">${item.golsCAP}</strong> x <strong class="text-white">${item.golsCFC}</strong> CFC</td>
                         <td class="p-2"><button onclick="window.excluirRodadaHistorico('${item.id}')" class="text-red-500 hover:text-red-400 px-2 py-1 bg-stone-800 rounded transition"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>`;
                 });
@@ -3357,7 +3287,7 @@
             const camposPublicos = ['id', 'nome', 'camisa', 'time', 'gols', 'amarelos', 'vermelho', 'histAmarelos', 'histVermelhos'];
             const atletaPublico = Object.fromEntries(camposPublicos.map(campo => [campo, novoAtleta[campo]]));
             const atletaPrivado = { pagamentos: {} };
-            const ordemTimes = { BOTAFOGO: 0, FLUMINENSE: 1 };
+            const ordemTimes = { CFC: 0, CAP: 1 };
             let idDuplicado = false;
             let privadoCriado = false;
             let transacaoPublicaIniciada = false;
@@ -3448,7 +3378,7 @@
             let html = ''; 
             window.atletasCache.forEach(a => { 
                 html += `<tr class="border-b border-stone-800 text-xs">
-                    <td class="p-2.5 font-bold">${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</td>
+                    <td class="p-2.5 font-bold">${a.nome} (${a.time === 'CAP' ? 'CAP' : 'CFC'})</td>
                     <td class="p-2.5 text-center font-mono">#${a.camisa}</td>
                     <td class="p-2.5 text-center"><button onclick="window.excluirAtleta('${a.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`; 
@@ -3466,16 +3396,16 @@
 
         function atualizarScoutsSemPerderPosicao() {
             const y = window.scrollY || document.documentElement.scrollTop || 0;
-            const abertoBota = !document.getElementById('scouts-list-BOTAFOGO')?.classList.contains('hidden');
-            const abertoFlu = !document.getElementById('scouts-list-FLUMINENSE')?.classList.contains('hidden');
+            const abertoCFC = !document.getElementById('scouts-list-CFC')?.classList.contains('hidden');
+            const abertoCAP = !document.getElementById('scouts-list-CAP')?.classList.contains('hidden');
             renderAdminScouts();
-            if (abertoBota) {
-                document.getElementById('scouts-list-BOTAFOGO')?.classList.remove('hidden');
-                document.querySelector('[onclick*="BOTAFOGO"] .chevron')?.classList.add('rotate-90');
+            if (abertoCFC) {
+                document.getElementById('scouts-list-CFC')?.classList.remove('hidden');
+                document.querySelector('[onclick*="CFC"] .chevron')?.classList.add('rotate-90');
             }
-            if (abertoFlu) {
-                document.getElementById('scouts-list-FLUMINENSE')?.classList.remove('hidden');
-                document.querySelector('[onclick*="FLUMINENSE"] .chevron')?.classList.add('rotate-90');
+            if (abertoCAP) {
+                document.getElementById('scouts-list-CAP')?.classList.remove('hidden');
+                document.querySelector('[onclick*="CAP"] .chevron')?.classList.add('rotate-90');
             }
             atualizarResumosAposScout();
             requestAnimationFrame(() => window.scrollTo(0, y));
@@ -3643,17 +3573,17 @@
             if (!container) return;
 
             const times = {
-                "BOTAFOGO": { nome: "Botafogo", key: "BOTA", cor: "text-white", icon: "🏁", atletas: [] },
-                "FLUMINENSE": { nome: "Fluminense", key: "FLU", cor: "text-emerald-500", icon: "🇮🇹", atletas: [] }
+                "CFC": { nome: "Coritiba", key: "CFC", cor: "text-white", icon: "🏁", atletas: [] },
+                "CAP": { nome: "Athletico Paranaense", key: "CAP", cor: "text-red-500", icon: "🔴⚫", atletas: [] }
             };
 
             window.atletasCache.forEach(a => {
-                const timeKey = (a.time || "BOTAFOGO").toUpperCase();
+                const timeKey = (a.time || "CFC").toUpperCase();
                 if (times[timeKey]) times[timeKey].atletas.push(a);
             });
 
             let html = '';
-            const mois = ["BOTAFOGO", "FLUMINENSE"];
+            const mois = ["CFC", "CAP"];
 
             mois.forEach(tKey => {
                 const t = times[tKey];
@@ -3876,23 +3806,23 @@
             if (submitButton) submitButton.disabled = true;
             try {
                 const data = document.getElementById('sum-data').value;
-                const pb = document.getElementById('sum-placar-bota').value;
-                const pf = document.getElementById('sum-placar-flu').value;
-                const botaGols = document.getElementById('sum-bota-gols').value;
-                const botaAm = document.getElementById('sum-bota-amarelos').value;
-                const botaVer = document.getElementById('sum-bota-vermelhos').value;
-                const fluGols = document.getElementById('sum-flu-gols').value;
-                const fluAm = document.getElementById('sum-flu-amarelos').value;
-                const fluVer = document.getElementById('sum-flu-vermelhos').value;
+                const pb = document.getElementById('sum-placar-cfc').value;
+                const pf = document.getElementById('sum-placar-cap').value;
+                const cfcGols = document.getElementById('sum-cfc-gols').value;
+                const cfcAm = document.getElementById('sum-cfc-amarelos').value;
+                const cfcVer = document.getElementById('sum-cfc-vermelhos').value;
+                const capGols = document.getElementById('sum-cap-gols').value;
+                const capAm = document.getElementById('sum-cap-amarelos').value;
+                const capVer = document.getElementById('sum-cap-vermelhos').value;
                 const obs = document.getElementById('sum-obs').value;
                 if (!data) { window.mostrarToast('Data é obrigatória!', true); return; }
 
                 const editId = window.editandoSumulaId ? String(window.editandoSumulaId) : null;
                 const idSumula = editId || 'sum_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
                 const proposta = {
-                    id: idSumula, data, placarBota: pb, placarFlu: pf,
-                    bota: {gols: botaGols, am: botaAm, ver: botaVer},
-                    flu: {gols: fluGols, am: fluAm, ver: fluVer}, obs
+                    id: idSumula, data, placarCFC: pb, placarCAP: pf,
+                    cfc: {gols: cfcGols, am: cfcAm, ver: cfcVer},
+                    cap: {gols: capGols, am: capAm, ver: capVer}, obs
                 };
                 const salvo = await enqueueAdminTransaction('public', currentValue => {
                     const nextData = cloneAdminSaveValue(currentValue) || {};
@@ -3930,14 +3860,14 @@
             if (!s) return;
 
             document.getElementById('sum-data').value = s.data;
-            document.getElementById('sum-placar-bota').value = s.placarBota || '';
-            document.getElementById('sum-placar-flu').value = s.placarFlu || '';
-            document.getElementById('sum-bota-gols').value = s.bota?.gols || '';
-            document.getElementById('sum-bota-amarelos').value = s.bota?.am || '';
-            document.getElementById('sum-bota-vermelhos').value = s.bota?.ver || '';
-            document.getElementById('sum-flu-gols').value = s.flu?.gols || '';
-            document.getElementById('sum-flu-amarelos').value = s.flu?.am || '';
-            document.getElementById('sum-flu-vermelhos').value = s.flu?.ver || '';
+            document.getElementById('sum-placar-cfc').value = s.placarCFC || '';
+            document.getElementById('sum-placar-cap').value = s.placarCAP || '';
+            document.getElementById('sum-cfc-gols').value = s.cfc?.gols || '';
+            document.getElementById('sum-cfc-amarelos').value = s.cfc?.am || '';
+            document.getElementById('sum-cfc-vermelhos').value = s.cfc?.ver || '';
+            document.getElementById('sum-cap-gols').value = s.cap?.gols || '';
+            document.getElementById('sum-cap-amarelos').value = s.cap?.am || '';
+            document.getElementById('sum-cap-vermelhos').value = s.cap?.ver || '';
             document.getElementById('sum-obs').value = s.obs || '';
             window.editandoSumulaId = id;
             document.getElementById('titulo-form-sumula').innerHTML = '<i class="fa-solid fa-pen"></i> Editando Súmula';
@@ -3991,9 +3921,9 @@
                             <p class="text-xs font-bold text-white">${dataF}</p>
                             <div class="flex items-center gap-3">
                                 <span class="text-[10px] font-mono">
-                                    <span class="text-white">BOTA</span> <strong class="text-white">${s.placarBota || 0}</strong>
+                                    <span class="text-white">CFC</span> <strong class="text-white">${s.placarCFC || 0}</strong>
                                     <span class="text-stone-600">x</span>
-                                    <strong class="text-emerald-400">${s.placarFlu || 0}</strong> <span class="text-emerald-400">FLU</span>
+                                    <strong class="text-red-400">${s.placarCAP || 0}</strong> <span class="text-red-400">CAP</span>
                                 </span>
                                 <button onclick="window.editarSumula('${s.id}')" class="text-amber-400 hover:text-amber-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded" title="Editar súmula"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="window.excluirSumula('${s.id}')" class="text-red-400 hover:text-red-300 transition text-[10px] px-1.5 py-1 bg-stone-700/50 rounded" title="Excluir súmula"><i class="fa-solid fa-trash"></i></button>
@@ -4001,42 +3931,42 @@
                         </div>
                         <div class="divide-y divide-stone-800/60">
                             <div>
-                                <button onclick="document.getElementById('s-bota-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-bota-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
-                                    <span><i class="fa-solid fa-chevron-right chevron-bota-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🏁 Botafogo</span>
-                                    <span class="text-[10px] text-stone-500">${(s.bota?.gols?.trim() ? '⚽' : '')} ${(s.bota?.am?.trim() ? '🟨' : '')} ${(s.bota?.ver?.trim() ? '🟥' : '')}</span>
+                                <button onclick="document.getElementById('s-cfc-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-cfc-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
+                                    <span><i class="fa-solid fa-chevron-right chevron-cfc-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🟢⚪ Coritiba</span>
+                                    <span class="text-[10px] text-stone-500">${(s.cfc?.gols?.trim() ? '⚽' : '')} ${(s.cfc?.am?.trim() ? '🟨' : '')} ${(s.cfc?.ver?.trim() ? '🟥' : '')}</span>
                                 </button>
-                                <div id="s-bota-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
+                                <div id="s-cfc-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
-                                        <span class="text-stone-300 text-[10px]">${s.bota?.gols || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cfc?.gols || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
-                                        <span class="text-stone-300 text-[10px]">${s.bota?.am || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cfc?.am || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
-                                        <span class="text-stone-300 text-[10px]">${s.bota?.ver || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cfc?.ver || '---'}</span>
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <button onclick="document.getElementById('s-flu-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-flu-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
-                                    <span><i class="fa-solid fa-chevron-right chevron-flu-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🔥 Fluminense</span>
-                                    <span class="text-[10px] text-stone-500">${(s.flu?.gols?.trim() ? '⚽' : '')} ${(s.flu?.am?.trim() ? '🟨' : '')} ${(s.flu?.ver?.trim() ? '🟥' : '')}</span>
+                                <button onclick="document.getElementById('s-cap-${s.id}').classList.toggle('hidden'); this.querySelector('.chevron-cap-${s.id}').classList.toggle('rotate-90')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-white hover:text-amber-400 transition">
+                                    <span><i class="fa-solid fa-chevron-right chevron-cap-${s.id} text-[8px] mr-2 text-stone-600 transition-transform duration-200"></i> 🔴⚫ Athletico Paranaense</span>
+                                    <span class="text-[10px] text-stone-500">${(s.cap?.gols?.trim() ? '⚽' : '')} ${(s.cap?.am?.trim() ? '🟨' : '')} ${(s.cap?.ver?.trim() ? '🟥' : '')}</span>
                                 </button>
-                                <div id="s-flu-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
+                                <div id="s-cap-${s.id}" class="hidden space-y-2 p-3 bg-black/20">
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">⚽ Gols</p>
-                                        <span class="text-stone-300 text-[10px]">${s.flu?.gols || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cap?.gols || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟨 Amarelos</p>
-                                        <span class="text-stone-300 text-[10px]">${s.flu?.am || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cap?.am || '---'}</span>
                                     </div>
                                     <div>
                                         <p class="text-[9px] text-stone-500 uppercase font-black mb-1">🟥 Vermelhos</p>
-                                        <span class="text-stone-300 text-[10px]">${s.flu?.ver || '---'}</span>
+                                        <span class="text-stone-300 text-[10px]">${s.cap?.ver || '---'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -4053,13 +3983,13 @@
             let html = '';
             window.sumulasCache.forEach((s, idx) => {
                 const dataF = s.data.split('-').reverse().join('/');
-                const pb = parseInt(s.placarBota || 0);
-                const pf = parseInt(s.placarFlu || 0);
+                const pb = parseInt(s.placarCFC || 0);
+                const pf = parseInt(s.placarCAP || 0);
                 
                 let resultText = '';
                 let resultClass = '';
-                if (pb > pf) { resultText = 'Vitória do Botafogo'; resultClass = 'text-white'; }
-                else if (pf > pb) { resultText = 'Vitória do Fluminense'; resultClass = 'text-emerald-400'; }
+                if (pb > pf) { resultText = 'Vitória do Coritiba'; resultClass = 'text-white'; }
+                else if (pf > pb) { resultText = 'Vitória do Athletico Paranaense'; resultClass = 'text-red-400'; }
                 else { resultText = 'Empate'; resultClass = 'text-amber-500'; }
 
                 html += `
@@ -4072,13 +4002,13 @@
                             </div>
                             <div class="flex items-center justify-center gap-4 py-2">
                                 <div class="text-right flex-1">
-                                    <p class="text-[10px] font-black text-white uppercase truncate">Botafogo</p>
+                                    <p class="text-[10px] font-black text-white uppercase truncate">Coritiba</p>
                                     <p class="text-3xl font-black text-white">${pb}</p>
                                 </div>
                                 <div class="text-stone-700 font-black text-xl italic">X</div>
                                 <div class="text-left flex-1">
-                                    <p class="text-[10px] font-black text-emerald-500 uppercase truncate">Fluminense</p>
-                                    <p class="text-3xl font-black text-emerald-500">${pf}</p>
+                                    <p class="text-[10px] font-black text-red-500 uppercase truncate">Athletico Paranaense</p>
+                                    <p class="text-3xl font-black text-red-500">${pf}</p>
                                 </div>
                             </div>
                             <div class="flex justify-between items-center">
@@ -4091,22 +4021,22 @@
                         <div id="sumula-detalhes-${idx}" class="hidden p-5 space-y-6">
                             <div class="relative pl-4 border-l-4 border-white/20">
                                 <h5 class="text-xs font-black text-white uppercase mb-2 flex items-center gap-2">
-                                    <i class="fa-solid fa-flag"></i> Botafogo 🏁
+                                    <i class="fa-solid fa-flag"></i> Coritiba 🏁
                                 </h5>
                                 <div class="space-y-1.5 text-[11px]">
-                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.bota.gols || '---'}</p>
-                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.bota.am || '---'}</p>
-                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.bota.ver || '00'}</p>
+                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.cfc.gols || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.cfc.am || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.cfc.ver || '00'}</p>
                                 </div>
                             </div>
                             <div class="relative pl-4 border-l-4 border-emerald-500/40">
                                 <h5 class="text-xs font-black text-emerald-500 uppercase mb-2 flex items-center gap-2">
-                                    <i class="fa-solid fa-flag"></i> Fluminense 🇧🇬
+                                    <i class="fa-solid fa-flag"></i> Athletico Paranaense 🇧🇬
                                 </h5>
                                 <div class="space-y-1.5 text-[11px]">
-                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.flu.gols || '---'}</p>
-                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.flu.am || '---'}</p>
-                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.flu.ver || '00'}</p>
+                                    <p class="text-stone-300"><span class="text-emerald-400 font-bold mr-1"><i class="fa-solid fa-soccer-ball"></i> GOLS:</span> ${s.cap.gols || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-amber-500 font-bold mr-1"><i class="fa-solid fa-square"></i> AMARELOS:</span> ${s.cap.am || '---'}</p>
+                                    <p class="text-stone-300"><span class="text-red-500 font-bold mr-1"><i class="fa-solid fa-square"></i> VERMELHOS:</span> ${s.cap.ver || '00'}</p>
                                 </div>
                             </div>
                             ${s.obs ? `
@@ -5559,28 +5489,28 @@
 
     <script>
         window.setAppTheme = function(theme) {
-            document.body.classList.remove('theme-botafogo', 'theme-fluminense');
-            document.body.classList.add('theme-' + theme);
+            const canonical = theme === 'athletico' ? 'athletico' : 'coritiba';
+            document.body.classList.remove('theme-athletico', 'theme-coritiba');
+            document.body.classList.add('theme-' + canonical);
             const teamDisplay = document.getElementById('theme-team-name');
             if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'ATLÉTICO-PR' : 'CORITIBA';
-                if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = '#c8102e'; teamDisplay.style.color = 'white';
-                } else {
-                    teamDisplay.style.backgroundColor = '#006b3f'; teamDisplay.style.color = 'white';
-                }
+                const isAthletico = canonical === 'athletico';
+                teamDisplay.innerText = isAthletico ? 'ATHLETICO PARANAENSE' : 'CORITIBA';
+                teamDisplay.style.backgroundColor = isAthletico ? '#c8102e' : '#006b3f';
+                teamDisplay.style.color = 'white';
+                teamDisplay.setAttribute('aria-label', `Tema atual: ${isAthletico ? 'Athletico Paranaense' : 'Coritiba'}. Toque para alternar.`);
             }
-            teamDisplay?.setAttribute('aria-label', `Tema atual: ${theme === 'botafogo' ? 'Atlético-PR' : 'Coritiba'}. Toque para alternar.`);
             teamDisplay?.setAttribute('title', 'Toque para alternar o tema');
-            localStorage.setItem('baba_app_theme', theme);
+            localStorage.setItem('baba_app_theme', canonical);
         };
         window.alternarTemaApp = function() {
-            const proximoTema = document.body.classList.contains('theme-botafogo') ? 'fluminense' : 'botafogo';
-            window.setAppTheme(proximoTema);
+            window.setAppTheme(document.body.classList.contains('theme-athletico') ? 'coritiba' : 'athletico');
         };
         document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('baba_app_theme') || 'fluminense';
-            window.setAppTheme(saved);
+            const saved = localStorage.getItem('baba_app_theme');
+            // Map prior saved theme identifiers to the matching official club colors.
+            const mapped = saved === 'botafogo' || saved === 'athletico' ? 'athletico' : 'coritiba';
+            window.setAppTheme(mapped);
         });
     </script>
 
@@ -5988,7 +5918,7 @@
                     itemHtml += `<div class="flex items-center justify-between">`;
                     if (d.camisa) itemHtml += `<span class="text-[10px] text-stone-500 font-mono">#${d.camisa}</span>`;
                     itemHtml += `<span class="text-xs font-bold text-stone-200">${d.nome}</span>`;
-                    if (d.time) itemHtml += `<span class="text-[9px] ${d.time === 'fluminense' ? 'text-red-400' : 'text-stone-400'} uppercase font-black">${d.time === 'fluminense' ? '⚪ FLU' : '⚫ BOTA'}</span>`;
+                    if (d.time) itemHtml += `<span class="text-[9px] ${d.time === 'CAP' ? 'text-red-400' : 'text-stone-400'} uppercase font-black">${d.time === 'CAP' ? '🔴⚫ CAP' : '🟢⚪ CFC'}</span>`;
                     itemHtml += `</div>`;
                     if (d.valor) itemHtml += `<p class="text-[10px] text-stone-400 mt-1">Valor: <span class="font-bold text-${n.tipo === 'cobranca' ? 'red' : 'orange'}-400">R$ ${Number(d.valor).toFixed(2)}</span></p>`;
                     if (d.motivo) itemHtml += `<p class="text-[10px] text-stone-400">Motivo: ${d.motivo}</p>`;
@@ -6218,7 +6148,7 @@
                         });
                         const debito = multas > 0 ? VALOR_MENSALIDADE + multas : VALOR_MENSALIDADE;
                         return `<div class="flex justify-between items-center py-2">
-                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})</span></span>
+                            <span class="text-stone-300 font-bold">${a.nome} <span class="text-[9px] text-stone-500">(${a.time === 'CAP' ? 'CAP' : 'CFC'})</span></span>
                             <span class="text-[10px] font-mono font-black ${multas > 0 ? 'text-orange-400' : 'text-red-400'}">R$ ${debito.toFixed(2)}</span>
                         </div>`;
                     }).join('');
@@ -6271,7 +6201,7 @@
                     return !window.verificarPago(a.pagamentos, mesAtual, a);
                 });
                 titulo = `📬 Cobrança de Mensalidade - ${mesNome.toUpperCase()}`;
-                corpo = alvos.map(a => `• ${a.nome} (${a.time === 'FLUMINENSE' ? 'FLU' : 'BOTA'})`).join('\n');
+                corpo = alvos.map(a => `• ${a.nome} (${a.time === 'CAP' ? 'CAP' : 'CFC'})`).join('\n');
                 if (!corpo) corpo = 'Nenhum atleta pendente.';
                 if (customText) customText.classList.add('hidden');
             } else if (tipo === 'multas') {
@@ -6750,7 +6680,6 @@
         // A navegação entre telas é feita somente pelos ícones do menu.
     </script>
 
-    <script src="./bolao-firebase.js"></script>
 
 </body>
 </html>
