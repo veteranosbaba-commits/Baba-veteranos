@@ -345,14 +345,15 @@
         }
     
         /* Assistente público por voz — somente leitura do cache público já carregado pelo app. */
-        #baba-assistant-launcher{position:fixed;right:14px;bottom:82px;z-index:49;min-height:48px;border:1px solid #6ee7b7;border-radius:999px;background:#064e3b;color:#ecfdf5;padding:0 16px;font-weight:900;box-shadow:0 8px 24px #0008}
+        #baba-assistant-launcher{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom, 0px) + 112px);z-index:49;min-height:48px;border:1px solid #6ee7b7;border-radius:999px;background:#064e3b;color:#ecfdf5;padding:0 16px;font-weight:900;box-shadow:0 8px 24px #0008}
+        body.snake-fullscreen #baba-assistant-launcher{display:none !important}
         #baba-assistant-overlay{position:fixed;inset:0;z-index:90;background:#000b;padding:16px;display:flex;align-items:center;justify-content:center}
         #baba-assistant-overlay.hidden{display:none}
         #baba-assistant-card{width:min(100%,480px);max-height:min(82vh,720px);overflow:auto;border:1px solid #34d399;background:#111827;color:#f5f5f4;border-radius:20px;padding:20px;box-shadow:0 20px 60px #000b}
         #baba-assistant-card button{min-height:48px}
         #baba-assistant-question{width:100%;min-height:48px;border:1px solid #78716c;border-radius:12px;background:#1c1917;color:white;padding:12px;margin:8px 0}
         #baba-assistant-answer{min-height:68px;white-space:pre-wrap;line-height:1.6}
-        @media(max-width:380px){#baba-assistant-launcher{right:8px;bottom:74px;padding:0 12px;font-size:13px}}
+        @media(max-width:380px){#baba-assistant-launcher{left:8px;padding:0 12px;font-size:13px}}
 </style>
 
     <style>
@@ -915,7 +916,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 72</span>
+                <span class="font-bold">Versão 73</span>
             </footer>
         </div>
 
