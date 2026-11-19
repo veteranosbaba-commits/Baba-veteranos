@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#064e3b">
+<title>Baba Veteranos · Assistente por voz (teste)</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--card:#182436;--line:#34475e;--text:#f3f7fc;--muted:#c1cde0;--green:#9cf0bd;--blue:#a8d4ff;--amber:#ffe39b;--red:#ffb2b2}*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#0d1727,#17352f);font:18px/1.5 system-ui,sans-serif;color:var(--text);min-height:100vh;padding:20px 14px}.wrap{max-width:680px;margin:auto}.banner,.card{border-radius:18px;padding:20px;margin:14px 0}.banner{background:#332d1d;border:2px solid #705e27;color:var(--amber);font-weight:750}.card{background:var(--card);border:1px solid var(--line);box-shadow:0 12px 35px #0003}h1{font-size:1.6rem;margin:16px 0 6px}h2{font-size:1.15rem;margin:0 0 12px}.muted{color:var(--muted)}button,input{font:inherit}button{min-height:58px;border:0;border-radius:14px;padding:12px 18px;font-weight:800;cursor:pointer}button:focus-visible,input:focus-visible{outline:4px solid var(--blue);outline-offset:3px}.mic{width:100%;font-size:1.15rem;background:#16864b;color:white}.secondary{background:#34465c;color:white}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.row button{flex:1}label{display:block;font-weight:750;margin:8px 0}.question{display:flex;gap:9px;flex-wrap:wrap}input{flex:1;min-width:190px;background:#0e1928;color:var(--text);border:2px solid #52677f;border-radius:12px;padding:13px}.answer{font-size:1.2rem;font-weight:750;min-height:82px;padding:15px;border-radius:12px;background:#0e1928;border:1px solid var(--line);white-space:pre-wrap}.status{font-size:1rem;min-height:1.5em}.small{font-size:.95rem}.example{display:inline-block;background:#293a50;padding:5px 9px;border-radius:9px;margin:4px 3px 0 0;color:var(--text)}[hidden]{display:none!important}@media(max-width:450px){body{font-size:17px;padding:14px 10px}.card{padding:16px}.row button{min-width:100%}}
+</style>
+</head>
+<body><main class="wrap">
+<div class="banner" role="note">Protótipo isolado de teste — usa apenas o Firebase de teste. Não é o app oficial nem publica respostas no grupo do WhatsApp.</div>
+<h1>Ajuda do Baba Veteranos</h1>
+<p class="muted">Faça uma pergunta falando ou escrevendo. Por enquanto, este teste responde sobre o último placar registrado.</p>
+<section class="card" aria-labelledby="voiceTitle">
+  <h2 id="voiceTitle">Perguntar por voz</h2>
+  <button id="mic" class="mic" type="button" aria-describedby="micHint">🎙️ Toque para falar</button>
+  <p id="micHint" class="muted small">O navegador pode pedir permissão para usar o microfone. A fala não é gravada pelo app.</p>
+  <p id="status" class="status" role="status" aria-live="polite">Pronto para ajudar.</p>
+</section>
+<section class="card">
+  <h2>Ou escreva sua pergunta</h2>
+  <label for="question">Exemplo: “Qual foi o último placar?”</label>
+  <div class="question"><input id="question" autocomplete="off" placeholder="Digite ou use o microfone"><button id="ask" class="secondary" type="button">Perguntar</button></div>
+</section>
+<section class="card" aria-labelledby="answerTitle">
+  <h2 id="answerTitle">Resposta</h2>
+  <div id="answer" class="answer" role="status" aria-live="polite">Ainda não fizemos uma consulta.</div>
+  <div class="row"><button id="readAgain" class="secondary" type="button" disabled>🔊 Ouvir resposta</button></div>
+</section>
+<section class="card">
+ <h2>O que este protótipo acessa</h2>
+ <p class="muted small">Somente o histórico público de placares do projeto Firebase de teste. A consulta é apenas de leitura; não acessa contas, atletas, finanças, senhas ou dados privados e não grava nada.</p>
+</section>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(() => {
+  'use strict';
+  const cfg={apiKey:'AIzaSyCgHDw9YYsIjwEGCpeuh8-ndEWl_eWX4Ao',authDomain:'baba-veteranos---teste-auth.firebaseapp.com',databaseURL:'https://baba-veteranos---teste-auth-default-rtdb.firebaseio.com',projectId:'baba-veteranos---teste-auth',storageBucket:'baba-veteranos---teste-auth.firebasestorage.app',messagingSenderId:'693322003433',appId:'1:693322003433:web:23a0bb93a914adf0f3d178'};
+  const $=id=>document.getElementById(id); let db=null,lastAnswer='';
+  function say(text){$('answer').textContent=text;lastAnswer=text;$('readAgain').disabled=!('speechSynthesis'in window);if('speechSynthesis'in window){speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='pt-BR';speechSynthesis.speak(utterance)}}
+  function dateKey(value){const m=String(value||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:''}
+  function rows(value){return Array.isArray(value)?value.filter(Boolean):value&&typeof value==='object'?Object.values(value).filter(Boolean):[]}
+  async function answerQuestion(text){const q=String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();if(!q.trim()){say('Não entendi a pergunta. Pode perguntar qual foi o último placar?');return}
+    const supported=(q.includes('placar')||q.includes('resultado'))&&(q.includes('ultimo')||q.includes('mais recente')||q.includes('atual')||q.includes('jogo'));
+    if(!supported){say('Neste teste, ainda só consigo informar o último placar. Pergunte: qual foi o último placar?');return}
+    $('status').textContent='Consultando o placar público…';$('ask').disabled=true;$('mic').disabled=true;
+    try{if(!db)throw new Error('firebase-not-initialized');const snap=await db.ref('baba/public/data/historicoPlacares').once('value');const history=rows(snap.val()).filter(x=>x&&x.golsCAP!==undefined&&x.golsCFC!==undefined);history.sort((a,b)=>dateKey(b.data).localeCompare(dateKey(a.data)));if(!history.length){say('Ainda não encontrei placares registrados no histórico público de teste.');$('status').textContent='Consulta concluída.';return}
+      const r=history[0],date=String(r.data||'');say(`O último placar registrado foi CAP ${r.golsCAP} a ${r.golsCFC} CFC${date?`, em ${date}`:''}.`);$('status').textContent='Consulta concluída.';
+    }catch(e){console.error('Falha na consulta pública:',e?.code||e?.message||'erro');say('Não consegui consultar o histórico público de teste. Nenhum dado foi alterado.');$('status').textContent='A consulta não ficou disponível; tente novamente mais tarde.'}
+    finally{$('ask').disabled=false;$('mic').disabled=false}
+  }
+  try{firebase.initializeApp(cfg);db=firebase.database()}catch(e){$('status').textContent='Não foi possível inicializar o serviço de teste.'}
+  $('ask').addEventListener('click',()=>answerQuestion($('question').value));$('question').addEventListener('keydown',e=>{if(e.key==='Enter')answerQuestion($('question').value)});$('readAgain').addEventListener('click',()=>{if(lastAnswer&&'speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(lastAnswer);u.lang='pt-BR';speechSynthesis.speak(u)}});
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){$('mic').disabled=true;$('mic').textContent='Microfone indisponível neste navegador';$('micHint').textContent='Você ainda pode escrever sua pergunta. Tente um navegador atualizado com suporte a reconhecimento de voz.'}
+  else{$('mic').addEventListener('click',()=>{const recognition=new SpeechRecognition();recognition.lang='pt-BR';recognition.interimResults=false;recognition.maxAlternatives=1;$('mic').disabled=true;$('status').textContent='Pode falar; estou ouvindo…';recognition.onresult=e=>{const transcript=e.results?.[0]?.[0]?.transcript||'';$('question').value=transcript;$('status').textContent=`Entendi: “${transcript}”`;void answerQuestion(transcript)};recognition.onerror=()=>{$('status').textContent='Não consegui ouvir. Tente novamente ou escreva a pergunta.';$('mic').disabled=false};recognition.onend=()=>{$('mic').disabled=false};try{recognition.start()}catch(e){$('status').textContent='Não foi possível iniciar o microfone. Tente de novo ou escreva.';$('mic').disabled=false}})}
+})();
+</script>
+</body></html>
