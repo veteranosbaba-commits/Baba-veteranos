@@ -6681,5 +6681,83 @@
     </script>
 
 
+    <div id="baba-install-modal" class="hidden fixed inset-0 z-[160] items-center justify-center bg-black/85 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="baba-install-title" aria-describedby="baba-install-help">
+        <section class="w-full max-w-sm rounded-2xl border border-emerald-600 bg-stone-900 p-5 shadow-2xl">
+            <h2 id="baba-install-title" class="text-base font-black text-emerald-300"><i class="fa-solid fa-mobile-screen-button mr-2"></i>Instale o Baba Veteranos</h2>
+            <p class="mt-2 text-sm text-stone-200">Adicione o atalho à tela inicial para abrir o aplicativo mais facilmente.</p>
+            <p id="baba-install-help" class="mt-3 rounded-xl bg-stone-800 p-3 text-xs leading-relaxed text-stone-300"></p>
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="baba-install-dismiss" type="button" class="rounded-lg border border-stone-600 px-4 py-2 text-xs font-bold text-stone-300">Fechar</button>
+                <button id="baba-install-action" type="button" class="hidden rounded-lg bg-emerald-500 px-4 py-2 text-xs font-black text-stone-950">Instalar aplicativo</button>
+            </div>
+        </section>
+    </div>
+    <script>
+        (() => {
+            const storageKey = 'baba_install_nudge_open_count_v1';
+            const installedKey = 'baba_app_installed_v1';
+            let installPromptEvent = null;
+            const modal = document.getElementById('baba-install-modal');
+            const help = document.getElementById('baba-install-help');
+            const installButton = document.getElementById('baba-install-action');
+            const dismissButton = document.getElementById('baba-install-dismiss');
+            if (!modal || !help || !installButton || !dismissButton) return;
+
+            const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const instructions = () => {
+                const ua = navigator.userAgent || '';
+                if (/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+                    return 'No iPhone ou iPad: toque em Compartilhar no navegador e escolha “Adicionar à Tela de Início”.';
+                }
+                if (/Android/i.test(ua)) {
+                    return 'No menu ⋮ do navegador, escolha “Instalar app” ou “Adicionar à tela inicial”.';
+                }
+                return 'No menu do navegador ou no ícone de instalação da barra de endereço, escolha “Instalar Baba Veteranos” ou “Criar atalho”.';
+            };
+            const close = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+            dismissButton.addEventListener('click', close);
+            modal.addEventListener('click', event => { if (event.target === modal) close(); });
+            installButton.addEventListener('click', async () => {
+                if (!installPromptEvent) return;
+                const event = installPromptEvent;
+                installPromptEvent = null;
+                try {
+                    await event.prompt();
+                    const choice = await event.userChoice;
+                    if (choice && choice.outcome === 'accepted') {
+                        localStorage.setItem(installedKey, '1');
+                    }
+                } catch (_) {}
+                close();
+            });
+            window.addEventListener('beforeinstallprompt', event => {
+                event.preventDefault();
+                installPromptEvent = event;
+                installButton.classList.remove('hidden');
+            });
+            window.addEventListener('appinstalled', () => {
+                try { localStorage.setItem(installedKey, '1'); } catch (_) {}
+                close();
+            });
+            document.addEventListener('DOMContentLoaded', () => {
+                if (isStandalone()) return;
+                let opens = 0;
+                try {
+                    if (localStorage.getItem(installedKey) === '1') return;
+                    opens = Number(localStorage.getItem(storageKey) || '0');
+                    if (!Number.isFinite(opens) || opens < 0) opens = 0;
+                    if (opens >= 2) return;
+                    localStorage.setItem(storageKey, String(opens + 1));
+                } catch (_) { return; }
+                help.textContent = instructions();
+                if (installPromptEvent) installButton.classList.remove('hidden');
+                setTimeout(() => {
+                    if (isStandalone()) return;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }, 900);
+            });
+        })();
+    </script>
 </body>
 </html>
