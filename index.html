@@ -346,25 +346,26 @@
     </style>
 
     <style>
+        /* Os nomes internos das classes são preservados para não invalidar preferências locais salvas. */
         body.theme-botafogo {
-            background-color: #000000;
-            background-image: linear-gradient(90deg, #000000 50%, #ffffff 50%);
-            background-size: 80px 100%;
+            background-color: #c8102e;
+            background-image: linear-gradient(135deg, #c8102e 0%, #9e0b22 45%, #111111 45%, #050505 100%);
+            background-size: 100% 100%;
             background-attachment: fixed;
         }
         body.theme-botafogo::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); z-index: -1;
+            background: rgba(0, 0, 0, 0.76); z-index: -1;
         }
         body.theme-fluminense {
-            background-color: #800000;
-            background-image: linear-gradient(90deg, #800000 45%, #ffffff 45%, #ffffff 55%, #006400 55%);
-            background-size: 100px 100%;
+            background-color: #006b3f;
+            background-image: linear-gradient(90deg, #006b3f 0%, #087a49 42%, #f7f7f2 42%, #f7f7f2 47%, #006b3f 47%, #006b3f 53%, #f7f7f2 53%, #f7f7f2 58%, #006b3f 58%, #004d2e 100%);
+            background-size: 100% 100%;
             background-attachment: fixed;
         }
         body.theme-fluminense::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 0, 0, 0.88); z-index: -1;
+            background: rgba(0, 20, 10, 0.78); z-index: -1;
         }
     </style>
 
@@ -904,7 +905,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 66</span>
+                <span class="font-bold">Versão 67</span>
             </footer>
         </div>
 
@@ -5562,14 +5563,14 @@
             document.body.classList.add('theme-' + theme);
             const teamDisplay = document.getElementById('theme-team-name');
             if (teamDisplay) {
-                teamDisplay.innerText = theme === 'botafogo' ? 'BOTAFOGO' : 'FLUMINENSE';
+                teamDisplay.innerText = theme === 'botafogo' ? 'ATLÉTICO-PR' : 'CORITIBA';
                 if (theme === 'botafogo') {
-                    teamDisplay.style.backgroundColor = 'white'; teamDisplay.style.color = 'black';
+                    teamDisplay.style.backgroundColor = '#c8102e'; teamDisplay.style.color = 'white';
                 } else {
-                    teamDisplay.style.backgroundColor = '#800000'; teamDisplay.style.color = 'white';
+                    teamDisplay.style.backgroundColor = '#006b3f'; teamDisplay.style.color = 'white';
                 }
             }
-            teamDisplay?.setAttribute('aria-label', `Tema atual: ${theme === 'botafogo' ? 'Botafogo' : 'Fluminense'}. Toque para alternar.`);
+            teamDisplay?.setAttribute('aria-label', `Tema atual: ${theme === 'botafogo' ? 'Atlético-PR' : 'Coritiba'}. Toque para alternar.`);
             teamDisplay?.setAttribute('title', 'Toque para alternar o tema');
             localStorage.setItem('baba_app_theme', theme);
         };
