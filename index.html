@@ -905,7 +905,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 70</span>
+                <span class="font-bold">Versão 71</span>
             </footer>
         </div>
 
@@ -1461,7 +1461,10 @@
             </div>
             <form onsubmit="window.autenticarAdmin(event)" class="space-y-4">
                 <input type="email" id="login-user" autocomplete="username" placeholder="E-mail" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
-                <input type="password" id="login-pass" placeholder="Senha" required class="w-full bg-stone-800 border border-stone-600 p-2.5 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                <div class="relative">
+                    <input type="password" id="login-pass" placeholder="Senha" required class="w-full bg-stone-800 border border-stone-600 p-2.5 pr-12 rounded-lg text-sm text-white focus:ring-1 focus:ring-amber-500 outline-none">
+                    <button type="button" class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-stone-400 hover:text-amber-300" data-password-toggle="login-pass" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                </div>
                 <div id="login-erro" class="text-xs text-red-500 font-bold hidden">Credenciais incorretas!</div>
                 <button type="submit" class="w-full bg-amber-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest hover:bg-amber-400 transition">Entrar</button>
             </form>
@@ -1532,7 +1535,7 @@
     </div>
 
     <script>
-        // Alterna a visualização somente da senha do próprio campo de acesso do atleta.
+        // Alterna a visualização das senhas nos formulários de acesso do atleta e administrador.
         document.querySelectorAll('[data-password-toggle]').forEach(button => {
             button.addEventListener('click', () => {
                 const input = document.getElementById(button.dataset.passwordToggle);
