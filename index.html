@@ -905,7 +905,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 69</span>
+                <span class="font-bold">Versão 70</span>
             </footer>
         </div>
 
@@ -1478,7 +1478,10 @@
             <form onsubmit="window.entrarAtletaFirebase(event)" class="space-y-3">
                 <div id="athlete-auth-login-fields" class="space-y-3">
                     <input type="email" id="athlete-auth-email" autocomplete="username" placeholder="Seu e-mail" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
-                    <input type="password" id="athlete-auth-password" autocomplete="current-password" placeholder="Sua senha" required class="w-full bg-stone-800 border border-stone-600 p-3 rounded-lg text-sm text-white outline-none">
+                    <div class="relative">
+                        <input type="password" id="athlete-auth-password" autocomplete="current-password" placeholder="Sua senha" required class="w-full bg-stone-800 border border-stone-600 p-3 pr-12 rounded-lg text-sm text-white outline-none">
+                        <button type="button" class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-stone-400 hover:text-emerald-300" data-password-toggle="athlete-auth-password" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                    </div>
                     <button id="athlete-auth-submit" type="submit" class="w-full bg-emerald-500 text-stone-950 font-black p-3 rounded-lg text-xs uppercase tracking-widest">Entrar</button>
                 </div>
                 <p id="athlete-auth-message" class="hidden text-xs font-bold" aria-live="polite"></p>
@@ -1527,6 +1530,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Alterna a visualização somente da senha do próprio campo de acesso do atleta.
+        document.querySelectorAll('[data-password-toggle]').forEach(button => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.passwordToggle);
+                if (!input) return;
+                const showing = input.type === 'password';
+                input.type = showing ? 'text' : 'password';
+                button.setAttribute('aria-pressed', String(showing));
+                button.setAttribute('aria-label', showing ? 'Ocultar senha' : 'Mostrar senha');
+                button.title = showing ? 'Ocultar senha' : 'Mostrar senha';
+                const icon = button.querySelector('i');
+                if (icon) icon.className = showing ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            });
+        });
+    </script>
 
     <script>
         // =====================================================
