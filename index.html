@@ -343,7 +343,17 @@
             body.snake-fullscreen .snake-control.snake-action { width:86px; min-width:86px; height:38px; min-height:38px; }
             body.snake-fullscreen #snake-game-controls { gap:14px; margin-top:12px !important; }
         }
-    </style>
+    
+        /* Assistente público por voz — somente leitura do cache público já carregado pelo app. */
+        #baba-assistant-launcher{position:fixed;right:14px;bottom:82px;z-index:49;min-height:48px;border:1px solid #6ee7b7;border-radius:999px;background:#064e3b;color:#ecfdf5;padding:0 16px;font-weight:900;box-shadow:0 8px 24px #0008}
+        #baba-assistant-overlay{position:fixed;inset:0;z-index:90;background:#000b;padding:16px;display:flex;align-items:center;justify-content:center}
+        #baba-assistant-overlay.hidden{display:none}
+        #baba-assistant-card{width:min(100%,480px);max-height:min(82vh,720px);overflow:auto;border:1px solid #34d399;background:#111827;color:#f5f5f4;border-radius:20px;padding:20px;box-shadow:0 20px 60px #000b}
+        #baba-assistant-card button{min-height:48px}
+        #baba-assistant-question{width:100%;min-height:48px;border:1px solid #78716c;border-radius:12px;background:#1c1917;color:white;padding:12px;margin:8px 0}
+        #baba-assistant-answer{min-height:68px;white-space:pre-wrap;line-height:1.6}
+        @media(max-width:380px){#baba-assistant-launcher{right:8px;bottom:74px;padding:0 12px;font-size:13px}}
+</style>
 
     <style>
         /* Os nomes internos das classes são preservados para não invalidar preferências locais salvas. */
@@ -6923,5 +6933,58 @@
             });
         })();
     </script>
+
+    <button id="baba-assistant-launcher" type="button" aria-haspopup="dialog" aria-controls="baba-assistant-overlay"><i class="fa-solid fa-microphone mr-2" aria-hidden="true"></i>Ajuda do Baba</button>
+    <div id="baba-assistant-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="baba-assistant-title">
+      <section id="baba-assistant-card">
+        <div class="flex items-start justify-between gap-3">
+          <div><h2 id="baba-assistant-title" class="text-lg font-black text-emerald-300">Ajuda do Baba</h2><p class="text-xs text-stone-300 mt-1">Faça uma pergunta por voz ou escreva. Neste primeiro recurso, consulto apenas o último placar público.</p></div>
+          <button id="baba-assistant-close" type="button" class="rounded-lg border border-stone-600 px-3 py-2 text-sm font-bold" aria-label="Fechar ajuda">Fechar</button>
+        </div>
+        <button id="baba-assistant-mic" type="button" class="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 font-black text-white"><i class="fa-solid fa-microphone mr-2" aria-hidden="true"></i>Toque para perguntar</button>
+        <p class="mt-2 text-xs text-stone-400">O navegador pode enviar a fala ao serviço de reconhecimento de voz. Não fale senhas nem dados privados.</p>
+        <label for="baba-assistant-question" class="mt-4 block text-sm font-bold">Ou escreva sua pergunta</label>
+        <input id="baba-assistant-question" type="text" autocomplete="off" placeholder="Ex.: qual foi o último placar?">
+        <div class="flex gap-2"><button id="baba-assistant-ask" type="button" class="flex-1 rounded-xl bg-emerald-500 px-4 py-3 font-black text-stone-950">Perguntar</button><button id="baba-assistant-speak" type="button" class="rounded-xl border border-stone-600 px-4 py-3 font-bold" disabled>Ouvir</button></div>
+        <p id="baba-assistant-status" class="mt-3 text-sm text-stone-300" role="status" aria-live="polite">Pronto para ajudar.</p>
+        <div id="baba-assistant-answer" class="mt-2 rounded-xl border border-stone-700 bg-black/30 p-3 text-base font-bold" role="status" aria-live="polite">A resposta aparecerá aqui.</div>
+      </section>
+    </div>
+    <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const overlay = $('baba-assistant-overlay');
+      if (!overlay) return;
+      let lastAnswer = '';
+      const normalize = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const rows = value => Array.isArray(value) ? value.filter(Boolean) : value && typeof value === 'object' ? Object.values(value).filter(Boolean) : [];
+      const dateKey = value => { const text = String(value || ''); let m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; m = text.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[1]}-${m[2]}-${m[3]}` : ''; };
+      const answer = text => { $('baba-assistant-answer').textContent = text; lastAnswer = text; $('baba-assistant-speak').disabled = !('speechSynthesis' in window); if ('speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; speechSynthesis.speak(u); } };
+      function ask(raw) {
+        const q = normalize(raw);
+        if (!q.trim()) { answer('Pergunte, por exemplo: qual foi o último placar?'); return; }
+        if (!(q.includes('placar') || q.includes('resultado')) || !(q.includes('ultimo') || q.includes('recente') || q.includes('jogo') || q.includes('atual'))) { answer('Por enquanto consigo informar o último placar público. Pergunte: qual foi o último placar?'); return; }
+        if (!window.publicDataLoaded) { answer('Os dados públicos ainda estão carregando. Aguarde um pouco e tente novamente.'); return; }
+        const data = window.latestPublicDataSnapshot || {};
+        const history = rows(data.historicoPlacares || window.historicoPlacares).filter(item => item && item.golsCAP !== undefined && item.golsCFC !== undefined && dateKey(item.data));
+        history.sort((a,b) => dateKey(b.data).localeCompare(dateKey(a.data)));
+        if (!history.length) { answer('Ainda não encontrei placares registrados no histórico público.'); return; }
+        const latest = history[0];
+        answer(`O último placar registrado foi CAP ${latest.golsCAP} a ${latest.golsCFC} CFC${latest.data ? `, em ${latest.data}` : ''}.`);
+      }
+      function open() { overlay.classList.remove('hidden'); $('baba-assistant-question').focus(); }
+      function close() { overlay.classList.add('hidden'); if ('speechSynthesis' in window) speechSynthesis.cancel(); $('baba-assistant-launcher').focus(); }
+      $('baba-assistant-launcher').addEventListener('click', open); $('baba-assistant-close').addEventListener('click', close);
+      overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
+      $('baba-assistant-ask').addEventListener('click', () => ask($('baba-assistant-question').value));
+      $('baba-assistant-question').addEventListener('keydown', e => { if (e.key === 'Enter') ask(e.currentTarget.value); });
+      $('baba-assistant-speak').addEventListener('click', () => { if (lastAnswer && 'speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(lastAnswer); u.lang = 'pt-BR'; speechSynthesis.speak(u); } });
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition) { $('baba-assistant-mic').disabled = true; $('baba-assistant-mic').textContent = 'Microfone não disponível neste navegador'; }
+      else $('baba-assistant-mic').addEventListener('click', () => { const rec = new Recognition(); rec.lang = 'pt-BR'; rec.interimResults = false; $('baba-assistant-mic').disabled = true; $('baba-assistant-status').textContent = 'Pode falar; estou ouvindo…'; rec.onresult = e => { const text = e.results?.[0]?.[0]?.transcript || ''; $('baba-assistant-question').value = text; $('baba-assistant-status').textContent = text ? `Entendi: “${text}”` : 'Não consegui entender.'; ask(text); }; rec.onerror = () => { $('baba-assistant-status').textContent = 'Não consegui ouvir. Tente de novo ou escreva a pergunta.'; }; rec.onend = () => { $('baba-assistant-mic').disabled = false; }; try { rec.start(); } catch (_) { $('baba-assistant-mic').disabled = false; $('baba-assistant-status').textContent = 'Não foi possível iniciar o microfone. Escreva sua pergunta.'; } });
+    })();
+    </script>
 </body>
 </html>
+
