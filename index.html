@@ -905,7 +905,7 @@
             <footer id="app-release-info" class="text-center py-4 text-[10px] uppercase tracking-[0.2em] text-stone-500">
                 <span class="font-black text-stone-400">Baba Veteranos</span>
                 <span class="mx-1 text-stone-700">·</span>
-                <span class="font-bold">Versão 71</span>
+                <span class="font-bold">Versão 72</span>
             </footer>
         </div>
 
@@ -1001,6 +1001,11 @@
                 <h3 class="font-black text-amber-500 text-sm uppercase tracking-wider">Painel Administrativo</h3>
                 <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-black rounded-lg uppercase transition">Fechar</button>
             </div>
+            <section id="admin-athlete-link-panel" class="hidden rounded-2xl border border-emerald-700 bg-emerald-950/60 p-4 shadow-lg">
+                <h4 class="text-sm font-black uppercase tracking-wide text-emerald-300"><i class="fa-solid fa-link mr-1"></i> Seu cadastro de atleta</h4>
+                <p class="mt-1 text-xs text-stone-300">Vincule seu próprio cadastro ao mesmo login. Seu acesso de administrador será mantido; não precisa sair nem criar outra conta.</p>
+                <button type="button" onclick="window.abrirVinculoProprioAtleta()" class="mt-3 w-full rounded-xl bg-emerald-500 px-4 py-3 text-xs font-black text-stone-950 hover:bg-emerald-400">Vincular meu cadastro de atleta</button>
+            </section>
 
             <div class="flex border-b border-stone-800 text-xs font-bold bg-stone-950 rounded-t-xl overflow-x-auto">
                 <button onclick="switchAdminSubTab('adm-atletas')" class="adm-sub-btn flex-1 py-3.5 px-2 text-center bg-stone-900 border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">Atletas</button>
@@ -1499,6 +1504,27 @@
             </form>
             <p class="text-stone-500 text-[10px] mt-3">Cada pessoa mantém a própria senha. Vínculos de atleta e acessos de administrador dependem de aprovação.</p>
         </div>
+    </div>
+
+    <div id="admin-athlete-link-modal" class="fixed inset-0 z-[125] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="admin-athlete-link-title" aria-describedby="admin-athlete-link-help">
+        <form id="admin-athlete-link-form" onsubmit="window.confirmarVinculoProprioAtleta(event)" class="w-full max-w-sm space-y-4 rounded-2xl border border-emerald-700 bg-stone-900 p-5 shadow-2xl">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 id="admin-athlete-link-title" class="text-sm font-black uppercase tracking-wide text-emerald-300">Vincular meu cadastro</h3>
+                    <p id="admin-athlete-link-help" class="mt-2 text-xs leading-relaxed text-stone-300">Escolha seu cadastro de atleta. A conta atual continuará com acesso administrativo e passará a abrir também seu perfil de atleta.</p>
+                </div>
+                <button type="button" onclick="window.fecharVinculoProprioAtleta()" aria-label="Fechar" class="text-stone-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <label for="admin-athlete-link-select" class="block text-[10px] font-bold uppercase text-stone-400">Seu cadastro</label>
+            <select id="admin-athlete-link-select" required class="-mt-3 w-full rounded-lg border border-stone-600 bg-stone-800 p-3 text-sm text-white outline-none focus:border-emerald-500">
+                <option value="">Escolha seu nome</option>
+            </select>
+            <p id="admin-athlete-link-message" class="hidden text-xs font-bold" aria-live="polite"></p>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="window.fecharVinculoProprioAtleta()" class="rounded-lg border border-stone-600 px-3 py-2 text-xs font-bold text-stone-300">Cancelar</button>
+                <button id="admin-athlete-link-submit" type="submit" class="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-black text-stone-950">Vincular</button>
+            </div>
+        </form>
     </div>
 
     <div id="athlete-profile-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[80] flex items-center justify-center hidden">
@@ -4229,6 +4255,7 @@
             visible('member-auth-button', signedIn && !isAthlete && !isAdmin);
             visible('member-profile-button', isAthlete);
             visible('member-logout-button', signedIn && !isAdmin);
+            visible('admin-athlete-link-panel', signedIn && state === 'admin');
             visible('athlete-auth-login-fields', !signedIn);
             visible('athlete-auth-create', !signedIn);
             visible('athlete-auth-reset', !signedIn);
@@ -4435,6 +4462,120 @@
                     ? 'Não foi possível registrar a solicitação. Sua conta continua sem privilégios administrativos; tente novamente.'
                     : detail || 'Não foi possível enviar a solicitação. Tente novamente.';
                 exibirMensagemAcessoAtleta(message, true);
+            }
+        };
+
+        window.fecharVinculoProprioAtleta = function() {
+            const modal = document.getElementById('admin-athlete-link-modal');
+            modal?.classList.add('hidden');
+            modal?.classList.remove('flex');
+        };
+
+        window.abrirVinculoProprioAtleta = function() {
+            const user = window.authRef?.currentUser;
+            if (!window.isAdminLogado || !user || user.uid !== window.firebaseUser?.uid) {
+                window.mostrarToast('Entre como administrador para vincular seu cadastro.', true);
+                return;
+            }
+            if (window.isAtletaLogado && window.currentAthleteId) {
+                window.mostrarToast('Esta conta já está vinculada a um cadastro de atleta.');
+                return;
+            }
+            const select = document.getElementById('admin-athlete-link-select');
+            const message = document.getElementById('admin-athlete-link-message');
+            const submit = document.getElementById('admin-athlete-link-submit');
+            if (!select || !message || !submit) return;
+            select.replaceChildren(new Option('Escolha seu nome', ''));
+            const athletes = (window.publicAthletesCache || []).filter(athlete => athlete && athlete.id != null && String(athlete.id).trim());
+            athletes.sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'));
+            for (const athlete of athletes) {
+                const team = String(athlete.time || '').toUpperCase();
+                const teamLabel = team === 'CAP' ? 'ATHLETICO' : team === 'CFC' ? 'CORITIBA' : team;
+                const jersey = athlete.camisa !== undefined && athlete.camisa !== null && String(athlete.camisa).trim() ? ` · Nº ${athlete.camisa}` : '';
+                const option = new Option(`${athlete.nome || 'Atleta'}${teamLabel ? ` · ${teamLabel}` : ''}${jersey}`, String(athlete.id));
+                select.add(option);
+            }
+            const hasAthletes = athletes.length > 0;
+            select.disabled = !hasAthletes;
+            submit.disabled = !hasAthletes;
+            submit.classList.toggle('opacity-50', !hasAthletes);
+            message.className = hasAthletes ? 'hidden text-xs font-bold' : 'text-xs font-bold text-amber-300';
+            message.textContent = hasAthletes ? '' : 'Ainda não há cadastros de atletas. Feche esta janela e cadastre seu nome em Administração > Atletas; depois volte para vinculá-lo.';
+            const modal = document.getElementById('admin-athlete-link-modal');
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+        };
+
+        window.confirmarVinculoProprioAtleta = async function(event) {
+            event?.preventDefault();
+            if (!window.babaExigirConexao?.()) return;
+            const user = window.authRef?.currentUser;
+            if (!window.isAdminLogado || !user || user.uid !== window.firebaseUser?.uid) {
+                window.mostrarToast('Entre como administrador para vincular seu cadastro.', true);
+                return;
+            }
+            const select = document.getElementById('admin-athlete-link-select');
+            const submit = document.getElementById('admin-athlete-link-submit');
+            const message = document.getElementById('admin-athlete-link-message');
+            const athleteId = String(select?.value || '');
+            const athlete = (window.publicAthletesCache || []).find(item => String(item?.id || '') === athleteId);
+            if (!athleteId || !athlete) {
+                if (message) { message.className = 'text-xs font-bold text-red-400'; message.textContent = 'Escolha um cadastro válido da lista.'; }
+                return;
+            }
+            const athleteName = String(athlete.nome || 'Atleta');
+            if (!await window.confirmarAcao(`Vincular a conta administrativa atual ao cadastro de ${athleteName}? O acesso de administrador será mantido.`, {confirmText: 'Vincular'})) return;
+            if (submit) { submit.disabled = true; submit.textContent = 'Vinculando…'; }
+            try {
+                const linkedAt = new Date().toISOString();
+                let outcome = '';
+                const usersRef = window.rolesRef.child('users');
+                const result = await usersRef.transaction(currentValue => {
+                    const users = currentValue && typeof currentValue === 'object' && !Array.isArray(currentValue) ? currentValue : {};
+                    const ownProfile = users[user.uid];
+                    if (ownProfile) {
+                        if (ownProfile.role === 'athlete' && String(ownProfile.athleteId || '') === athleteId) {
+                            outcome = 'already-linked';
+                            return users;
+                        }
+                        outcome = 'own-profile-conflict';
+                        return;
+                    }
+                    if (Object.values(users).some(profile => String(profile?.athleteId || '') === athleteId)) {
+                        outcome = 'athlete-already-linked';
+                        return;
+                    }
+                    outcome = 'linked';
+                    return {...users, [user.uid]: {role: 'athlete', athleteId, linkedAt, linkedBy: user.uid}};
+                }, undefined, false);
+                if (!result.committed) {
+                    if (outcome === 'own-profile-conflict') throw new Error('Esta conta já tem outro vínculo. Não alterei o perfil; será preciso revisar o vínculo existente.');
+                    if (outcome === 'athlete-already-linked') throw new Error('Esse cadastro já está vinculado a outra conta. Para proteger o acesso, não foi feito nenhum vínculo.');
+                    throw new Error('O banco não confirmou o vínculo. Nenhuma alteração foi considerada concluída. Confira as permissões e tente novamente.');
+                }
+                window.isAtletaLogado = true;
+                window.currentAthleteId = athleteId;
+                window.currentUserProfile = result.snapshot?.val()?.[user.uid] || {role: 'athlete', athleteId, linkedAt, linkedBy: user.uid};
+                window.atualizarInterfaceAcessoAtleta?.(user, 'adminAthlete');
+                document.getElementById('admin-badge')?.classList.remove('hidden');
+                atualizarAcessoFinanceiro();
+                try {
+                    const privateSnapshot = await window.privateRef.child(`athletes/${athleteId}`).once('value');
+                    window.privateAthletesCache = {...(window.privateAthletesCache || {}), [athleteId]: privateSnapshot.val() || {}};
+                    aplicarCachePrivado();
+                } catch (readError) {
+                    console.error('Vínculo concluído; não foi possível atualizar os dados privados do atleta.', readError?.code || '');
+                }
+                window.renderizarTudo();
+                window.fecharVinculoProprioAtleta();
+                window.mostrarToast(outcome === 'already-linked' ? 'Este cadastro já estava vinculado a esta conta.' : 'Vínculo concluído. Seu acesso administrativo foi mantido.');
+                window.abrirMeuCadastro();
+            } catch (error) {
+                const text = error?.message || 'Não foi possível vincular o cadastro. O acesso administrativo não foi alterado.';
+                if (message) { message.className = 'text-xs font-bold text-red-400'; message.textContent = text; }
+                else window.mostrarToast(text, true);
+            } finally {
+                if (submit) { submit.disabled = false; submit.textContent = 'Vincular'; }
             }
         };
 
