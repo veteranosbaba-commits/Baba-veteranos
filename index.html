@@ -540,7 +540,7 @@
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-ranking-star text-emerald-400 text-sm"></i>
                         <span class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">BABA VETERANOS</span>
-                        <button type="button" id="theme-team-name" onclick="window.alternarTemaApp()" aria-label="Alternar tema do clube" title="Toque para alternar o tema" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20"></button>
+                        <button type="button" id="theme-team-name" onclick="window.alternarTemaApp()" aria-label="Alternar tema do clube" title="Toque para alternar o tema" class="text-[9px] font-bold uppercase whitespace-nowrap px-2 py-0.5 rounded border border-white/20"></button>
                     </div>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2">
@@ -5495,7 +5495,7 @@
             const teamDisplay = document.getElementById('theme-team-name');
             if (teamDisplay) {
                 const isAthletico = canonical === 'athletico';
-                teamDisplay.innerText = isAthletico ? 'ATHLETICO PARANAENSE' : 'CORITIBA';
+                teamDisplay.innerText = isAthletico ? 'ATHLETICO' : 'CORITIBA';
                 teamDisplay.style.backgroundColor = isAthletico ? '#c8102e' : '#006b3f';
                 teamDisplay.style.color = 'white';
                 teamDisplay.setAttribute('aria-label', `Tema atual: ${isAthletico ? 'Athletico Paranaense' : 'Coritiba'}. Toque para alternar.`);
